@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Turniej w squasha</title>
+  <link id="themeStylesheet" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5/dist/flatly/bootstrap.min.css" />
+  <style>
+    body {
+      background-color: #f8f9fa;
+      padding-top: 70px;
+    }
+    .container {
+      margin-bottom: 30px;
+    }
+    input, button {
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: box-shadow 0.2s ease-in-out;
+    }
+    input:focus, button:hover {
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    table {
+      background: #fff;
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    th {
+      background-color: #e9ecef;
+    }
+    .confirmed {
+      background-color: #d4edda !important;
+    }
+    #resetTournamentBtn,
+    #resetGeneralStatsBtn,
+    #endTournamentBtn {
+      margin-top: 15px;
+    }
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+  appearance: none;
+  -moz-appearance: textfield;
+}
+
+  </style>
+</head>
+<body>
+
+<!-- 🔐 Formularz logowania -->
+<div id="authContainer" class="container">
+  <h3>Logowanie do turnieju</h3>
+  <input type="email" id="emailInput" class="form-control mb-2" placeholder="E-mail" />
+  <input type="password" id="passwordInput" class="form-control mb-2" placeholder="Hasło" />
+  <button id="loginBtn" class="btn btn-primary me-2">Zaloguj się</button>
+  <button id="registerBtn" class="btn btn-secondary">Zarejestruj się</button>
+</div>
+
+<!-- 👀 Główny widok aplikacji -->
+<div id="mainContainer" class="container" style="display: none;">
+
+  <!-- Sekcja dodawania graczy -->
+  <div id="playerControls" class="mb-3">
+    <div class="input-group">
+      <input type="text" id="newPlayerName" class="form-control" placeholder="Nazwa gracza" />
+      <button id="addPlayerBtn" class="btn btn-primary">Dodaj gracza</button>
+    </div>
+  </div>
+
+  <!-- Lista dostępnych graczy z checkboxami -->
+  <div id="playersList" class="mb-3">
+    <h5>Dostępni gracze:</h5>
+    <div id="playersForm"></div>
+    <button id="confirmPlayersBtn" class="btn btn-secondary mt-2">Wybierz graczy</button>
+  </div>
+
+  <!-- Ustawienie liczby dostępnych kortów -->
+  <div class="mb-3">
+    <label for="numCourts" class="form-label">Liczba dostępnych kortów:</label>
+    <input type="number" id="numCourts" class="form-control" value="1" min="1" style="width: 100px;" />
+  </div>
+
+  <!-- Generowanie meczów -->
+  <button id="generateMatchesBtn" class="btn btn-success mb-3">Wygeneruj mecze</button>
+  <div class="table-responsive mb-4">
+    <table id="matchesTable" class="table table-bordered"></table>
+  </div>
+
+  <h5>Wyniki meczów</h5>
+  <div class="table-responsive mb-4">
+    <table id="resultsTable" class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Mecz</th>
+          <th>Gracz 1</th>
+          <th>Gracz 2</th>
+          <th>Wynik</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <h5>Statystyki graczy</h5>
+  <div class="table-responsive mb-4">
+    <table id="statsTable" class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Gracz</th>
+          <th>Wygrane mecze</th>
+          <th>Przegrane mecze</th>
+          <th>Rozegrane mecze</th>
+          <th>Zdobyte punkty</th>
+          <th>Średnia pkt zdobytych</th>
+          <th>Stracone punkty</th>
+          <th>Średnia pkt straconych</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <h5>Statystyki roczne</h5>
+  <div class="table-responsive mb-4">
+    <table id="yearlyStatsTable" class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Gracz</th>
+          <th>Rok</th>
+          <th>Wygrane mecze</th>
+          <th>Przegrane mecze</th>
+          <th>Rozegrane mecze</th>
+          <th>Zdobyte punkty</th>
+          <th>Średnia pkt zdobytych</th>
+          <th>Stracone punkty</th>
+          <th>Średnia pkt straconych</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <h5>Statystyki miesięczne</h5>
+  <div class="table-responsive mb-4">
+    <table id="monthlyStatsTable" class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Gracz</th>
+          <th>Miesiąc</th>
+          <th>Wygrane mecze</th>
+          <th>Przegrane mecze</th>
+          <th>Rozegrane mecze</th>
+          <th>Zdobyte punkty</th>
+          <th>Średnia pkt zdobytych</th>
+          <th>Stracone punkty</th>
+          <th>Średnia pkt straconych</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <h5>Statystyki ogólne</h5>
+  <div class="table-responsive mb-4">
+    <table id="generalStatsTable" class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Gracz</th>
+          <th>Wygrane</th>
+          <th>Porażki</th>
+          <th>Rozegrane mecze</th>
+          <th>Zdobyte punkty</th>
+          <th>Średnia pkt zdobytych</th>
+          <th>Stracone punkty</th>
+          <th>Średnia pkt straconych</th>
+          <th>Obecność</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Przyciski resetujące oraz kończące turniej -->
+  <div class="mb-4">
+    <button id="resetTournamentBtn" class="btn btn-warning me-2">Resetuj wyniki i statystyki turnieju</button>
+    <button id="resetGeneralStatsBtn" class="btn btn-warning me-2">Resetuj statystyki ogólne</button>
+    <button id="endTournamentBtn" class="btn btn-danger">Koniec turnieju</button>
+    <button id="resetAllDataBtn" class="btn btn-danger">🗑️ Usuń całą bazę danych</button>
+  </div>
+</div>
+
+<!-- 📦 Skrypty -->
+<script type="module">
+  import "./js/firebase.js";
+
+  window.firebaseAuthReady(() => {
+    // dopiero po zalogowaniu ładujemy pozostałe moduły
+    import("./js/tournament.js").then(() => {
+      import("./js/ui.js");
+    });
+  });
+</script>
+
+</body>
+</html>
