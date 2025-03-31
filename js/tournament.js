@@ -20,7 +20,7 @@ let currentRoundIndex = 0;
 
 // ======= FUNKCJA ZAPISUJĄCA DANE DO FIREBASE =======
 function saveDataToFirebase() {
-  db.collection("turniej").doc("stats").set({
+  setDoc(doc(db, "turniej", "stats"), {
     stats: stats,
     yearlyStats: yearlyStats,
     monthlyStats: monthlyStats,
@@ -298,7 +298,7 @@ export function resetGeneralStats() {
 export function resetEntireDatabase() {
   if (!confirm("Na pewno chcesz USUNĄĆ wszystkie dane z bazy? Tej operacji nie można cofnąć.")) return;
 
-  db.collection("turniej").doc("stats").delete()
+  deleteDoc(doc(db, "turniej", "stats"))
     .then(() => {
       alert("Wszystkie dane zostały usunięte z bazy Firebase.");
       location.reload(); // Odśwież stronę, by zresetować widok

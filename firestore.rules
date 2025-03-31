@@ -4,26 +4,17 @@ service cloud.firestore {
 
     // 📁 USERS – nick przypisany do UID
     match /users/{userId} {
-      // tylko właściciel dokumentu może czytać i pisać
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // 📁 TURNIEJ – statystyki, gracze, mecze itd.
+    // 📁 TURNIEJ – tylko admin ma pełen dostęp
     match /turniej/stats {
-      // każdy zalogowany użytkownik może czytać i aktualizować
-      allow read, update: if request.auth != null;
-
-      // tylko admin może usuwać dane (np. przycisk „Zresetuj bazę”)
-      allow delete: if request.auth != null && request.auth.token.admin == true;
-
-      // zakaz tworzenia nowego dokumentu „stats” z zewnątrz
-      allow create: if false;
+      allow read, write, delete: if request.auth != null && request.auth.token.admin == true;
     }
 
-    // 🔐 Wszystko inne domyślnie zabronione
+    // 🔐 Domyślnie wszystko zablokowane
     match /{document=**} {
       allow read, write: if false;
     }
   }
 }
-
