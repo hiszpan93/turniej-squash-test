@@ -123,83 +123,8 @@ function renderStats() {
   });
 }
 
-// ======= RENDEROWANIE TABEL STATYSTYK ROCZNYCH =======
-function renderYearlyStats() {
-  const yearlyStatsTable = document.getElementById("yearlyStatsTable").getElementsByTagName("tbody")[0];
-  yearlyStatsTable.innerHTML = "";
-  Object.keys(yearlyStats).forEach(year => {
-    const playersArr = Object.keys(yearlyStats[year]).map(player => ({
-      name: player,
-      wins: yearlyStats[year][player].wins,
-      losses: yearlyStats[year][player].losses,
-      pointsScored: yearlyStats[year][player].pointsScored,
-      pointsConceded: yearlyStats[year][player].pointsConceded
-    }));
-    playersArr.sort((a, b) => {
-      if (b.wins !== a.wins) return b.wins - a.wins;
-      const ratioA = a.pointsConceded > 0 ? a.pointsScored / a.pointsConceded : (a.pointsScored > 0 ? Infinity : 0);
-      const ratioB = b.pointsConceded > 0 ? b.pointsScored / b.pointsConceded : (b.pointsScored > 0 ? Infinity : 0);
-      return ratioB - ratioA;
-    });
-    playersArr.forEach(player => {
-      const played = player.wins + player.losses;
-      const avgScored = played > 0 ? (player.pointsScored / played).toFixed(2) : "0.00";
-      const avgConceded = played > 0 ? (player.pointsConceded / played).toFixed(2) : "0.00";
-      const row = yearlyStatsTable.insertRow();
-      row.innerHTML = `
-        <td>${player.name}</td>
-        <td>${year}</td>
-        <td>${player.wins}</td>
-        <td>${player.losses}</td>
-        <td>${played}</td>
-        <td>${player.pointsScored}</td>
-        <td>${avgScored}</td>
-        <td>${player.pointsConceded}</td>
-        <td>${avgConceded}</td>
-      `;
-    });
-  });
-}
 
-// ======= RENDEROWANIE TABEL STATYSTYK MIESIĘCZNYCH =======
-function renderMonthlyStats() {
-  const monthlyStatsTable = document.getElementById("monthlyStatsTable").getElementsByTagName("tbody")[0];
-  monthlyStatsTable.innerHTML = "";
-  Object.keys(monthlyStats).forEach(year => {
-    Object.keys(monthlyStats[year]).forEach(month => {
-      const playersArr = Object.keys(monthlyStats[year][month]).map(player => ({
-        name: player,
-        wins: monthlyStats[year][month][player].wins,
-        losses: monthlyStats[year][month][player].losses,
-        pointsScored: monthlyStats[year][month][player].pointsScored,
-        pointsConceded: monthlyStats[year][month][player].pointsConceded
-      }));
-      playersArr.sort((a, b) => {
-        if (b.wins !== a.wins) return b.wins - a.wins;
-        const ratioA = a.pointsConceded > 0 ? a.pointsScored / a.pointsConceded : (a.pointsScored > 0 ? Infinity : 0);
-        const ratioB = b.pointsConceded > 0 ? b.pointsScored / b.pointsConceded : (b.pointsScored > 0 ? Infinity : 0);
-        return ratioB - ratioA;
-      });
-      playersArr.forEach(player => {
-        const played = player.wins + player.losses;
-        const avgScored = played > 0 ? (player.pointsScored / played).toFixed(2) : "0.00";
-        const avgConceded = played > 0 ? (player.pointsConceded / played).toFixed(2) : "0.00";
-        const row = monthlyStatsTable.insertRow();
-        row.innerHTML = `
-          <td>${player.name}</td>
-          <td>${month}</td>
-          <td>${player.wins}</td>
-          <td>${player.losses}</td>
-          <td>${played}</td>
-          <td>${player.pointsScored}</td>
-          <td>${avgScored}</td>
-          <td>${player.pointsConceded}</td>
-          <td>${avgConceded}</td>
-        `;
-      });
-    });
-  });
-}
+
 
 // ======= RENDEROWANIE TABEL STATYSTYK OGÓLNYCH =======
 function renderGeneralStats() {
@@ -243,21 +168,15 @@ window.renderPlayersList = renderPlayersList;
 window.renderMatches = renderMatches;
 window.addResultToResultsTable = addResultToResultsTable;
 window.renderStats = renderStats;
-window.renderYearlyStats = renderYearlyStats;
-window.renderMonthlyStats = renderMonthlyStats;
 window.renderGeneralStats = renderGeneralStats;
 
 // Podpięcie zdarzeń interfejsu do przycisków
 document.getElementById("addPlayerBtn").addEventListener('click', addPlayer);
 document.getElementById("confirmPlayersBtn").addEventListener('click', confirmPlayers);
 document.getElementById("generateMatchesBtn").addEventListener('click', generateMatches);
-document.getElementById("resetTournamentBtn").addEventListener('click', resetData);
-document.getElementById("resetGeneralStatsBtn").addEventListener('click', resetGeneralStats);
 document.getElementById("endTournamentBtn").addEventListener('click', endTournament);
 document.getElementById("resetAllDataBtn").addEventListener('click', resetEntireDatabase);
 
 
 // Wczytanie początkowych danych i sprawdzenie automatycznych resetów
 loadDataFromFirebase();
-checkMonthlyReset();
-checkYearlyReset();

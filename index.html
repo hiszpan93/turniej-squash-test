@@ -86,7 +86,11 @@
   </div>
 
   <!-- Generowanie meczów -->
-  <button id="generateMatchesBtn" class="btn btn-success mb-3">Wygeneruj mecze</button>
+  <div class="d-flex mb-3 gap-2">
+    <button id="generateMatchesBtn" class="btn btn-success">Wygeneruj mecze</button>
+    <button id="endTournamentBtn" class="btn btn-danger">Koniec turnieju</button>
+  </div>
+  
   <div class="table-responsive mb-4">
     <table id="matchesTable" class="table table-bordered"></table>
   </div>
@@ -125,45 +129,7 @@
     </table>
   </div>
 
-  <h5>Statystyki roczne</h5>
-  <div class="table-responsive mb-4">
-    <table id="yearlyStatsTable" class="table table-bordered">
-      <thead>
-        <tr>
-          <th>Gracz</th>
-          <th>Rok</th>
-          <th>Wygrane mecze</th>
-          <th>Przegrane mecze</th>
-          <th>Rozegrane mecze</th>
-          <th>Zdobyte punkty</th>
-          <th>Średnia pkt zdobytych</th>
-          <th>Stracone punkty</th>
-          <th>Średnia pkt straconych</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <h5>Statystyki miesięczne</h5>
-  <div class="table-responsive mb-4">
-    <table id="monthlyStatsTable" class="table table-bordered">
-      <thead>
-        <tr>
-          <th>Gracz</th>
-          <th>Miesiąc</th>
-          <th>Wygrane mecze</th>
-          <th>Przegrane mecze</th>
-          <th>Rozegrane mecze</th>
-          <th>Zdobyte punkty</th>
-          <th>Średnia pkt zdobytych</th>
-          <th>Stracone punkty</th>
-          <th>Średnia pkt straconych</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+  
 
   <h5>Statystyki ogólne</h5>
   <div class="table-responsive mb-4">
@@ -187,9 +153,6 @@
 
   <!-- Przyciski resetujące oraz kończące turniej -->
   <div class="mb-4">
-    <button id="resetTournamentBtn" class="btn btn-warning me-2">Resetuj wyniki i statystyki turnieju</button>
-    <button id="resetGeneralStatsBtn" class="btn btn-warning me-2">Resetuj statystyki ogólne</button>
-    <button id="endTournamentBtn" class="btn btn-danger">Koniec turnieju</button>
     <button id="resetAllDataBtn" class="btn btn-danger">🗑️ Usuń całą bazę danych</button>
   </div>
 </div>

@@ -9,8 +9,6 @@ let players = [];
 export let matches = [];
 let results = [];
 export let stats = {};
-export let yearlyStats = {};
-export let monthlyStats = {};
 export let generalStats = {};
 export let tournamentEnded = false;
 
@@ -21,9 +19,7 @@ let currentRoundIndex = 0;
 // ======= FUNKCJA ZAPISUJĄCA DANE DO FIREBASE =======
 function saveDataToFirebase() {
   setDoc(doc(db, "turniej", "stats"), {
-    stats: stats,
-    yearlyStats: yearlyStats,
-    monthlyStats: monthlyStats,
+    
     generalStats: generalStats,
     allPlayers: allPlayers
   })
@@ -221,133 +217,17 @@ function updateStats(match) {
   generalStats[match.player2].pointsScored += score2;
   generalStats[match.player1].pointsConceded += score2;
   generalStats[match.player2].pointsConceded += score1;
-  yearlyStats[year] = yearlyStats[year] || {};
-  updateYearlyStats(match, year, score1, score2);
-  monthlyStats[year] = monthlyStats[year] || {};
-  monthlyStats[year][month] = monthlyStats[year][month] || {};
-  updateMonthlyStats(match, year, month, score1, score2);
+  
   window.renderStats();
-  window.renderYearlyStats();
-  window.renderMonthlyStats();
+  
   window.renderGeneralStats();
 }
 
-function updateYearlyStats(match, year, score1, score2) {
-  if (!yearlyStats[year][match.player1]) {
-    yearlyStats[year][match.player1] = { wins: 0, losses: 0, pointsScored: 0, pointsConceded: 0 };
-  }
-  if (!yearlyStats[year][match.player2]) {
-    yearlyStats[year][match.player2] = { wins: 0, losses: 0, pointsScored: 0, pointsConceded: 0 };
-  }
-  if (score1 > score2) {
-    yearlyStats[year][match.player1].wins++;
-    yearlyStats[year][match.player2].losses++;
-  } else {
-    yearlyStats[year][match.player2].wins++;
-    yearlyStats[year][match.player1].losses++;
-  }
-  yearlyStats[year][match.player1].pointsScored += score1;
-  yearlyStats[year][match.player2].pointsScored += score2;
-  yearlyStats[year][match.player1].pointsConceded += score2;
-  yearlyStats[year][match.player2].pointsConceded += score1;
-}
 
-function updateMonthlyStats(match, year, month, score1, score2) {
-  if (!monthlyStats[year][month][match.player1]) {
-    monthlyStats[year][month][match.player1] = { wins: 0, losses: 0, pointsScored: 0, pointsConceded: 0 };
-  }
-  if (!monthlyStats[year][month][match.player2]) {
-    monthlyStats[year][month][match.player2] = { wins: 0, losses: 0, pointsScored: 0, pointsConceded: 0 };
-  }
-  if (score1 > score2) {
-    monthlyStats[year][month][match.player1].wins++;
-    monthlyStats[year][month][match.player2].losses++;
-  } else {
-    monthlyStats[year][month][match.player2].wins++;
-    monthlyStats[year][month][match.player1].losses++;
-  }
-  monthlyStats[year][month][match.player1].pointsScored += score1;
-  monthlyStats[year][month][match.player2].pointsScored += score2;
-  monthlyStats[year][month][match.player1].pointsConceded += score2;
-  monthlyStats[year][month][match.player2].pointsConceded += score1;
-}
 
-// ======= RESETOWANIE DANYCH TURNIEJU =======
-export function resetData() {
-  if (confirm("Czy na pewno chcesz usunąć wyniki i statystyki turnieju?")) {
-    stats = {};
-    matches = [];
-    results = [];
-    players = [];
-    document.getElementById("matchesTable").innerHTML = "";
-    document.getElementById("resultsTable").getElementsByTagName("tbody")[0].innerHTML = "";
-    document.getElementById("statsTable").getElementsByTagName("tbody")[0].innerHTML = "";
-    alert("Wyniki i statystyki turniejowe zostały zresetowane. Tabele statystyk rocznych i miesięcznych, lista graczy oraz statystyki ogólne pozostają bez zmian.");
-    saveDataToFirebase();
-  }
-}
 
-// ======= RESETOWANIE STATYSTYK OGÓLNYCH =======
-export function resetGeneralStats() {
-  if (confirm("Czy na pewno chcesz zresetować statystyki ogólne?")) {
-    generalStats = {};
-    window.renderGeneralStats();
-    saveDataToFirebase();
-  }
-}
-export function resetEntireDatabase() {
-  if (!confirm("Na pewno chcesz USUNĄĆ wszystkie dane z bazy? Tej operacji nie można cofnąć.")) return;
 
-  deleteDoc(doc(db, "turniej", "stats"))
-    .then(() => {
-      alert("Wszystkie dane zostały usunięte z bazy Firebase.");
-      location.reload(); // Odśwież stronę, by zresetować widok
-    })
-    .catch((error) => {
-      console.error("Błąd przy usuwaniu danych:", error);
-      alert("Wystąpił błąd podczas usuwania danych.");
-    });
-}
 
-// ======= RESET MIESIĘCZNY Z GENEROWANIEM PDF =======
-export function checkMonthlyReset() {
-  const now = new Date();
-  const currentYM = now.getFullYear() + "-" + (now.getMonth() + 1);
-  if (now.getDate() === 1) {
-    generateMonthlyStatsPDFAndReset(currentYM);
-  }
-}
-
-function generateMonthlyStatsPDFAndReset(currentYM) {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  loadCustomFont(doc);
-  doc.autoTable({ html: '#monthlyStatsTable', startY: 10, theme: 'grid' });
-  doc.save("monthly_stats_" + currentYM + ".pdf");
-  monthlyStats = {};
-  window.renderMonthlyStats();
-  saveDataToFirebase();
-}
-
-// ======= RESET ROCZNY Z GENEROWANIEM PDF =======
-export function checkYearlyReset() {
-  const now = new Date();
-  if (now.getMonth() === 0 && now.getDate() === 1) {
-    const currentYear = now.getFullYear();
-    generateYearlyStatsPDFAndReset(currentYear);
-  }
-}
-
-function generateYearlyStatsPDFAndReset(currentYear) {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  loadCustomFont(doc);
-  doc.autoTable({ html: '#yearlyStatsTable', startY: 10, theme: 'grid' });
-  doc.save("yearly_stats_" + currentYear + ".pdf");
-  yearlyStats = {};
-  window.renderYearlyStats();
-  saveDataToFirebase();
-}
 
 // ======= ZAKOŃCZENIE TURNIEJU =======
 export function endTournament() {
@@ -424,9 +304,6 @@ export function loadDataFromFirebase() {
     .then(docSnap => {
       if (docSnap.exists()) {
         const data = docSnap.data();
-        stats = data.stats || {};
-        yearlyStats = data.yearlyStats || {};
-        monthlyStats = data.monthlyStats || {};
         allPlayers = data.allPlayers || [];
         generalStats = data.generalStats || {};
         if (allPlayers.length > 0) {
@@ -435,8 +312,7 @@ export function loadDataFromFirebase() {
         window.renderPlayersList();
         window.renderMatches();
         window.renderStats();
-        window.renderYearlyStats();
-        window.renderMonthlyStats();
+      
         window.renderGeneralStats();
       } else {
         console.log("Brak dokumentu 'stats' w kolekcji 'turniej'");
