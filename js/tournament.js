@@ -168,7 +168,7 @@ export function generateMatches() {
     return;
   }
 
-  const players = [...selectedPlayers];
+  const players = allPlayers.filter(p => p.selected);
   const courtCount = parseInt(document.getElementById("numCourts").value, 10) || 1;
   const lastSeries = parseInt(localStorage.getItem("turniej_series"), 10) || 0;
 const seriesNumber = lastSeries + 1;
