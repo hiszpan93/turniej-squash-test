@@ -80,6 +80,11 @@
   </style>
 </head>
 <body>
+<!-- 🔄 Pasek zakładek (responsywny) -->
+<div id="viewTabs" class="container d-flex gap-2 justify-content-center mb-3" style="display: none;">
+  <button id="showTournamentBtn" class="btn btn-outline-primary btn-sm px-4">🎾 Turniej</button>
+  <button id="showArchiveBtn" class="btn btn-outline-secondary btn-sm px-4">📦 Archiwum</button>
+</div>
 
 <div id="authContainer" class="container">
   <h3>Logowanie do turnieju</h3>
@@ -87,6 +92,17 @@
   <input type="password" id="passwordInput" class="form-control mb-2" placeholder="Hasło" />
   <button id="loginBtn" class="btn btn-primary me-2">Zaloguj się</button>
   <button id="registerBtn" class="btn btn-secondary">Zarejestruj się</button>
+</div>
+<!-- Nawigacja zakładkowa -->
+<div id="tabs" class="container mb-4" style="display: none;">
+  <ul class="nav nav-tabs">
+    <li class="nav-item">
+      <a class="nav-link active" href="#" id="tab-tournament">Turniej</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#" id="tab-archive">Archiwum</a>
+    </li>
+  </ul>
 </div>
 
 <div id="mainContainer" class="container" style="display: none;">
@@ -97,6 +113,20 @@
         <button id="addPlayerBtn" class="btn btn-primary">Dodaj gracza</button>
       </div>
     </div>
+    <!-- tu masz resztę turnieju -->
+  </div> <!-- 🔚 ZAMKNIĘCIE #setupPanel -->
+
+  <!-- 🔽 WIDOK ARCHIWUM -->
+  <div id="archiveView" style="display:none">
+    <div class="card mt-4">
+      <div class="card-body">
+        <h5 class="card-title">📦 Archiwum turniejów</h5>
+        <div id="tournamentArchive"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 
     <div id="playersList" class="mb-3">
       <h5>Dostępni gracze:</h5>
@@ -177,15 +207,38 @@
 
 <script type="module">
   import "./js/firebase.js";
+
   window.firebaseAuthReady(() => {
     import("./js/tournament.js").then(() => {
       import("./js/ui.js");
+
+      // 🔁 Pokaż zakładki po zalogowaniu
+      document.getElementById("viewTabs").style.display = "flex";
+
+      // Obsługa przełączania widoków
+      document.getElementById("showTournamentBtn").onclick = () => {
+        document.getElementById("mainContainer").style.display = "block";
+        document.getElementById("archiveView").style.display = "none";
+        document.getElementById("showTournamentBtn").classList.add("btn-primary");
+        document.getElementById("showTournamentBtn").classList.remove("btn-outline-primary");
+        document.getElementById("showArchiveBtn").classList.remove("btn-primary");
+        document.getElementById("showArchiveBtn").classList.add("btn-outline-secondary");
+      };
+
+      document.getElementById("showArchiveBtn").onclick = () => {
+        document.getElementById("mainContainer").style.display = "none";
+        document.getElementById("archiveView").style.display = "block";
+        document.getElementById("showArchiveBtn").classList.add("btn-primary");
+        document.getElementById("showArchiveBtn").classList.remove("btn-outline-secondary");
+        document.getElementById("showTournamentBtn").classList.remove("btn-primary");
+        document.getElementById("showTournamentBtn").classList.add("btn-outline-primary");
+        if (window.renderArchiveView) window.renderArchiveView();
+      };
     });
   });
 </script>
-<!-- 📦 Archiwum meczów turnieju -->
-<h5>📦 Archiwum turniejów</h5>
-<div id="archiveContainer" class="mb-4"></div>
+
+
 
 </body>
 </html>

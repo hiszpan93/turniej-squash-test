@@ -80,6 +80,8 @@ document.getElementById("logoutBtn").onclick = () => {
     const infoBox = document.getElementById("userInfoBox");
     if (infoBox) infoBox.remove(); // 🔥 usuń baner
     document.getElementById("mainContainer").style.display = "none";
+    document.getElementById("tabs").style.display = "block";
+
     document.getElementById("authContainer").style.display = "block";
     localStorage.clear(); // 🔁 (opcjonalnie) czyść dane lokalne
   });

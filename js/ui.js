@@ -252,6 +252,22 @@ document.getElementById("confirmPlayersBtn").addEventListener('click', confirmPl
 document.getElementById("generateMatchesBtn").addEventListener('click', generateMatches);
 document.getElementById("endTournamentBtn").addEventListener('click', endTournament);
 
+document.getElementById("tab-tournament").addEventListener("click", () => {
+  document.getElementById("tournamentView").style.display = "block";
+  document.getElementById("archiveView").style.display = "none";
+  document.getElementById("tab-tournament").classList.add("active");
+  document.getElementById("tab-archive").classList.remove("active");
+});
+
+document.getElementById("tab-archive").addEventListener("click", () => {
+  document.getElementById("tournamentView").style.display = "none";
+  document.getElementById("archiveView").style.display = "block";
+  document.getElementById("tab-tournament").classList.remove("active");
+  document.getElementById("tab-archive").classList.add("active");
+  if (typeof window.renderArchiveView === "function") {
+    window.renderArchiveView();  // odśwież archiwum
+  }
+});
 
 
 // Wczytanie początkowych danych i sprawdzenie automatycznych resetów
