@@ -57,8 +57,9 @@ function renderMatches() {
         <td>${match.court}</td>
         <td>${resultInput}</td>
         <td>
-          <button id="confirmButton-${index}" class="btn btn-sm btn-outline-success" ${tournamentEnded ? "disabled" : ""}>Potwierdź</button>
-        </td>
+  <button id="confirmButton-${index}" class="btn btn-sm btn-outline-success" ${tournamentEnded || match.confirmed ? "disabled" : ""}>Potwierdź</button>
+</td>
+
       </tr>
     `;
   });

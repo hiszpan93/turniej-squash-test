@@ -29,6 +29,12 @@ function loadLocalBackup() {
     stats = JSON.parse(savedStats);
     window.renderMatches();
     window.renderStats();
+    // Dodajemy potwierdzone mecze do tabeli wyników
+    matches.forEach(match => {
+      if (match.confirmed) {
+        window.addResultToResultsTable(match);
+      }
+    });
     console.log("Przywrócono dane turnieju z localStorage");
   }
 }
