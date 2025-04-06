@@ -41,13 +41,12 @@ function renderMatches() {
   matches.forEach((match, index) => {
     let resultInput = "";
 
-    if (match.result) {
+    if (match.confirmed) {
       resultInput = `<span>${match.result}</span>`;
     } else {
-      resultInput = `
-        <input type="text" class="form-control" id="result-${index}" placeholder="np. 11:9" style="max-width: 120px;" />
-      `;
+      resultInput = `<input type="text" class="form-control" id="result-${index}" placeholder="np. 11:9" style="max-width: 120px;" />`;
     }
+    
 
     tableHTML += `
       <tr class="${match.confirmed ? 'confirmed' : ''}">
