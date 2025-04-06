@@ -41,37 +41,42 @@ function renderMatches() {
   matches.forEach((match, index) => {
     let resultInput = "";
 
-    if (match.confirmed) {
+    let player1Style = "";
+    let player2Style = "";
+
+    if (match.confirmed && match.result) {
+      const [score1, score2] = match.result.split(":").map(Number);
+      if (score1 > score2) {
+        player1Style = ' style="color:green;font-weight:bold;"';
+        player2Style = ' style="color:red;"';
+      } else {
+        player2Style = ' style="color:green;font-weight:bold;"';
+        player1Style = ' style="color:red;"';
+      }
       resultInput = `<span>${match.result}</span>`;
     } else {
       resultInput = `
-  <div style="display: flex; flex-direction: column; gap: 4px;">
-    <label style="font-size: 0.8em; color: #666;">
-      ${match.player1}:
-      <input type="number" id="score1-${index}" class="form-control" min="0"
-        style="max-width: 100px;" 
-        oninput="autoFocusNext(this, 'score2-${index}'); highlightWinner(${index})" />
-    </label>
-    <label style="font-size: 0.8em; color: #666;">
-      ${match.player2}:
-      <input type="number" id="score2-${index}" class="form-control" min="0"
-        style="max-width: 100px;" 
-        oninput="highlightWinner(${index})" />
-    </label>
-  </div>
-`;
-
+        <div class="d-flex flex-column gap-1">
+          <div>
+            <small class="text-muted">${match.player1}:</small>
+            <input type="number" min="0" class="form-control" id="score1-${index}" style="max-width: 100px;" />
+          </div>
+          <div>
+            <small class="text-muted">${match.player2}:</small>
+            <input type="number" min="0" class="form-control" id="score2-${index}" style="max-width: 100px;" />
+          </div>
+        </div>`;
     }
 
     tableHTML += `
       <tr class="${match.confirmed ? 'confirmed' : ''}">
         <td>${index + 1} (seria ${match.series || 1}, runda ${match.round || 1})</td>
-        <td>${match.player1}</td>
-        <td>${match.player2}</td>
+        <td${player1Style}>${match.player1}</td>
+        <td${player2Style}>${match.player2}</td>
         <td>${match.court}</td>
         <td>${resultInput}</td>
         <td>
-          <button id="confirmButton-${index}" class="btn btn-sm btn-outline-success" ${tournamentEnded || match.confirmed ? "disabled" : ""}>Potwierdź</button>
+          <button id="confirmButton-${index}" class="btn btn-sm ${match.confirmed ? "btn-success" : "btn-outline-success"}" ${tournamentEnded || match.confirmed ? "disabled" : ""}>Potwierdź</button>
         </td>
       </tr>
     `;
@@ -80,13 +85,15 @@ function renderMatches() {
   tableHTML += "</tbody>";
   matchesTable.innerHTML = tableHTML;
 
+  // Eventy
   matches.forEach((_, index) => {
     const btn = document.getElementById(`confirmButton-${index}`);
     if (btn) {
-      btn.addEventListener('click', () => confirmMatch(index));
+      btn.addEventListener("click", () => confirmMatch(index));
     }
   });
 }
+
 
 // Autofocus po pierwszym polu
 function autoFocusNext(currentInput, nextId) {

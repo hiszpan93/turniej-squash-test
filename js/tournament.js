@@ -113,15 +113,17 @@ export function confirmPlayers() {
   if (tournamentEnded) return;
 
   const checkboxes = document.querySelectorAll(".playerCheckbox");
-
-  // 🔁 RESETUJ i OZNACZAJ wybranych graczy w allPlayers
   allPlayers.forEach(p => p.selected = false);
+
+  const selected = [];
+
   checkboxes.forEach(chk => {
     if (chk.checked) {
       const playerId = parseInt(chk.value);
       const player = allPlayers.find(p => p.id === playerId);
       if (player) {
         player.selected = true;
+        selected.push(player.name);
       }
     }
   });
@@ -137,9 +139,12 @@ export function confirmPlayers() {
     generalStats[player.name] = generalStats[player.name] || { wins: 0, losses: 0, pointsScored: 0, pointsConceded: 0, obecnosc: 0 };
   });
 
+  localStorage.setItem("turniej_players", JSON.stringify(selected));
+
   alert("Gracze zostali wybrani. Możesz teraz wygenerować mecze.");
   saveDataToFirebase();
 }
+
 
 
 
@@ -242,6 +247,8 @@ export function generateMatches() {
 
   matches = newMatches;
   window.renderMatches();
+  document.getElementById("setupPanel").style.display = "none";
+
 }
 
 
@@ -299,6 +306,9 @@ export function confirmMatch(index) {
 
   window.renderMatches();
   window.renderStats();
+  input1.style.backgroundColor = "";
+input2.style.backgroundColor = "";
+
 }
 
 
@@ -368,6 +378,17 @@ function updateStats(match) {
 export function endTournament() {
   if (tournamentEnded) return;
   tournamentEnded = true;
+  const savedPlayers = JSON.parse(localStorage.getItem("turniej_players")) || [];
+
+savedPlayers.forEach(name => {
+  if (!generalStats[name]) {
+    generalStats[name] = { wins: 0, losses: 0, pointsScored: 0, pointsConceded: 0, obecnosc: 0 };
+  }
+  generalStats[name].obecnosc += 1;
+});
+
+localStorage.removeItem("turniej_players"); // 🧹 sprzątamy
+
   players.forEach(player => {
     if (!generalStats[player.name]) {
       generalStats[player.name] = { wins: 0, losses: 0, pointsScored: 0, pointsConceded: 0, obecnosc: 0 };
