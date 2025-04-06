@@ -163,15 +163,16 @@ function generateRoundRobinRounds(playersList) {
 
 // ======= GENEROWANIE MECZÓW (AKTUALNA RUNDA) =======
 export function generateMatches() {
-  if (selectedPlayers.length < 2) {
+  const players = allPlayers.filter(p => p.selected);
+  if (players.length < 2) {
     alert("Wybierz co najmniej dwóch graczy, aby wygenerować mecze.");
     return;
   }
 
-  const players = allPlayers.filter(p => p.selected);
   const courtCount = parseInt(document.getElementById("numCourts").value, 10) || 1;
   const lastSeries = parseInt(localStorage.getItem("turniej_series"), 10) || 0;
-const seriesNumber = lastSeries + 1;
+  const seriesNumber = lastSeries + 1;
+
 
   const newMatches = [];
   const pairings = [];
