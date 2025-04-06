@@ -67,13 +67,24 @@ window.firebaseAuthReady = (callback) => {
       const nick = docSnap.exists() ? docSnap.data().nick : "(nieznany)";
 
       const infoBox = document.createElement("div");
-      infoBox.className = "alert alert-info mt-3";
-      infoBox.innerHTML = `
-        Zalogowano jako: <strong>${nick}</strong> (${user.email})
-        <button id="logoutBtn" class="btn btn-sm btn-danger float-end">Wyloguj</button>
-      `;
-      document.body.prepend(infoBox);
-      document.getElementById("logoutBtn").onclick = () => signOut(auth);
+infoBox.id = "userInfoBox"; // ⬅️ dodaj ID
+infoBox.className = "alert alert-info mt-3";
+infoBox.innerHTML = `
+  Zalogowano jako: <strong>${nick}</strong> (${user.email})
+  <button id="logoutBtn" class="btn btn-sm btn-danger float-end">Wyloguj</button>
+`;
+document.body.prepend(infoBox);
+
+document.getElementById("logoutBtn").onclick = () => {
+  signOut(auth).then(() => {
+    const infoBox = document.getElementById("userInfoBox");
+    if (infoBox) infoBox.remove(); // 🔥 usuń baner
+    document.getElementById("mainContainer").style.display = "none";
+    document.getElementById("authContainer").style.display = "block";
+    localStorage.clear(); // 🔁 (opcjonalnie) czyść dane lokalne
+  });
+};
+
 
       document.getElementById("authContainer").style.display = "none";
       document.getElementById("mainContainer").style.display = "block";
