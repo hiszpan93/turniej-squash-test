@@ -16,6 +16,28 @@ export let tournamentEnded = false;
 let allRounds = [];
 let currentRoundIndex = 0;
 
+function saveLocalBackup() {
+  localStorage.setItem("turniej_matches", JSON.stringify(matches));
+  localStorage.setItem("turniej_stats", JSON.stringify(stats));
+}
+
+function loadLocalBackup() {
+  const savedMatches = localStorage.getItem("turniej_matches");
+  const savedStats = localStorage.getItem("turniej_stats");
+  if (savedMatches && savedStats) {
+    matches = JSON.parse(savedMatches);
+    stats = JSON.parse(savedStats);
+    window.renderMatches();
+    window.renderStats();
+    console.log("Przywrócono dane turnieju z localStorage");
+  }
+}
+
+function clearLocalBackup() {
+  localStorage.removeItem("turniej_matches");
+  localStorage.removeItem("turniej_stats");
+}
+
 // ======= FUNKCJA ZAPISUJĄCA DANE DO FIREBASE =======
 function saveDataToFirebase() {
   setDoc(doc(db, "turniej", "stats"), {
@@ -162,6 +184,8 @@ const [score1, score2] = input.value.trim().split(":").map(Number);
   window.addResultToResultsTable(matches[index]);
   updateStats(matches[index]);
   saveDataToFirebase();
+  saveLocalBackup(); // 🔄 backup po każdym meczu
+
   if (matches.every(match => match.confirmed)) {
     updateNextRound();
   }
@@ -240,6 +264,8 @@ export function endTournament() {
     generalStats[player.name].obecnosc = (generalStats[player.name].obecnosc || 0) + 1;
   });
   saveDataToFirebase();
+  clearLocalBackup(); // 🧹 usuń backup
+
   window.renderGeneralStats();
   document.getElementById("addPlayerBtn").disabled = true;
   document.getElementById("confirmPlayersBtn").disabled = true;
@@ -314,6 +340,10 @@ export function loadDataFromFirebase() {
        // window.renderStats();
       
         window.renderGeneralStats();
+        if (!tournamentEnded) {
+          loadLocalBackup(); // 🔁 przywróć dane turnieju jeśli nie zakończony
+        }
+        
       } else {
         console.log("Brak dokumentu 'stats' w kolekcji 'turniej'");
       }
