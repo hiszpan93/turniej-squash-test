@@ -322,16 +322,4 @@ export function loadDataFromFirebase() {
       console.error("Błąd odczytu danych z Firebase: ", error);
     });
 }
-export function resetEntireDatabase() {
-  if (!confirm("Na pewno chcesz USUNĄĆ wszystkie dane z bazy? Tej operacji nie można cofnąć.")) return;
 
-  deleteDoc(doc(db, "turniej", "stats"))
-    .then(() => {
-      alert("Wszystkie dane zostały usunięte z bazy Firebase.");
-      location.reload();
-    })
-    .catch((error) => {
-      console.error("Błąd przy usuwaniu danych:", error);
-      alert("Wystąpił błąd podczas usuwania danych.");
-    });
-}

@@ -2,7 +2,7 @@ import { allPlayers, matches, stats, generalStats, tournamentEnded,
          addPlayer, confirmPlayers, generateMatches, confirmMatch,
         endTournament,
          loadDataFromFirebase,  
-         resetEntireDatabase } from './tournament.js';
+          } from './tournament.js';
 
 
 // ======= RENDEROWANIE LISTY GRACZY Z CHECKBOXAMI =======
@@ -175,7 +175,7 @@ document.getElementById("addPlayerBtn").addEventListener('click', addPlayer);
 document.getElementById("confirmPlayersBtn").addEventListener('click', confirmPlayers);
 document.getElementById("generateMatchesBtn").addEventListener('click', generateMatches);
 document.getElementById("endTournamentBtn").addEventListener('click', endTournament);
-document.getElementById("resetAllDataBtn").addEventListener('click', resetEntireDatabase);
+
 
 
 // Wczytanie początkowych danych i sprawdzenie automatycznych resetów
