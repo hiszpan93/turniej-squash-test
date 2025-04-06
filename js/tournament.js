@@ -310,8 +310,8 @@ export function loadDataFromFirebase() {
           nextPlayerId = Math.max(...allPlayers.map(p => p.id)) + 1;
         }
         window.renderPlayersList();
-        window.renderMatches();
-        window.renderStats();
+       // window.renderMatches();
+       // window.renderStats();
       
         window.renderGeneralStats();
       } else {
