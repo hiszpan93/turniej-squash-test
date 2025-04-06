@@ -44,22 +44,35 @@ function renderMatches() {
     if (match.confirmed) {
       resultInput = `<span>${match.result}</span>`;
     } else {
-      resultInput = `<input type="text" class="form-control" id="result-${index}" placeholder="np. 11:9" style="max-width: 120px;" />`;
+      resultInput = `
+  <div style="display: flex; flex-direction: column; gap: 4px;">
+    <label style="font-size: 0.8em; color: #666;">
+      ${match.player1}:
+      <input type="number" id="score1-${index}" class="form-control" min="0"
+        style="max-width: 100px;" 
+        oninput="autoFocusNext(this, 'score2-${index}'); highlightWinner(${index})" />
+    </label>
+    <label style="font-size: 0.8em; color: #666;">
+      ${match.player2}:
+      <input type="number" id="score2-${index}" class="form-control" min="0"
+        style="max-width: 100px;" 
+        oninput="highlightWinner(${index})" />
+    </label>
+  </div>
+`;
+
     }
-    
 
     tableHTML += `
       <tr class="${match.confirmed ? 'confirmed' : ''}">
         <td>${index + 1} (seria ${match.series || 1}, runda ${match.round || 1})</td>
-
         <td>${match.player1}</td>
         <td>${match.player2}</td>
         <td>${match.court}</td>
         <td>${resultInput}</td>
         <td>
-  <button id="confirmButton-${index}" class="btn btn-sm btn-outline-success" ${tournamentEnded || match.confirmed ? "disabled" : ""}>Potwierdź</button>
-</td>
-
+          <button id="confirmButton-${index}" class="btn btn-sm btn-outline-success" ${tournamentEnded || match.confirmed ? "disabled" : ""}>Potwierdź</button>
+        </td>
       </tr>
     `;
   });
@@ -67,13 +80,43 @@ function renderMatches() {
   tableHTML += "</tbody>";
   matchesTable.innerHTML = tableHTML;
 
-  // Dodanie nasłuchiwania zdarzeń na przyciski potwierdzenia wyniku
   matches.forEach((_, index) => {
     const btn = document.getElementById(`confirmButton-${index}`);
     if (btn) {
       btn.addEventListener('click', () => confirmMatch(index));
     }
   });
+}
+
+// Autofocus po pierwszym polu
+function autoFocusNext(currentInput, nextId) {
+  if (currentInput.value.length > 1) {
+    document.getElementById(nextId)?.focus();
+  }
+}
+
+function highlightWinner(index) {
+  const input1 = document.getElementById(`score1-${index}`);
+  const input2 = document.getElementById(`score2-${index}`);
+
+  if (!input1 || !input2) return;
+
+  const val1 = parseInt(input1.value);
+  const val2 = parseInt(input2.value);
+
+  input1.style.backgroundColor = "";
+  input2.style.backgroundColor = "";
+
+  if (isNaN(val1) || isNaN(val2)) return;
+  if (val1 === val2) return;
+
+  if (val1 > val2) {
+    input1.style.backgroundColor = "#d4edda"; // zielony
+    input2.style.backgroundColor = "#f8d7da"; // czerwony
+  } else {
+    input1.style.backgroundColor = "#f8d7da";
+    input2.style.backgroundColor = "#d4edda";
+  }
 }
 
 

@@ -251,41 +251,56 @@ export function confirmMatch(index) {
     alert("Turniej został zakończony. Nie można wpisywać wyników.");
     return;
   }
-  const input = document.getElementById(`result-${index}`);
-if (!input || !/^\d+:\d+$/.test(input.value.trim())) {
-  alert("Wprowadź wynik w formacie X:Y (np. 11:9)");
-  return;
-}
-const [score1, score2] = input.value.trim().split(":").map(Number);
 
-  if (!validateResult(score1, score2)) {
-    alert("Wynik meczu jest niepoprawny. Upewnij się, że wynik spełnia zasady:\n• Jeśli przeciwnik ma mniej niż 10 punktów, zwycięzca musi mieć dokładnie 11 punktów.\n• Jeśli obaj gracze mają 10 lub więcej punktów, mecz trwa aż do momentu, gdy różnica wyniesie dokładnie 2 punkty.");
+  const match = matches[index];
+  const input1 = document.getElementById(`score1-${index}`);
+  const input2 = document.getElementById(`score2-${index}`);
+
+  const score1 = parseInt(input1.value);
+  const score2 = parseInt(input2.value);
+
+  if (isNaN(score1) || isNaN(score2) || score1 < 0 || score2 < 0) {
+    alert("Wprowadź nieujemne liczby dla obu graczy.");
     return;
   }
-  const result = score1 + ":" + score2;
-  matches[index].result = result;
-  matches[index].confirmed = true;
-  matches.forEach((m, i) => {
-    if (!m.confirmed) {
-      m.result = ""; // lub: delete m.result;
-    }
-  });
-  
+
+  if (!validateResult(score1, score2)) {
+    alert("Wynik meczu jest niepoprawny. Zasady:\n• Zwycięzca: 11 pkt, jeśli przeciwnik ma <10\n• Lub różnica 2 pkt przy 10+");
+    return;
+  }
+
+  const result = `${score1}:${score2}`;
+  const winner = score1 > score2 ? match.player1 : match.player2;
+
+  const confirmText = `Wynik meczu:\n${match.player1}: ${score1} pkt\n${match.player2}: ${score2} pkt\n\nZwycięzca: ${winner}\n\nCzy na pewno zatwierdzić ten wynik?`;
+  if (!confirm(confirmText)) return;
+
+  match.result = result;
+  match.confirmed = true;
+
   const btn = document.getElementById(`confirmButton-${index}`);
   btn.classList.remove("btn-outline-success");
   btn.classList.add("btn-success");
+
   const matchesTable = document.getElementById("matchesTable");
   const rows = matchesTable.getElementsByTagName("tr");
   rows[index + 1].classList.add("confirmed");
-  window.addResultToResultsTable(matches[index]);
-  updateStats(matches[index]);
+
+  window.addResultToResultsTable(match);
+  updateStats(match);
   saveDataToFirebase();
-  saveLocalBackup(); // 🔄 backup po każdym meczu
+  saveLocalBackup();
 
   if (matches.every(match => match.confirmed)) {
-    updateNextRound();
+    localStorage.setItem("turniej_series", match.series);
+    matches = [];
+    generateMatches();
   }
+
+  window.renderMatches();
+  window.renderStats();
 }
+
 
 // ======= WALIDACJA WYNIKU MECZU =======
 // Zasady:
@@ -374,50 +389,7 @@ export function endTournament() {
   alert("Turniej został zakończony. Nie można już generować meczy ani wpisywać wyników.");
 }
 
-// ======= PRZEJŚCIE DO KOLEJNEJ RUNDY =======
-function updateNextRound() {
-  if (players.length === 2) {
-    allRounds = generateRoundRobinRounds(players);
-    currentRoundIndex = 0;
-    const roundMatches = allRounds[currentRoundIndex];
-    matches = [];
-    const numCourts = parseInt(document.getElementById("numCourts").value);
-    for (let i = 0; i < roundMatches.length; i += numCourts) {
-      const timeslot = roundMatches.slice(i, i + numCourts);
-      timeslot.forEach((match, idx) => {
-        match.court = idx + 1;
-        match.round = currentRoundIndex + 1;
-        matches.push(match);
-      });
-    }
-    window.renderMatches();
-    saveDataToFirebase();
-    console.log("Restart rundy dla dwóch graczy, runda:", currentRoundIndex + 1);
-    alert("Restart rundy: " + (currentRoundIndex + 1));
-  } else {
-    if (currentRoundIndex < allRounds.length - 1) {
-      currentRoundIndex++;
-    } else {
-      currentRoundIndex = 0;
-      allRounds = generateRoundRobinRounds(players);
-    }
-    const roundMatches = allRounds[currentRoundIndex];
-    matches = [];
-    const numCourts = parseInt(document.getElementById("numCourts").value);
-    for (let i = 0; i < roundMatches.length; i += numCourts) {
-      const timeslot = roundMatches.slice(i, i + numCourts);
-      timeslot.forEach((match, idx) => {
-        match.court = idx + 1;
-        match.round = currentRoundIndex + 1;
-        matches.push(match);
-      });
-    }
-    window.renderMatches();
-    saveDataToFirebase();
-    console.log("Przejście do kolejnej rundy, runda:", currentRoundIndex + 1);
-    alert("Przejście do kolejnej rundy: " + (currentRoundIndex + 1));
-  }
-}
+
 
 // ======= WCZYTANIE DANYCH Z FIREBASE =======
 export function loadDataFromFirebase() {
