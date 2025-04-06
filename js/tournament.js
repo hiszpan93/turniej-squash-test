@@ -184,31 +184,59 @@ export function generateMatches() {
   const lastSeries = parseInt(localStorage.getItem("turniej_series"), 10) || 0;
   const seriesNumber = lastSeries + 1;
 
-
-  const newMatches = [];
   const pairings = [];
-
   for (let i = 0; i < players.length; i++) {
     for (let j = i + 1; j < players.length; j++) {
       pairings.push([players[i], players[j]]);
     }
   }
 
+  const newMatches = [];
   let round = 1;
+  let recentPlayers = [];
+
   while (pairings.length > 0) {
-    for (let court = 1; court <= courtCount; court++) {
-      if (pairings.length === 0) break;
-      const [p1, p2] = pairings.shift();
+    const roundMatches = [];
+    const roundPlayers = new Set();
+
+    for (let k = 0; k < pairings.length; k++) {
+      const [p1, p2] = pairings[k];
+      if (
+        !roundPlayers.has(p1.name) &&
+        !roundPlayers.has(p2.name) &&
+        !recentPlayers.includes(p1.name) &&
+        !recentPlayers.includes(p2.name)
+      ) {
+        roundMatches.push({ p1, p2 });
+        roundPlayers.add(p1.name);
+        roundPlayers.add(p2.name);
+        pairings.splice(k, 1);
+        k--; // fix index after removal
+        if (roundMatches.length >= courtCount) break;
+      }
+    }
+
+    // jeśli nic nie udało się dobrać wg reguł fair – weź cokolwiek
+    if (roundMatches.length === 0) {
+      for (let k = 0; k < courtCount && k < pairings.length; k++) {
+        const [p1, p2] = pairings.shift();
+        roundMatches.push({ p1, p2 });
+      }
+    }
+
+    roundMatches.forEach((match, index) => {
       newMatches.push({
-        player1: p1.name,
-        player2: p2.name,
-        court: court,
+        player1: match.p1.name,
+        player2: match.p2.name,
+        court: index + 1,
         result: "",
         confirmed: false,
         series: seriesNumber,
         round: round
       });
-    }
+    });
+
+    recentPlayers = Array.from(roundPlayers);
     round++;
   }
 
