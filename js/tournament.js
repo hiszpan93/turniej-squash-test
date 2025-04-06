@@ -24,10 +24,15 @@ function saveLocalBackup() {
   }));
   localStorage.setItem("turniej_matches", JSON.stringify(backupMatches));
   localStorage.setItem("turniej_stats", JSON.stringify(stats));
+  localStorage.setItem("turniej_series", getCurrentSeriesNumber());
+
 }
 
 
+
 function loadLocalBackup() {
+  const savedSeries = parseInt(localStorage.getItem("turniej_series"), 10) || 0;
+
   const savedMatches = localStorage.getItem("turniej_matches");
   const savedStats = localStorage.getItem("turniej_stats");
 
@@ -38,7 +43,6 @@ function loadLocalBackup() {
     window.renderMatches();
     window.renderStats();
 
-    // Przywrócenie meczów do tabeli wyników
     matches.forEach(match => {
       if (match.confirmed) {
         window.addResultToResultsTable(match);
@@ -47,19 +51,24 @@ function loadLocalBackup() {
 
     console.log("✅ Przywrócono dane turnieju z localStorage");
 
-    // 🔁 Jeśli wszystkie mecze są potwierdzone, generujemy kolejną rundę
     const allConfirmed = matches.length > 0 && matches.every(m => m.confirmed);
     if (allConfirmed && !tournamentEnded) {
       console.log("▶️ Wszystkie mecze potwierdzone – generuję nową rundę...");
+
+      // 💥 USUWAMY stare mecze (potwierdzone) przed kolejną rundą
+      matches = [];
       generateMatches();
     }
   }
 }
 
 
+
 function clearLocalBackup() {
   localStorage.removeItem("turniej_matches");
   localStorage.removeItem("turniej_stats");
+  localStorage.removeItem("turniej_series");
+
 }
 
 // ======= FUNKCJA ZAPISUJĄCA DANE DO FIREBASE =======
@@ -154,30 +163,47 @@ function generateRoundRobinRounds(playersList) {
 
 // ======= GENEROWANIE MECZÓW (AKTUALNA RUNDA) =======
 export function generateMatches() {
-  if (tournamentEnded) {
-    alert("Turniej został zakończony. Nie można generować nowych meczy.");
+  if (selectedPlayers.length < 2) {
+    alert("Wybierz co najmniej dwóch graczy, aby wygenerować mecze.");
     return;
   }
-  if (players.length < 2) {
-    alert("Wybierz co najmniej dwóch graczy!");
-    return;
+
+  const players = [...selectedPlayers];
+  const courtCount = parseInt(document.getElementById("numCourts").value, 10) || 1;
+  const lastSeries = parseInt(localStorage.getItem("turniej_series"), 10) || 0;
+const seriesNumber = lastSeries + 1;
+
+  const newMatches = [];
+  const pairings = [];
+
+  for (let i = 0; i < players.length; i++) {
+    for (let j = i + 1; j < players.length; j++) {
+      pairings.push([players[i], players[j]]);
+    }
   }
-  allRounds = generateRoundRobinRounds(players);
-  currentRoundIndex = 0;
-  const roundMatches = allRounds[currentRoundIndex];
-  matches = [];
-  const numCourts = parseInt(document.getElementById("numCourts").value);
-  for (let i = 0; i < roundMatches.length; i += numCourts) {
-    const timeslot = roundMatches.slice(i, i + numCourts);
-    timeslot.forEach((match, idx) => {
-      match.court = idx + 1;
-      match.round = currentRoundIndex + 1;
-      matches.push(match);
-    });
+
+  let round = 1;
+  while (pairings.length > 0) {
+    for (let court = 1; court <= courtCount; court++) {
+      if (pairings.length === 0) break;
+      const [p1, p2] = pairings.shift();
+      newMatches.push({
+        player1: p1.name,
+        player2: p2.name,
+        court: court,
+        result: "",
+        confirmed: false,
+        series: seriesNumber,
+        round: round
+      });
+    }
+    round++;
   }
+
+  matches = newMatches;
   window.renderMatches();
-  saveDataToFirebase();
 }
+
 
 // ======= POTWIERDZANIE MECZU =======
 export function confirmMatch(index) {
@@ -382,5 +408,10 @@ export function loadDataFromFirebase() {
       console.error("Błąd odczytu danych z Firebase: ", error);
     });
     
+}
+function getCurrentSeriesNumber() {
+  if (matches.length === 0) return 0;
+  const allConfirmed = matches.every(m => m.confirmed);
+  return allConfirmed ? matches[matches.length - 1].series || 0 : matches[0].series || 1;
 }
 

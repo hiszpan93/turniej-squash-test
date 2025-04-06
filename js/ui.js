@@ -50,7 +50,8 @@ function renderMatches() {
 
     tableHTML += `
       <tr class="${match.confirmed ? 'confirmed' : ''}">
-        <td>${index + 1} (runda ${match.round})</td>
+        <td>${index + 1} (seria ${match.series || 1}, runda ${match.round || 1})</td>
+
         <td>${match.player1}</td>
         <td>${match.player2}</td>
         <td>${match.court}</td>
