@@ -1,7 +1,7 @@
-import { allPlayers, matches, stats, yearlyStats, monthlyStats, generalStats, tournamentEnded,
+import { allPlayers, matches, stats, generalStats, tournamentEnded,
          addPlayer, confirmPlayers, generateMatches, confirmMatch,
-         resetData, resetGeneralStats, endTournament,
-         loadDataFromFirebase, checkMonthlyReset, checkYearlyReset,
+        endTournament,
+         loadDataFromFirebase,  
          resetEntireDatabase } from './tournament.js';
 
 
