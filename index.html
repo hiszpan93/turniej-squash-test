@@ -33,7 +33,6 @@
     .confirmed {
       background-color: #d4edda !important;
     }
-    
     #endTournamentBtn {
       margin-top: 15px;
     }
@@ -43,15 +42,34 @@
       margin: 0;
     }
     input[type=number] {
-  appearance: none;
-  -moz-appearance: textfield;
-}
+      appearance: none;
+      -moz-appearance: textfield;
+    }
 
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    @media (max-width: 768px) {
+      th, td {
+        font-size: 14px;
+        padding: 6px;
+      }
+      .form-control-sm {
+        font-size: 14px;
+        padding: 4px;
+      }
+      .btn {
+        width: 100%;
+      }
+      #setupPanel input, #setupPanel button {
+        font-size: 16px;
+      }
+    }
   </style>
 </head>
 <body>
 
-<!-- 🔐 Formularz logowania -->
 <div id="authContainer" class="container">
   <h3>Logowanie do turnieju</h3>
   <input type="email" id="emailInput" class="form-control mb-2" placeholder="E-mail" />
@@ -60,41 +78,33 @@
   <button id="registerBtn" class="btn btn-secondary">Zarejestruj się</button>
 </div>
 
-<!-- 👀 Główny widok aplikacji -->
 <div id="mainContainer" class="container" style="display: none;">
   <div id="setupPanel">
-  <!-- Sekcja dodawania graczy -->
-  <div id="playerControls" class="mb-3">
-    <div class="input-group">
-      <input type="text" id="newPlayerName" class="form-control" placeholder="Nazwa gracza" />
-      <button id="addPlayerBtn" class="btn btn-primary">Dodaj gracza</button>
+    <div id="playerControls" class="mb-3">
+      <div class="input-group">
+        <input type="text" id="newPlayerName" class="form-control" placeholder="Nazwa gracza" />
+        <button id="addPlayerBtn" class="btn btn-primary">Dodaj gracza</button>
+      </div>
+    </div>
+
+    <div id="playersList" class="mb-3">
+      <h5>Dostępni gracze:</h5>
+      <div id="playersForm"></div>
+      <button id="confirmPlayersBtn" class="btn btn-secondary mt-2">Wybierz graczy</button>
+    </div>
+
+    <div class="mb-3">
+      <label for="numCourts" class="form-label">Liczba dostępnych kortów:</label>
+      <input type="number" id="numCourts" class="form-control" value="1" min="1" style="width: 100px;" />
+    </div>
+
+    <div class="d-flex flex-column gap-2">
+      <button id="generateMatchesBtn" class="btn btn-success">Wygeneruj mecze</button>
     </div>
   </div>
 
-  <!-- Lista dostępnych graczy z checkboxami -->
-  <div id="playersList" class="mb-3">
-    <h5>Dostępni gracze:</h5>
-    <div id="playersForm"></div>
-    <button id="confirmPlayersBtn" class="btn btn-secondary mt-2">Wybierz graczy</button>
-  </div>
-
-  <!-- Ustawienie liczby dostępnych kortów -->
-  <div class="mb-3">
-    <label for="numCourts" class="form-label">Liczba dostępnych kortów:</label>
-    <input type="number" id="numCourts" class="form-control" value="1" min="1" style="width: 100px;" />
-  </div>
-
-  <!-- Generowanie meczów -->
-  <div class="d-flex mb-3 gap-2">
-    <button id="generateMatchesBtn" class="btn btn-success">Wygeneruj mecze</button>
-  </div>
-  </div> <!-- ⬅️ zamyka setupPanel -->
-  
-  <!-- 🔴 PRZENIESIONY przycisk poza setupPanel -->
   <button id="endTournamentBtn" class="btn btn-danger mb-4">Koniec turnieju</button>
-  
-  </div>
-  
+
   <div class="table-responsive mb-4">
     <table id="matchesTable" class="table table-bordered"></table>
   </div>
@@ -133,8 +143,6 @@
     </table>
   </div>
 
-  
-
   <h5>Statystyki ogólne</h5>
   <div class="table-responsive mb-4">
     <table id="generalStatsTable" class="table table-bordered">
@@ -154,15 +162,11 @@
       <tbody></tbody>
     </table>
   </div>
+</div>
 
-  
-
-<!-- 📦 Skrypty -->
 <script type="module">
   import "./js/firebase.js";
-
   window.firebaseAuthReady(() => {
-    // dopiero po zalogowaniu ładujemy pozostałe moduły
     import("./js/tournament.js").then(() => {
       import("./js/ui.js");
     });

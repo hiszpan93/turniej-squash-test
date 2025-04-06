@@ -391,7 +391,7 @@ savedPlayers.forEach(name => {
 
 localStorage.removeItem("turniej_players"); // 🧹 sprzątamy
 localStorage.removeItem("turniej_in_progress");
-document.getElementById("setupPanel").style.display = "block"; // ← przywróć widok, jeśli chcesz od razu
+
 
   players.forEach(player => {
     if (!generalStats[player.name]) {

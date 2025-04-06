@@ -40,7 +40,6 @@ function renderMatches() {
 
   matches.forEach((match, index) => {
     let resultInput = "";
-
     let player1Style = "";
     let player2Style = "";
 
@@ -57,13 +56,13 @@ function renderMatches() {
     } else {
       resultInput = `
         <div class="d-flex flex-column gap-1">
-          <div>
-            <small class="text-muted">${match.player1}:</small>
-            <input type="number" min="0" class="form-control" id="score1-${index}" style="max-width: 100px;" />
+          <div class="d-flex justify-content-between align-items-center gap-2">
+            <span class="text-muted small w-50 text-end">${match.player1}:</span>
+            <input type="number" min="0" class="form-control form-control-sm" id="score1-${index}" style="max-width: 80px;" />
           </div>
-          <div>
-            <small class="text-muted">${match.player2}:</small>
-            <input type="number" min="0" class="form-control" id="score2-${index}" style="max-width: 100px;" />
+          <div class="d-flex justify-content-between align-items-center gap-2">
+            <span class="text-muted small w-50 text-end">${match.player2}:</span>
+            <input type="number" min="0" class="form-control form-control-sm" id="score2-${index}" style="max-width: 80px;" />
           </div>
         </div>`;
     }
@@ -74,7 +73,7 @@ function renderMatches() {
         <td${player1Style}>${match.player1}</td>
         <td${player2Style}>${match.player2}</td>
         <td>${match.court}</td>
-        <td>${resultInput}</td>
+        <td class="p-2">${resultInput}</td>
         <td>
           <button id="confirmButton-${index}" class="btn btn-sm ${match.confirmed ? "btn-success" : "btn-outline-success"}" ${tournamentEnded || match.confirmed ? "disabled" : ""}>Potwierdź</button>
         </td>
@@ -93,6 +92,7 @@ function renderMatches() {
     }
   });
 }
+
 
 
 // Autofocus po pierwszym polu
