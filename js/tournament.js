@@ -111,26 +111,37 @@ export function addPlayer() {
 // ======= POTWIERDZENIE WYBORU GRACZY =======
 export function confirmPlayers() {
   if (tournamentEnded) return;
+
   const checkboxes = document.querySelectorAll(".playerCheckbox");
-  players = [];
+
+  // 🔁 RESETUJ i OZNACZAJ wybranych graczy w allPlayers
+  allPlayers.forEach(p => p.selected = false);
   checkboxes.forEach(chk => {
     if (chk.checked) {
       const playerId = parseInt(chk.value);
       const player = allPlayers.find(p => p.id === playerId);
       if (player) {
-        players.push(player);
-        stats[player.name] = stats[player.name] || { wins: 0, losses: 0, pointsScored: 0, pointsConceded: 0 };
-        generalStats[player.name] = generalStats[player.name] || { wins: 0, losses: 0, pointsScored: 0, pointsConceded: 0, obecnosc: 0 };
+        player.selected = true;
       }
     }
   });
+
+  const players = allPlayers.filter(p => p.selected);
   if (players.length < 2) {
     alert("Wybierz co najmniej dwóch graczy!");
     return;
   }
+
+  players.forEach(player => {
+    stats[player.name] = stats[player.name] || { wins: 0, losses: 0, pointsScored: 0, pointsConceded: 0 };
+    generalStats[player.name] = generalStats[player.name] || { wins: 0, losses: 0, pointsScored: 0, pointsConceded: 0, obecnosc: 0 };
+  });
+
   alert("Gracze zostali wybrani. Możesz teraz wygenerować mecze.");
   saveDataToFirebase();
 }
+
+
 
 // ======= GENEROWANIE RUND METODĄ ROUND-ROBIN =======
 function generateRoundRobinRounds(playersList) {
