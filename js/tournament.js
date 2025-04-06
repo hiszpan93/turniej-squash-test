@@ -247,6 +247,8 @@ export function generateMatches() {
 
   matches = newMatches;
   window.renderMatches();
+  localStorage.setItem("turniej_in_progress", "true");
+
   document.getElementById("setupPanel").style.display = "none";
 
 }
@@ -388,6 +390,8 @@ savedPlayers.forEach(name => {
 });
 
 localStorage.removeItem("turniej_players"); // 🧹 sprzątamy
+localStorage.removeItem("turniej_in_progress");
+document.getElementById("setupPanel").style.display = "block"; // ← przywróć widok, jeśli chcesz od razu
 
   players.forEach(player => {
     if (!generalStats[player.name]) {
@@ -408,6 +412,7 @@ localStorage.removeItem("turniej_players"); // 🧹 sprzątamy
   endTournamentBtn.classList.remove("btn-danger");
   endTournamentBtn.classList.add("btn-secondary");
   alert("Turniej został zakończony. Nie można już generować meczy ani wpisywać wyników.");
+  
 }
 
 
@@ -425,14 +430,18 @@ export function loadDataFromFirebase() {
           nextPlayerId = Math.max(...allPlayers.map(p => p.id)) + 1;
         }
         window.renderPlayersList();
-       // window.renderMatches();
-       // window.renderStats();
-      
         window.renderGeneralStats();
+
         if (!tournamentEnded) {
-          loadLocalBackup(); // 🔁 przywróć dane turnieju jeśli nie zakończony
+          loadLocalBackup(); // 🔁 przywróć dane jeśli turniej trwa
         }
-        
+
+        // ✅ Ukryj setupPanel jeśli turniej trwa
+        if (localStorage.getItem("turniej_in_progress") === "true") {
+          const panel = document.getElementById("setupPanel");
+          if (panel) panel.style.display = "none";
+        }
+
       } else {
         console.log("Brak dokumentu 'stats' w kolekcji 'turniej'");
       }
@@ -440,8 +449,8 @@ export function loadDataFromFirebase() {
     .catch(error => {
       console.error("Błąd odczytu danych z Firebase: ", error);
     });
-    
 }
+
 function getCurrentSeriesNumber() {
   if (matches.length === 0) return 0;
   const allConfirmed = matches.every(m => m.confirmed);
