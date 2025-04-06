@@ -181,6 +181,12 @@ const [score1, score2] = input.value.trim().split(":").map(Number);
   const result = score1 + ":" + score2;
   matches[index].result = result;
   matches[index].confirmed = true;
+  matches.forEach((m, i) => {
+    if (!m.confirmed) {
+      m.result = ""; // lub: delete m.result;
+    }
+  });
+  
   const btn = document.getElementById(`confirmButton-${index}`);
   btn.classList.remove("btn-outline-success");
   btn.classList.add("btn-success");
