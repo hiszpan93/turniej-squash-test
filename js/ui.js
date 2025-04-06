@@ -56,16 +56,11 @@ function renderMatches() {
     } else {
       resultInput = `
         <div class="d-flex flex-column gap-1">
-          <div class="d-flex justify-content-between align-items-center gap-2">
-            <span class="text-muted small w-50 text-end">${match.player1}:</span>
-            <input type="number" min="0" class="form-control form-control-sm" id="score1-${index}" style="max-width: 80px;" />
-          </div>
-          <div class="d-flex justify-content-between align-items-center gap-2">
-            <span class="text-muted small w-50 text-end">${match.player2}:</span>
-            <input type="number" min="0" class="form-control form-control-sm" id="score2-${index}" style="max-width: 80px;" />
-          </div>
+          <input type="number" min="0" class="form-control form-control-sm text-center" id="score1-${index}" placeholder="${match.player1}" style="max-width: 100px; margin: 0 auto;" />
+          <input type="number" min="0" class="form-control form-control-sm text-center" id="score2-${index}" placeholder="${match.player2}" style="max-width: 100px; margin: 0 auto;" />
         </div>`;
     }
+    
 
     tableHTML += `
       <tr class="${match.confirmed ? 'confirmed' : ''}">
