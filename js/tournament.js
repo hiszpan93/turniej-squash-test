@@ -250,6 +250,9 @@ export function generateMatches() {
   localStorage.setItem("turniej_in_progress", "true");
 
   document.getElementById("setupPanel").style.display = "none";
+document.getElementById("playersList").style.display = "none";
+document.getElementById("numCourts").parentElement.style.display = "none";
+document.getElementById("generateMatchesBtn").style.display = "none";
 
 }
 
