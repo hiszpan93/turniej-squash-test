@@ -208,6 +208,36 @@ function renderGeneralStats() {
     `;
   });
 }
+function renderArchiveView() {
+  const container = document.getElementById("archiveContainer");
+  if (!container) return;
+
+  const archive = JSON.parse(localStorage.getItem("turniej_archiwum")) || [];
+  if (archive.length === 0) {
+    container.innerHTML = "<p>Brak zapisanych turniejów.</p>";
+    return;
+  }
+
+  let html = "";
+  archive.forEach((turniej, i) => {
+    html += `<div class="mb-3 border rounded p-2 bg-light">
+      <strong>Turniej #${i + 1} - ${new Date(turniej.data).toLocaleString()}</strong><br/>
+      <em>Gracze:</em> ${turniej.gracze.join(", ")}<br/>
+      ${turniej.serie.map(seria => `
+        <div class="mt-2">
+          <strong>${seria.numer}</strong>
+          <ul>
+            ${seria.mecze.map(m => `<li>${m.gracz1} vs ${m.gracz2}, kort ${m.kort}, runda ${m.runda}, wynik: ${m.wynik}</li>`).join("")}
+          </ul>
+        </div>
+      `).join("")}
+    </div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+window.renderArchiveView = renderArchiveView;
 
 // Ustawienie funkcji renderujących w globalnym obiekcie `window` (dla dostępu z tournament.js)
 window.renderPlayersList = renderPlayersList;
@@ -215,7 +245,7 @@ window.renderMatches = renderMatches;
 window.addResultToResultsTable = addResultToResultsTable;
 window.renderStats = renderStats;
 window.renderGeneralStats = renderGeneralStats;
-
+window.renderArchiveView = renderArchiveView;
 // Podpięcie zdarzeń interfejsu do przycisków
 document.getElementById("addPlayerBtn").addEventListener('click', addPlayer);
 document.getElementById("confirmPlayersBtn").addEventListener('click', confirmPlayers);

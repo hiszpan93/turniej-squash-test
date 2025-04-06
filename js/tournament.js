@@ -413,6 +413,51 @@ localStorage.removeItem("turniej_in_progress");
   endTournamentBtn.classList.add("btn-secondary");
   alert("Turniej został zakończony. Nie można już generować meczy ani wpisywać wyników.");
   
+    // 🔽 1. Zbuduj strukturę archiwum turnieju
+    const archive = {
+      data: new Date().toISOString(),
+      gracze: players.map(p => p.name),
+      serie: [],
+    };
+  
+    const serieMap = new Map();
+    matches.forEach(match => {
+      const key = `seria_${match.series}`;
+      if (!serieMap.has(key)) serieMap.set(key, []);
+      serieMap.get(key).push(match);
+    });
+  
+    for (const [seriaKey, serieMatches] of serieMap.entries()) {
+      archive.serie = archive.serie || [];
+      archive.serie.push({
+        numer: seriaKey,
+        mecze: serieMatches.map(m => ({
+          gracz1: m.player1,
+          gracz2: m.player2,
+          kort: m.court,
+          runda: m.round,
+          wynik: m.result,
+          timestamp: m.timestamp || new Date().toISOString()  // ⏱️ dodane zabezpieczenie
+        }))
+      });
+    }
+  
+    // 🔽 2. Dodaj do localStorage do archiwum
+    const fullArchive = JSON.parse(localStorage.getItem("turniej_archiwum")) || [];
+    fullArchive.push(archive);
+    localStorage.setItem("turniej_archiwum", JSON.stringify(fullArchive));
+  
+    // 🔽 3. (tylko do wersji .apk - na razie zakomentowane)
+    /*
+    const fileName = `turniej_${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+    const fileContent = JSON.stringify(archive, null, 2);
+    const filePath = `/storage/emulated/0/Android/data/turniej_squasha/files/${fileName}`;
+    // Użyj biblioteki do zapisu pliku w Cordova/Capacitor np. Filesystem.writeFile()
+    */
+  
+    // 🔽 4. Renderuj widok archiwum (z `index.html`)
+    if (window.renderArchiveView) window.renderArchiveView();
+  
 }
 
 
