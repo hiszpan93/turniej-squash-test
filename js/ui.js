@@ -224,58 +224,61 @@ function renderGeneralStats() {
 }
 function renderArchiveView() {
   const container = document.getElementById("tournamentArchive");
-  if (!container) return;
+  const archiveData = JSON.parse(localStorage.getItem("turniej_archiwum")) || [];
 
-  container.innerHTML = "<p><em>⏳ Wczytywanie archiwum...</em></p>";
+  if (archiveData.length === 0) {
+    container.innerHTML = "<p>Brak zapisanych turniejów.</p>";
+    return;
+  }
 
-  setTimeout(() => {
-    const archive = JSON.parse(localStorage.getItem("turniej_archiwum")) || [];
-    if (archive.length === 0) {
-      container.innerHTML = "<p>Brak zapisanych turniejów.</p>";
-      return;
-    }
+  let html = "";
 
-    let html = "";
-    archive.forEach((turniej, i) => {
-      html += `
-      <div class="mb-3 border rounded p-2 bg-light">
-        <strong>Turniej #${i + 1} – ${new Date(turniej.data).toLocaleString()}</strong><br/>
-        <em>Gracze:</em> ${turniej.gracze.join(", ")}
-        ${turniej.serie.map(seria => `
-          <details class="mt-2">
-            <summary><strong>${seria.numer}</strong></summary>
-            <div class="table-responsive mt-2">
-              <table class="table table-sm table-bordered">
-                <thead>
-                  <tr>
-                    <th>Gracz 1</th>
-                    <th>Gracz 2</th>
-                    <th>Kort</th>
-                    <th>Runda</th>
-                    <th>Wynik</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${seria.mecze.map(m => `
+  archiveData.reverse().forEach((turniej, idx) => {
+    html += `
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <strong>📅 Turniej ${new Date(turniej.data).toLocaleString()}</strong>
+          <span class="badge bg-secondary">${turniej.gracze.length} graczy</span>
+        </div>
+        <div class="card-body">
+          <p><strong>Gracze:</strong> ${turniej.gracze.join(", ")}</p>
+          <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+            <table class="table table-sm table-bordered">
+              <thead>
+                <tr>
+                  <th>Seria</th>
+                  <th>Runda</th>
+                  <th>Kort</th>
+                  <th>Gracz 1</th>
+                  <th>Gracz 2</th>
+                  <th>Wynik</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${(turniej.serie || []).flatMap((seria, sIdx) => 
+                  seria.mecze.map(mecz => `
                     <tr>
-                      <td>${m.gracz1}</td>
-                      <td>${m.gracz2}</td>
-                      <td>${m.kort}</td>
-                      <td>${m.runda}</td>
-                      <td>${m.wynik}</td>
-                    </tr>`).join("")}
-                </tbody>
-              </table>
-            </div>
-          </details>
-        `).join("")}
-      </div>`;
-    });
+                      <td>${seria.numer.replace("seria_", "")}</td>
+                      <td>${mecz.runda}</td>
+                      <td>${mecz.kort}</td>
+                      <td>${mecz.gracz1}</td>
+                      <td>${mecz.gracz2}</td>
+                      <td>${mecz.wynik || "-"}</td>
+                    </tr>
+                  `)
+                ).join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+  });
 
-    container.innerHTML = html;
-    fadeInElement(container);
+  container.innerHTML = html;
+  fadeInElement(container);
 
-  }, 200);
+   
 }
 
 
