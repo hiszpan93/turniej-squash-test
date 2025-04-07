@@ -55,16 +55,19 @@ function renderMatches() {
       resultInput = `<span>${match.result}</span>`;
     } else {
       resultInput = `
-        <div class="d-flex flex-column gap-1">
-          
-<label style="font-size: 12px; color: #666;">${match.player1}</label>
-<input type="number" min="0" class="form-control form-control-sm text-center" id="score1-${index}" style="max-width: 100px; margin: 0 auto;" />
-<label style="font-size: 12px; color: #666;">${match.player2}</label>
-<input type="number" min="0" class="form-control form-control-sm text-center" id="score2-${index}" style="max-width: 100px; margin: 0 auto;" />
-
-        </div>`;
+<div class="card p-2 mb-2">
+  <div class="row">
+    <div class="col-6 text-center">
+      <label style="font-size: 12px; color: #666;">${match.player1}</label>
+      <input type="number" min="0" class="form-control form-control-sm text-center" id="score1-${index}" />
+    </div>
+    <div class="col-6 text-center">
+      <label style="font-size: 12px; color: #666;">${match.player2}</label>
+      <input type="number" min="0" class="form-control form-control-sm text-center" id="score2-${index}" />
+    </div>
+  </div>
+</div>`;
     }
-    
 
     tableHTML += `
       <tr class="${match.confirmed ? 'confirmed' : ''}">
@@ -83,7 +86,6 @@ function renderMatches() {
   tableHTML += "</tbody>";
   matchesTable.innerHTML = tableHTML;
 
-  // Eventy
   matches.forEach((_, index) => {
     const btn = document.getElementById(`confirmButton-${index}`);
     if (btn) {
@@ -91,6 +93,7 @@ function renderMatches() {
     }
   });
 }
+
 
 
 
@@ -216,30 +219,35 @@ function renderArchiveView() {
   const container = document.getElementById("tournamentArchive");
   if (!container) return;
 
-  const archive = JSON.parse(localStorage.getItem("turniej_archiwum")) || [];
-  if (archive.length === 0) {
-    container.innerHTML = "<p>Brak zapisanych turniejów.</p>";
-    return;
-  }
+  container.innerHTML = "<p><em>⏳ Wczytywanie archiwum...</em></p>";
 
-  let html = "";
-  archive.forEach((turniej, i) => {
-    html += `<div class="mb-3 border rounded p-2 bg-light">
-      <strong>Turniej #${i + 1} - ${new Date(turniej.data).toLocaleString()}</strong><br/>
-      <em>Gracze:</em> ${turniej.gracze.join(", ")}<br/>
-      ${turniej.serie.map(seria => `
-        <div class="mt-2">
-          <strong>${seria.numer}</strong>
-          <ul>
-            ${seria.mecze.map(m => `<li>${m.gracz1} vs ${m.gracz2}, kort ${m.kort}, runda ${m.runda}, wynik: ${m.wynik}</li>`).join("")}
-          </ul>
-        </div>
-      `).join("")}
-    </div>`;
-  });
+  setTimeout(() => {
+    const archive = JSON.parse(localStorage.getItem("turniej_archiwum")) || [];
+    if (archive.length === 0) {
+      container.innerHTML = "<p>Brak zapisanych turniejów.</p>";
+      return;
+    }
 
-  container.innerHTML = html;
+    let html = "";
+    archive.forEach((turniej, i) => {
+      html += `<div class="mb-3 border rounded p-2 bg-light">
+        <strong>Turniej #${i + 1} - ${new Date(turniej.data).toLocaleString()}</strong><br/>
+        <em>Gracze:</em> ${turniej.gracze.join(", ")}<br/>
+        ${turniej.serie.map(seria => `
+          <details class="mt-2">
+            <summary><strong>${seria.numer}</strong></summary>
+            <ul>
+              ${seria.mecze.map(m => `<li>${m.gracz1} vs ${m.gracz2}, kort ${m.kort}, runda ${m.runda}, wynik: ${m.wynik}</li>`).join("")}
+            </ul>
+          </details>
+        `).join("")}
+      </div>`;
+    });
+
+    container.innerHTML = html;
+  }, 200); // symulacja "ładowania"
 }
+
 
 window.renderArchiveView = renderArchiveView;
 
