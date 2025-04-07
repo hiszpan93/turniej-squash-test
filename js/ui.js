@@ -293,7 +293,9 @@ window.renderArchiveView = renderArchiveView;
 document.getElementById("addPlayerBtn").addEventListener('click', addPlayer);
 document.getElementById("confirmPlayersBtn").addEventListener('click', confirmPlayers);
 document.getElementById("generateMatchesBtn").addEventListener('click', generateMatches);
-document.getElementById("endTournamentBtn").addEventListener('click', endTournament);
+const endBtn = document.getElementById("endTournamentBtn");
+if (endBtn) endBtn.addEventListener("click", endTournament);
+
 
 
 

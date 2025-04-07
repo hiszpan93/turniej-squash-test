@@ -131,7 +131,7 @@ hideAllMainElements();
 };function hideAllMainElements() {
   [
     "mainContainer", "viewTabs", "archiveView", "playersList",
-    "setupPanel", "generateMatchesBtn", "endTournamentBtn",
+    "setupPanel", "generateMatchesBtn", 
     "resetTournamentBtn"
   ].forEach(id => {
     const el = document.getElementById(id);
