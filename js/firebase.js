@@ -62,17 +62,15 @@ window.firebaseAuthReady = (callback) => {
 
   onAuthStateChanged(auth, async user => {
     if (user) {
-      // 👇 Pokaż zakładki i główne widoki
       document.getElementById("authContainer").style.display = "none";
       document.getElementById("viewTabs").style.display = "flex";
       document.getElementById("tabs").style.display = "block";
       document.getElementById("mainContainer").style.display = "block";
-  
-      // 🔽 Pobierz nick i pokaż info
+
       const docRef = doc(window.db, "users", user.uid);
       const docSnap = await getDoc(docRef);
       const nick = docSnap.exists() ? docSnap.data().nick : "(nieznany)";
-  
+
       const infoBox = document.createElement("div");
       infoBox.id = "userInfoBox";
       infoBox.className = "alert alert-info mt-3";
@@ -81,7 +79,7 @@ window.firebaseAuthReady = (callback) => {
         <button id="logoutBtn" class="btn btn-sm btn-danger float-end">Wyloguj</button>
       `;
       document.body.prepend(infoBox);
-  
+
       document.getElementById("logoutBtn").onclick = () => {
         signOut(auth).then(() => {
           const infoBox = document.getElementById("userInfoBox");
@@ -94,15 +92,24 @@ window.firebaseAuthReady = (callback) => {
           document.getElementById("playersList").style.display = "none";
           document.getElementById("setupPanel").style.display = "none";
           document.getElementById("generateMatchesBtn").style.display = "none";
+          document.getElementById("endTournamentBtn").style.display = "none";
+          const resetBtn = document.getElementById("resetTournamentBtn");
+          if (resetBtn) resetBtn.style.display = "none";
+          document.getElementById("sectionResultsHeader").style.display = "none";
+          document.getElementById("sectionStatsHeader").style.display = "none";
+          document.getElementById("sectionGeneralHeader").style.display = "none";
+          document.getElementById("matchesTable").closest(".table-responsive").style.display = "none";
+          document.getElementById("resultsTable").closest(".table-responsive").style.display = "none";
+          document.getElementById("statsTable").closest(".table-responsive").style.display = "none";
+          document.getElementById("generalStatsTable").closest(".table-responsive").style.display = "none";
           const nc = document.getElementById("numCourts")?.parentElement;
           if (nc) nc.style.display = "none";
           localStorage.clear();
         });
       };
-  
-      if (callback) callback(); // 👈 Kluczowy moment – odpal pozostałą logikę
+
+      if (callback) callback();
     } else {
-      // 👇 Użytkownik NIEZALOGOWANY – ukryj wszystko
       document.getElementById("authContainer").style.display = "block";
       document.getElementById("mainContainer").style.display = "none";
       document.getElementById("viewTabs").style.display = "none";
@@ -112,14 +119,17 @@ window.firebaseAuthReady = (callback) => {
       document.getElementById("setupPanel").style.display = "none";
       document.getElementById("generateMatchesBtn").style.display = "none";
       document.getElementById("endTournamentBtn").style.display = "none";
-document.getElementById("matchesTable").closest(".table-responsive").style.display = "none";
-document.getElementById("resultsTable").closest(".table-responsive").style.display = "none";
-document.getElementById("statsTable").closest(".table-responsive").style.display = "none";
-document.getElementById("generalStatsTable").closest(".table-responsive").style.display = "none";
-
+      const resetBtn = document.getElementById("resetTournamentBtn");
+      if (resetBtn) resetBtn.style.display = "none";
+      document.getElementById("sectionResultsHeader").style.display = "none";
+      document.getElementById("sectionStatsHeader").style.display = "none";
+      document.getElementById("sectionGeneralHeader").style.display = "none";
+      document.getElementById("matchesTable").closest(".table-responsive").style.display = "none";
+      document.getElementById("resultsTable").closest(".table-responsive").style.display = "none";
+      document.getElementById("statsTable").closest(".table-responsive").style.display = "none";
+      document.getElementById("generalStatsTable").closest(".table-responsive").style.display = "none";
       const nc = document.getElementById("numCourts")?.parentElement;
       if (nc) nc.style.display = "none";
     }
   });
-  
 };

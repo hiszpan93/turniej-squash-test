@@ -281,37 +281,53 @@ export function confirmMatch(index) {
   const result = `${score1}:${score2}`;
   const winner = score1 > score2 ? match.player1 : match.player2;
 
-  const confirmText = `Wynik meczu:\n${match.player1}: ${score1} pkt\n${match.player2}: ${score2} pkt\n\nZwycięzca: ${winner}\n\nCzy na pewno zatwierdzić ten wynik?`;
-  if (!confirm(confirmText)) return;
+  // ✅ Wstaw dane do modala
+  const modalContent = document.getElementById("matchConfirmContent");
+  modalContent.innerHTML = `
+    <p><strong>${match.player1}:</strong> ${score1} pkt</p>
+    <p><strong>${match.player2}:</strong> ${score2} pkt</p>
+    <hr/>
+    <p>✅ <strong>Zwycięzca:</strong> ${winner}</p>
+  `;
 
-  match.result = result;
-  match.confirmed = true;
+  // ✅ Pokaż modal
+  const modal = new bootstrap.Modal(document.getElementById("matchConfirmModal"));
+  modal.show();
 
-  const btn = document.getElementById(`confirmButton-${index}`);
-  btn.classList.remove("btn-outline-success");
-  btn.classList.add("btn-success");
+  // ✅ Obsługa kliknięcia „Potwierdź” w modalu
+  document.getElementById("confirmMatchBtnFinal").onclick = () => {
+    modal.hide();
 
-  const matchesTable = document.getElementById("matchesTable");
-  const rows = matchesTable.getElementsByTagName("tr");
-  rows[index + 1].classList.add("confirmed");
+    match.result = result;
+    match.confirmed = true;
 
-  window.addResultToResultsTable(match);
-  updateStats(match);
-  saveDataToFirebase();
-  saveLocalBackup();
+    const btn = document.getElementById(`confirmButton-${index}`);
+    btn.classList.remove("btn-outline-success");
+    btn.classList.add("btn-success");
 
-  if (matches.every(match => match.confirmed)) {
-    localStorage.setItem("turniej_series", match.series);
-    matches = [];
-    generateMatches();
-  }
+    const matchesTable = document.getElementById("matchesTable");
+    const rows = matchesTable.getElementsByTagName("tr");
+    rows[index + 1].classList.add("confirmed");
 
-  window.renderMatches();
-  window.renderStats();
-  input1.style.backgroundColor = "";
-input2.style.backgroundColor = "";
+    window.addResultToResultsTable(match);
+    updateStats(match);
+    saveDataToFirebase();
+    saveLocalBackup();
 
+    if (matches.every(match => match.confirmed)) {
+      localStorage.setItem("turniej_series", match.series);
+      matches = [];
+      generateMatches();
+    }
+
+    window.renderMatches();
+    window.renderStats();
+
+    input1.style.backgroundColor = "";
+    input2.style.backgroundColor = "";
+  };
 }
+
 
 
 // ======= WALIDACJA WYNIKU MECZU =======

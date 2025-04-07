@@ -266,6 +266,8 @@ function renderArchiveView() {
     });
 
     container.innerHTML = html;
+    fadeInElement(container);
+
   }, 200);
 }
 
