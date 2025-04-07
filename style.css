@@ -34,10 +34,7 @@
       -webkit-appearance: none;
       margin: 0;
     }
-    input[type=number] {
-      appearance: none;
-      -moz-appearance: textfield;
-    }
+    
 
     .table-responsive {
       overflow-x: auto;

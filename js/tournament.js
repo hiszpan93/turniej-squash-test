@@ -443,31 +443,28 @@ localStorage.removeItem("turniej_in_progress");
       serie: [],
     };
     
-  
     const serieMap = new Map();
     const savedMatches = JSON.parse(localStorage.getItem("turniej_matches")) || [];
-savedMatches.forEach(match => {
-
+    
+    savedMatches.forEach(match => {
       const key = `seria_${match.series}`;
       if (!serieMap.has(key)) serieMap.set(key, []);
       serieMap.get(key).push(match);
     });
-  
+    
     for (const [seriaKey, serieMatches] of serieMap.entries()) {
-      archive.serie = archive.serie || [];
       archive.serie.push({
         numer: seriaKey,
         mecze: serieMatches.map(m => ({
           gracz1: m.player1,
           gracz2: m.player2,
-          kort: m.court,
           runda: m.round,
-          wynik: m.result || "-",
-
-          timestamp: m.timestamp || new Date().toISOString()  // ⏱️ dodane zabezpieczenie
+          wynik: m.result && m.result.trim() !== "" ? m.result : "-", // ✅ gwarantuje wynik
+          timestamp: m.timestamp || new Date().toISOString()
         }))
       });
     }
+    
   
     // 🔽 2. Dodaj do localStorage do archiwum
     const fullArchive = JSON.parse(localStorage.getItem("turniej_archiwum")) || [];
