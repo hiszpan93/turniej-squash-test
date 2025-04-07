@@ -116,3 +116,4 @@ window.firebaseAuthReady = (callback) => {
     }
   });
   
+};
