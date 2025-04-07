@@ -66,7 +66,37 @@ window.firebaseAuthReady = (callback) => {
       document.getElementById("viewTabs").style.display = "flex";
       
       document.getElementById("mainContainer").style.display = "block";
+      
 
+      // Obsługa zakładek
+      document.getElementById("showTournamentBtn").onclick = () => {
+        const main = document.getElementById("mainContainer");
+        main.style.display = "block";
+        fadeInElement(main);
+      
+        const archive = document.getElementById("archiveView");
+        archive.style.display = "none";
+      
+        document.getElementById("showTournamentBtn").classList.add("btn-primary");
+        document.getElementById("showTournamentBtn").classList.remove("btn-outline-primary");
+        document.getElementById("showArchiveBtn").classList.remove("btn-primary");
+        document.getElementById("showArchiveBtn").classList.add("btn-outline-secondary");
+      };
+      
+      document.getElementById("showArchiveBtn").onclick = () => {
+        document.getElementById("mainContainer").style.display = "none";
+        const archive = document.getElementById("archiveView");
+        archive.style.display = "block";
+        fadeInElement(archive);
+      
+        document.getElementById("showArchiveBtn").classList.add("btn-primary");
+        document.getElementById("showArchiveBtn").classList.remove("btn-outline-secondary");
+        document.getElementById("showTournamentBtn").classList.remove("btn-primary");
+        document.getElementById("showTournamentBtn").classList.add("btn-outline-primary");
+      
+        if (window.renderArchiveView) window.renderArchiveView();
+      };
+      
       const docRef = doc(window.db, "users", user.uid);
       const docSnap = await getDoc(docRef);
       const nick = docSnap.exists() ? docSnap.data().nick : "(nieznany)";

@@ -10,15 +10,7 @@
 </head>
 <body>
 
-<script>
-  // Fade in efekt dla widoków po przełączeniu zakładek
-  function fadeInElement(el) {
-    if (!el) return;
-    el.classList.remove("fade-in");
-    void el.offsetWidth; // trigger reflow
-    el.classList.add("fade-in");
-  }
-</script>
+
 
 
 <!-- 🔄 Pasek zakładek (responsywny) -->
@@ -145,34 +137,8 @@
     import("./js/tournament.js").then(() => {
       import("./js/ui.js");
 
-      // 🔁 Pokaż zakładki po zalogowaniu
-      document.getElementById("viewTabs").style.display = "flex";
+     
 
-      // Obsługa przełączania widoków
-      document.getElementById("showTournamentBtn").onclick = () => {
-        const main = document.getElementById("mainContainer");
-        main.style.display = "block";
-        fadeInElement(main);
-
-        const archive = document.getElementById("archiveView");
-        archive.style.display = "block";
-        fadeInElement(archive);
-
-        document.getElementById("showTournamentBtn").classList.add("btn-primary");
-        document.getElementById("showTournamentBtn").classList.remove("btn-outline-primary");
-        document.getElementById("showArchiveBtn").classList.remove("btn-primary");
-        document.getElementById("showArchiveBtn").classList.add("btn-outline-secondary");
-      };
-
-      document.getElementById("showArchiveBtn").onclick = () => {
-        document.getElementById("mainContainer").style.display = "none";
-        document.getElementById("archiveView").style.display = "block";
-        document.getElementById("showArchiveBtn").classList.add("btn-primary");
-        document.getElementById("showArchiveBtn").classList.remove("btn-outline-secondary");
-        document.getElementById("showTournamentBtn").classList.remove("btn-primary");
-        document.getElementById("showTournamentBtn").classList.add("btn-outline-primary");
-        if (window.renderArchiveView) window.renderArchiveView();
-      };
     });
   });
 </script>
