@@ -445,7 +445,9 @@ localStorage.removeItem("turniej_in_progress");
     
   
     const serieMap = new Map();
-    matches.forEach(match => {
+    const savedMatches = JSON.parse(localStorage.getItem("turniej_matches")) || [];
+savedMatches.forEach(match => {
+
       const key = `seria_${match.series}`;
       if (!serieMap.has(key)) serieMap.set(key, []);
       serieMap.get(key).push(match);
