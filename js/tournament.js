@@ -521,16 +521,15 @@ function getCurrentSeriesNumber() {
 
 
 function hideSetupControls() {
-  const el1 = document.getElementById("setupPanel");
-  const el2 = document.getElementById("playersList");
-  const el3 = document.getElementById("numCourts")?.parentElement;
-  const el4 = document.getElementById("generateMatchesBtn");
+  ["setupPanel", "playersList", "generateMatchesBtn"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
+  });
 
-  if (el1) el1.style.display = "none";
-  if (el2) el2.style.display = "none";
-  if (el3) el3.style.display = "none";
-  if (el4) el4.style.display = "none";
+  const nc = document.getElementById("numCourts")?.parentElement;
+  if (nc) nc.style.display = "none";
 }
+
 function resetTournamentData() {
   if (!confirm("Na pewno usunąć wszystkie dane trwającego turnieju?")) return;
 
