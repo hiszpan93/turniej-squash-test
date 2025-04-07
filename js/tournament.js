@@ -251,7 +251,11 @@ export function generateMatches() {
 
   hideSetupControls();
   const endBtn = document.getElementById("endTournamentBtn");
-  if (endBtn && !tournamentEnded) endBtn.style.display = "block";
+  if (endBtn && !tournamentEnded) {
+    endBtn.style.display = "block";
+    fadeInElement(endBtn);
+  }
+  
   
 }
 
