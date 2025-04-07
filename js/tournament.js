@@ -249,10 +249,7 @@ export function generateMatches() {
   window.renderMatches();
   localStorage.setItem("turniej_in_progress", "true");
 
-  document.getElementById("setupPanel").style.display = "none";
-document.getElementById("playersList").style.display = "none";
-document.getElementById("numCourts").parentElement.style.display = "none";
-document.getElementById("generateMatchesBtn").style.display = "none";
+  hideSetupControls();
 
 }
 
@@ -505,3 +502,11 @@ function getCurrentSeriesNumber() {
   return allConfirmed ? matches[matches.length - 1].series || 0 : matches[0].series || 1;
 }
 
+
+
+function hideSetupControls() {
+  hideSetupControls();
+  document.getElementById("playersList").style.display = "none";
+  document.getElementById("numCourts").parentElement.style.display = "none";
+  document.getElementById("generateMatchesBtn").style.display = "none";
+}

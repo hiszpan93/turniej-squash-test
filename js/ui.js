@@ -56,8 +56,12 @@ function renderMatches() {
     } else {
       resultInput = `
         <div class="d-flex flex-column gap-1">
-          <input type="number" min="0" class="form-control form-control-sm text-center" id="score1-${index}" placeholder="${match.player1}" style="max-width: 100px; margin: 0 auto;" />
-          <input type="number" min="0" class="form-control form-control-sm text-center" id="score2-${index}" placeholder="${match.player2}" style="max-width: 100px; margin: 0 auto;" />
+          
+<label style="font-size: 12px; color: #666;">${match.player1}</label>
+<input type="number" min="0" class="form-control form-control-sm text-center" id="score1-${index}" style="max-width: 100px; margin: 0 auto;" />
+<label style="font-size: 12px; color: #666;">${match.player2}</label>
+<input type="number" min="0" class="form-control form-control-sm text-center" id="score2-${index}" style="max-width: 100px; margin: 0 auto;" />
+
         </div>`;
     }
     
@@ -209,7 +213,7 @@ function renderGeneralStats() {
   });
 }
 function renderArchiveView() {
-  const container = document.getElementById("archiveContainer");
+  const container = document.getElementById("tournamentArchive");
   if (!container) return;
 
   const archive = JSON.parse(localStorage.getItem("turniej_archiwum")) || [];
@@ -252,6 +256,7 @@ document.getElementById("confirmPlayersBtn").addEventListener('click', confirmPl
 document.getElementById("generateMatchesBtn").addEventListener('click', generateMatches);
 document.getElementById("endTournamentBtn").addEventListener('click', endTournament);
 
+
 document.getElementById("tab-tournament").addEventListener("click", () => {
   document.getElementById("setupPanel").style.display = "block";
   document.getElementById("playersList").style.display = "block";
@@ -262,6 +267,8 @@ document.getElementById("tab-tournament").addEventListener("click", () => {
   document.getElementById("tab-tournament").classList.add("active");
   document.getElementById("tab-archive").classList.remove("active");
 });
+
+
 
 document.getElementById("tab-archive").addEventListener("click", () => {
   document.getElementById("setupPanel").style.display = "none";
@@ -277,6 +284,7 @@ document.getElementById("tab-archive").addEventListener("click", () => {
     window.renderArchiveView();
   }
 });
+
 
 
 // Wczytanie początkowych danych i sprawdzenie automatycznych resetów
