@@ -230,23 +230,45 @@ function renderArchiveView() {
 
     let html = "";
     archive.forEach((turniej, i) => {
-      html += `<div class="mb-3 border rounded p-2 bg-light">
-        <strong>Turniej #${i + 1} - ${new Date(turniej.data).toLocaleString()}</strong><br/>
-        <em>Gracze:</em> ${turniej.gracze.join(", ")}<br/>
+      html += `
+      <div class="mb-3 border rounded p-2 bg-light">
+        <strong>Turniej #${i + 1} – ${new Date(turniej.data).toLocaleString()}</strong><br/>
+        <em>Gracze:</em> ${turniej.gracze.join(", ")}
         ${turniej.serie.map(seria => `
           <details class="mt-2">
             <summary><strong>${seria.numer}</strong></summary>
-            <ul>
-              ${seria.mecze.map(m => `<li>${m.gracz1} vs ${m.gracz2}, kort ${m.kort}, runda ${m.runda}, wynik: ${m.wynik}</li>`).join("")}
-            </ul>
+            <div class="table-responsive mt-2">
+              <table class="table table-sm table-bordered">
+                <thead>
+                  <tr>
+                    <th>Gracz 1</th>
+                    <th>Gracz 2</th>
+                    <th>Kort</th>
+                    <th>Runda</th>
+                    <th>Wynik</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${seria.mecze.map(m => `
+                    <tr>
+                      <td>${m.gracz1}</td>
+                      <td>${m.gracz2}</td>
+                      <td>${m.kort}</td>
+                      <td>${m.runda}</td>
+                      <td>${m.wynik}</td>
+                    </tr>`).join("")}
+                </tbody>
+              </table>
+            </div>
           </details>
         `).join("")}
       </div>`;
     });
 
     container.innerHTML = html;
-  }, 200); // symulacja "ładowania"
+  }, 200);
 }
+
 
 
 window.renderArchiveView = renderArchiveView;

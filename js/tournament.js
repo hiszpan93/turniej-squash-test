@@ -505,8 +505,14 @@ function getCurrentSeriesNumber() {
 
 
 function hideSetupControls() {
-  hideSetupControls();
-  document.getElementById("playersList").style.display = "none";
-  document.getElementById("numCourts").parentElement.style.display = "none";
-  document.getElementById("generateMatchesBtn").style.display = "none";
+  const el1 = document.getElementById("setupPanel");
+  const el2 = document.getElementById("playersList");
+  const el3 = document.getElementById("numCourts")?.parentElement;
+  const el4 = document.getElementById("generateMatchesBtn");
+
+  if (el1) el1.style.display = "none";
+  if (el2) el2.style.display = "none";
+  if (el3) el3.style.display = "none";
+  if (el4) el4.style.display = "none";
 }
+

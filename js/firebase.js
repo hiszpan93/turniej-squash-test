@@ -62,6 +62,11 @@ window.firebaseAuthReady = (callback) => {
 
   onAuthStateChanged(auth, async user => {
     if (user) {
+      document.getElementById("viewTabs").style.display = "none";
+document.getElementById("tabs").style.display = "none";
+document.getElementById("mainContainer").style.display = "none";
+document.getElementById("archiveView").style.display = "none";
+
       const docRef = doc(window.db, "users", user.uid);
       const docSnap = await getDoc(docRef);
       const nick = docSnap.exists() ? docSnap.data().nick : "(nieznany)";
