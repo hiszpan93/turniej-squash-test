@@ -508,7 +508,14 @@ export function loadDataFromFirebase() {
         if (localStorage.getItem("turniej_in_progress") === "true") {
           const panel = document.getElementById("setupPanel");
           if (panel) panel.style.display = "none";
+        
+          const endWrapper = document.getElementById("endTournamentWrapper");
+          if (endWrapper && !tournamentEnded) {
+            endWrapper.style.display = "block";
+            fadeInElement(endWrapper);
+          }
         }
+        
 
       } else {
         console.log("Brak dokumentu 'stats' w kolekcji 'turniej'");
