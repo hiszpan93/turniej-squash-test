@@ -82,6 +82,7 @@ function renderMatches() {
       </tr>
     `;
   });
+  fadeInElement(matchesTable);
 
   tableHTML += "</tbody>";
   matchesTable.innerHTML = tableHTML;
@@ -139,6 +140,8 @@ function addResultToResultsTable(match) {
     <td>${match.player2}</td>
     <td>${match.result}</td>
   `;
+  fadeInElement(resultsTable.parentElement);
+
 }
 
 // ======= RENDEROWANIE TABEL STATYSTYK GRACZY =======
@@ -174,6 +177,8 @@ function renderStats() {
       <td>${avgConceded}</td>
     `;
   });
+  fadeInElement(statsTable.parentElement);
+
 }
 
 
@@ -214,6 +219,8 @@ function renderGeneralStats() {
       <td>${player.obecnosc}</td>
     `;
   });
+  fadeInElement(generalStatsTable.parentElement);
+
 }
 function renderArchiveView() {
   const container = document.getElementById("tournamentArchive");
@@ -323,6 +330,15 @@ document.getElementById("resetTournamentBtn").addEventListener("click", () => {
   }
 });
 
+// ======= FADE-IN ELEMENTÓW INTERFEJSU =======
+function fadeInElement(el) {
+  if (!el) return;
+  el.classList.remove("fade-in");
+  void el.offsetWidth;
+  el.classList.add("fade-in");
+}
+
+window.fadeInElement = fadeInElement;
 
 // Wczytanie początkowych danych i sprawdzenie automatycznych resetów
 loadDataFromFirebase();
