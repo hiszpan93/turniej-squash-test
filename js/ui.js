@@ -296,33 +296,7 @@ document.getElementById("generateMatchesBtn").addEventListener('click', generate
 document.getElementById("endTournamentBtn").addEventListener('click', endTournament);
 
 
-document.getElementById("tab-tournament").addEventListener("click", () => {
-  document.getElementById("setupPanel").style.display = "block";
-  document.getElementById("playersList").style.display = "block";
-  document.getElementById("numCourts").parentElement.style.display = "block";
-  document.getElementById("generateMatchesBtn").style.display = "block";
 
-  document.getElementById("archiveView").style.display = "none";
-  document.getElementById("tab-tournament").classList.add("active");
-  document.getElementById("tab-archive").classList.remove("active");
-});
-
-
-
-document.getElementById("tab-archive").addEventListener("click", () => {
-  document.getElementById("setupPanel").style.display = "none";
-  document.getElementById("playersList").style.display = "none";
-  document.getElementById("numCourts").parentElement.style.display = "none";
-  document.getElementById("generateMatchesBtn").style.display = "none";
-
-  document.getElementById("archiveView").style.display = "block";
-  document.getElementById("tab-tournament").classList.remove("active");
-  document.getElementById("tab-archive").classList.add("active");
-
-  if (typeof window.renderArchiveView === "function") {
-    window.renderArchiveView();
-  }
-});
 
 document.getElementById("resetTournamentBtn").addEventListener("click", () => {
   if (typeof resetTournamentData === "function") {
