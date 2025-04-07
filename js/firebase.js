@@ -111,6 +111,12 @@ window.firebaseAuthReady = (callback) => {
       document.getElementById("playersList").style.display = "none";
       document.getElementById("setupPanel").style.display = "none";
       document.getElementById("generateMatchesBtn").style.display = "none";
+      document.getElementById("endTournamentBtn").style.display = "none";
+document.getElementById("matchesTable").closest(".table-responsive").style.display = "none";
+document.getElementById("resultsTable").closest(".table-responsive").style.display = "none";
+document.getElementById("statsTable").closest(".table-responsive").style.display = "none";
+document.getElementById("generalStatsTable").closest(".table-responsive").style.display = "none";
+
       const nc = document.getElementById("numCourts")?.parentElement;
       if (nc) nc.style.display = "none";
     }

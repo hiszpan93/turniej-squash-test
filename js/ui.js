@@ -315,6 +315,11 @@ document.getElementById("tab-archive").addEventListener("click", () => {
   }
 });
 
+document.getElementById("resetTournamentBtn").addEventListener("click", () => {
+  if (typeof resetTournamentData === "function") {
+    resetTournamentData();
+  }
+});
 
 
 // Wczytanie początkowych danych i sprawdzenie automatycznych resetów

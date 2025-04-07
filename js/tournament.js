@@ -515,4 +515,24 @@ function hideSetupControls() {
   if (el3) el3.style.display = "none";
   if (el4) el4.style.display = "none";
 }
+function resetTournamentData() {
+  if (!confirm("Na pewno usunąć wszystkie dane trwającego turnieju?")) return;
+
+  localStorage.removeItem("turniej_matches");
+  localStorage.removeItem("turniej_stats");
+  localStorage.removeItem("turniej_series");
+  localStorage.removeItem("turniej_players");
+  localStorage.removeItem("turniej_in_progress");
+
+  matches = [];
+  stats = {};
+  tournamentEnded = false;
+
+  document.getElementById("matchesTable").innerHTML = "";
+  document.getElementById("resultsTable").getElementsByTagName("tbody")[0].innerHTML = "";
+  document.getElementById("statsTable").getElementsByTagName("tbody")[0].innerHTML = "";
+
+  alert("Dane turnieju zostały zresetowane.");
+  location.reload();
+}
 
