@@ -439,9 +439,10 @@ localStorage.removeItem("turniej_in_progress");
     // 🔽 1. Zbuduj strukturę archiwum turnieju
     const archive = {
       data: new Date().toISOString(),
-      gracze: players.map(p => p.name),
+      gracze: allPlayers.filter(p => p.selected).map(p => p.name),
       serie: [],
     };
+    
   
     const serieMap = new Map();
     matches.forEach(match => {
@@ -459,7 +460,8 @@ localStorage.removeItem("turniej_in_progress");
           gracz2: m.player2,
           kort: m.court,
           runda: m.round,
-          wynik: m.result,
+          wynik: m.result || "-",
+
           timestamp: m.timestamp || new Date().toISOString()  // ⏱️ dodane zabezpieczenie
         }))
       });

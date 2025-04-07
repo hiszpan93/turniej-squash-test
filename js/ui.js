@@ -248,7 +248,6 @@ function renderArchiveView() {
                 <tr>
                   <th>Seria</th>
                   <th>Runda</th>
-                  <th>Kort</th>
                   <th>Gracz 1</th>
                   <th>Gracz 2</th>
                   <th>Wynik</th>
@@ -260,7 +259,7 @@ function renderArchiveView() {
                     <tr>
                       <td>${seria.numer.replace("seria_", "")}</td>
                       <td>${mecz.runda}</td>
-                      <td>${mecz.kort}</td>
+                      
                       <td>${mecz.gracz1}</td>
                       <td>${mecz.gracz2}</td>
                       <td>${mecz.wynik || "-"}</td>
