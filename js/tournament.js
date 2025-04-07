@@ -250,11 +250,12 @@ export function generateMatches() {
   localStorage.setItem("turniej_in_progress", "true");
 
   hideSetupControls();
-  const endBtn = document.getElementById("endTournamentBtn");
-  if (endBtn && !tournamentEnded) {
-    endBtn.style.display = "block";
-    fadeInElement(endBtn);
-  }
+  const endWrapper = document.getElementById("endTournamentWrapper");
+if (endWrapper && !tournamentEnded) {
+  endWrapper.style.display = "block";
+  fadeInElement(endWrapper);
+}
+
   
   
 }
