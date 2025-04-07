@@ -231,54 +231,82 @@ function renderArchiveView() {
     return;
   }
 
-  let html = "";
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
 
-  archiveData.reverse().forEach((turniej, idx) => {
-    html += `
-      <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <strong>📅 Turniej ${new Date(turniej.data).toLocaleString()}</strong>
-          <span class="badge bg-secondary">${turniej.gracze.length} graczy</span>
-        </div>
-        <div class="card-body">
-          <p><strong>Gracze:</strong> ${turniej.gracze.join(", ")}</p>
-          <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
-            <table class="table table-sm table-bordered">
-              <thead>
-                <tr>
-                  <th>Seria</th>
-                  <th>Runda</th>
-                  <th>Gracz 1</th>
-                  <th>Gracz 2</th>
-                  <th>Wynik</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${(turniej.serie || []).flatMap((seria, sIdx) => 
-                  seria.mecze.map(mecz => `
-                    <tr>
-                      <td>${seria.numer.replace("seria_", "")}</td>
-                      <td>${mecz.runda}</td>
-                      
-                      <td>${mecz.gracz1}</td>
-                      <td>${mecz.gracz2}</td>
-                      <td>${mecz.wynik || "-"}</td>
-                    </tr>
-                  `)
-                ).join("")}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    `;
+  const grouped = {};
+  archiveData.forEach(turniej => {
+    const date = new Date(turniej.data);
+    const key = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}`;
+    grouped[key] = grouped[key] || [];
+    grouped[key].push(turniej);
   });
 
-  container.innerHTML = html;
-  fadeInElement(container);
+  const monthList = Object.keys(grouped).sort().reverse();
+  const monthSelect = `
+    <label for="monthSelect" class="form-label">Wybierz miesiąc:</label>
+    <select id="monthSelect" class="form-select form-select-sm mb-3">
+      ${monthList.map(m => `<option value="${m}" ${m === currentMonth ? "selected" : ""}>${m}</option>`).join("")}
+    </select>
+  `;
 
-   
+  container.innerHTML = monthSelect + `<div id="archiveContent"></div>`;
+
+  const renderForMonth = (monthKey) => {
+    const data = grouped[monthKey] || [];
+    let html = "";
+
+    data.reverse().forEach(turniej => {
+      html += `
+        <div class="card mb-4">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>📅 Turniej ${new Date(turniej.data).toLocaleString()}</strong>
+            <span class="badge bg-secondary">${turniej.gracze?.length || 0} graczy</span>
+          </div>
+          <div class="card-body">
+            <p><strong>Gracze:</strong> ${turniej.gracze?.join(", ") || "-"}</p>
+            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+              <table class="table table-sm table-bordered">
+                <thead>
+                  <tr>
+                    <th>Seria</th>
+                    <th>Runda</th>
+                    <th>Gracz 1</th>
+                    <th>Gracz 2</th>
+                    <th>Wynik</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${(turniej.serie || []).flatMap(seria =>
+                    seria.mecze.map(m => `
+                      <tr>
+                        <td>${seria.numer.replace("seria_", "")}</td>
+                        <td>${m.runda}</td>
+                        <td>${m.gracz1}</td>
+                        <td>${m.gracz2}</td>
+                        <td>${m.wynik || "-"}</td>
+                      </tr>
+                    `)
+                  ).join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    document.getElementById("archiveContent").innerHTML = html || "<p>Brak danych.</p>";
+  };
+
+  document.getElementById("monthSelect").addEventListener("change", (e) => {
+    renderForMonth(e.target.value);
+  });
+
+  renderForMonth(currentMonth);
+  fadeInElement(container);
 }
+
 
 
 
