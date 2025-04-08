@@ -110,8 +110,25 @@
         margin-top: 30px;
         padding-bottom: 5px;
       }
-      .score-input {
-        font-size: 16px;
-        padding: 10px;
+      .match-input-tile {
+        background-color: #ffffff;
+        border: 1px solid #ccc;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       }
+      
+      .score-input-tile {
+        width: 100%;
+        font-size: 24px;
+        text-align: center;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        background-color: #f9f9f9;
+      }
+      
+      .player-label {
+        font-size: 12px;
+        color: #555;
+      }
+      
       

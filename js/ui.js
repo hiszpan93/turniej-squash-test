@@ -55,18 +55,24 @@ function renderMatches() {
       resultInput = `<span>${match.result}</span>`;
     } else {
       resultInput = `
-<div class="card p-2 mb-2">
-  <div class="row">
-    <div class="col-6 text-center">
-      <label style="font-size: 12px; color: #666;">${match.player1}</label>
-      <input type="number" inputmode="numeric" pattern="[0-9]*" min="0" class="form-control text-center score-input" id="score1-${index}" />
-    </div>
-    <div class="col-6 text-center">
-      <label style="font-size: 12px; color: #666;">${match.player2}</label>
-      <input type="number" inputmode="numeric" pattern="[0-9]*" min="0" class="form-control text-center score-input" id="score2-${index}" />
-    </div>
-  </div>
-</div>`;
+      <div class="match-input-tile mb-2 p-2 rounded">
+        <div class="text-center mb-1" style="font-size: 13px; color: #666;">Wynik meczu</div>
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="w-50 text-center">
+            <div class="player-label mb-1">${match.player1}</div>
+            <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
+              class="score-input-tile" id="score1-${index}" />
+          </div>
+          <div class="px-2">:</div>
+          <div class="w-50 text-center">
+            <div class="player-label mb-1">${match.player2}</div>
+            <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
+              class="score-input-tile" id="score2-${index}" />
+          </div>
+        </div>
+      </div>
+      `;
+      
 
     }
 
