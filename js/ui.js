@@ -59,14 +59,15 @@ function renderMatches() {
   <div class="row">
     <div class="col-6 text-center">
       <label style="font-size: 12px; color: #666;">${match.player1}</label>
-      <input type="number" min="0" class="form-control form-control-sm text-center" id="score1-${index}" />
+      <input type="number" inputmode="numeric" pattern="[0-9]*" min="0" class="form-control text-center score-input" id="score1-${index}" />
     </div>
     <div class="col-6 text-center">
       <label style="font-size: 12px; color: #666;">${match.player2}</label>
-      <input type="number" min="0" class="form-control form-control-sm text-center" id="score2-${index}" />
+      <input type="number" inputmode="numeric" pattern="[0-9]*" min="0" class="form-control text-center score-input" id="score2-${index}" />
     </div>
   </div>
 </div>`;
+
     }
 
     tableHTML += `
