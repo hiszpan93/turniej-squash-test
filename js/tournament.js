@@ -468,7 +468,8 @@ localStorage.removeItem("turniej_in_progress");
 
     
     savedMatches.forEach(match => {
-      const key = `seria_${match.series}`;
+      const key = `seria_${match.series ?? 1}`;
+
       if (!serieMap.has(key)) serieMap.set(key, []);
       serieMap.get(key).push(match);
     });
@@ -480,7 +481,7 @@ localStorage.removeItem("turniej_in_progress");
           gracz1: m.player1,
           gracz2: m.player2,
           runda: m.round,
-          wynik: m.result && m.result.trim() !== "" ? m.result : "-", // ✅ gwarantuje wynik
+          wynik: typeof m.result === "string" && m.result.trim() !== "" ? m.result : "-",
           timestamp: m.timestamp || new Date().toISOString()
         }))
       });
@@ -489,12 +490,18 @@ localStorage.removeItem("turniej_in_progress");
   
     // 🔽 2. Dodaj do localStorage do archiwum
     const fullArchive = JSON.parse(localStorage.getItem("turniej_archiwum")) || [];
-    fullArchive.push(archive);
+    const exists = fullArchive.find(a => a.data === archive.data);
+    if (!exists) {
+      fullArchive.push(archive);
+    }
+    
     localStorage.setItem("turniej_archiwum", JSON.stringify(fullArchive));
     const auth = getAuth();
     const user = auth.currentUser;
     if (user) {
-      const archiveRef = doc(db, "archiwa", `turniej_${new Date().toISOString()}`);
+      const archiveId = `turniej_${archive.data.replace(/[:.]/g, "-")}`;
+const archiveRef = doc(db, "archiwa", archiveId);
+
       setDoc(archiveRef, archive)
         .then(() => console.log("✅ Archiwum zapisane do Firebase"))
         .catch(err => console.error("❌ Błąd zapisu archiwum do Firebase", err));
