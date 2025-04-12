@@ -28,71 +28,56 @@ function renderMatches() {
     <thead>
       <tr>
         <th>Mecz</th>
-        <th>Gracz 1</th>
-        <th>Gracz 2</th>
+        <th>Gracze</th>
         <th>Kort</th>
-        <th>Wynik</th>
-        <th>Potwierdzenie</th>
+        <th>Status</th>
+        <th>Akcja</th>
       </tr>
     </thead>
     <tbody>
   `;
 
   matches.forEach((match, index) => {
-    let resultInput = "";
-    let player1Style = "";
-    let player2Style = "";
-
-    if (match.confirmed && match.result) {
-      const [score1, score2] = match.result.split(":").map(Number);
-      if (score1 > score2) {
-        player1Style = ' style="color:green;font-weight:bold;"';
-        player2Style = ' style="color:red;"';
-      } else {
-        player2Style = ' style="color:green;font-weight:bold;"';
-        player1Style = ' style="color:red;"';
-      }
-      resultInput = `<span>${match.result}</span>`;
-    } else {
-      resultInput = `
-      <div class="match-input-tile mb-2 p-2 rounded">
-        <div class="text-center mb-1" style="font-size: 13px; color: #666;">Wynik meczu</div>
-        <div class="d-flex justify-content-between align-items-center">
-          <div class="w-50 text-center">
-            <div class="player-label mb-1">${match.player1}</div>
-            <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
-              class="score-input-tile" id="score1-${index}" />
-          </div>
-          <div class="px-2">:</div>
-          <div class="w-50 text-center">
-            <div class="player-label mb-1">${match.player2}</div>
-            <input type="number" inputmode="numeric" pattern="[0-9]*" min="0"
-              class="score-input-tile" id="score2-${index}" />
-          </div>
-        </div>
-      </div>
-      `;
-      
-
-    }
+    const status = match.confirmed ? "✅" : "⏳";
+    const actionBtn = match.confirmed
+      ? `<span class="badge bg-success">Zatwierdzony</span>`
+      : `<button class="btn btn-sm btn-outline-primary score-row-toggle" onclick="toggleScoreRow(${index})">➕ Pokaż</button>`;
 
     tableHTML += `
       <tr class="${match.confirmed ? 'confirmed' : ''}">
         <td>${index + 1} (seria ${match.series || 1}, runda ${match.round || 1})</td>
-        <td${player1Style}>${match.player1}</td>
-        <td${player2Style}>${match.player2}</td>
+        <td>${match.player1} vs ${match.player2}</td>
         <td>${match.court}</td>
-        <td class="p-2">${resultInput}</td>
-        <td>
-          <button id="confirmButton-${index}" class="btn btn-sm ${match.confirmed ? "btn-success" : "btn-outline-success"}" ${tournamentEnded || match.confirmed ? "disabled" : ""}>Potwierdź</button>
+        <td>${status}</td>
+        <td>${actionBtn}</td>
+      </tr>
+      <tr id="scoreRow-${index}" class="score-row" style="display: none;">
+        <td colspan="5">
+          <div class="card p-3">
+            <div class="text-center mb-2 fade-in">
+              <strong>${match.player1}</strong> vs <strong>${match.player2}</strong>
+            </div>
+            <div class="d-flex justify-content-between align-items-center gap-2">
+              <div class="w-50 text-center">
+                <div class="player-label mb-1">${match.player1}</div>
+                <input type="number" id="score1-${index}" class="score-input-tile" min="0" />
+              </div>
+              <div class="px-2">:</div>
+              <div class="w-50 text-center">
+                <div class="player-label mb-1">${match.player2}</div>
+                <input type="number" id="score2-${index}" class="score-input-tile" min="0" />
+              </div>
+            </div>
+            <button id="confirmButton-${index}" class="btn btn-success mt-3 w-100">Potwierdź</button>
+          </div>
         </td>
       </tr>
     `;
   });
-  fadeInElement(matchesTable);
 
   tableHTML += "</tbody>";
   matchesTable.innerHTML = tableHTML;
+  fadeInElement(matchesTable);
 
   matches.forEach((_, index) => {
     const btn = document.getElementById(`confirmButton-${index}`);
@@ -101,6 +86,34 @@ function renderMatches() {
     }
   });
 }
+
+// Przełączanie widoczności kafelka
+window.toggleScoreRow = function(index) {
+  const clickedRow = document.getElementById(`scoreRow-${index}`);
+  const clickedBtn = document.querySelector(`button[onclick="toggleScoreRow(${index})"]`);
+
+  if (!clickedRow || !clickedBtn) return;
+
+  const allRows = document.querySelectorAll(".score-row");
+  const allButtons = document.querySelectorAll(".score-row-toggle");
+
+  // Zamknij wszystkie inne
+  allRows.forEach((row, i) => {
+    if (i !== index) row.style.display = "none";
+  });
+  allButtons.forEach((btn, i) => {
+    if (i !== index) btn.innerText = "➕ Pokaż";
+  });
+
+  // Przełącz kliknięty
+  const isOpen = clickedRow.style.display !== "none";
+  clickedRow.style.display = isOpen ? "none" : "table-row";
+  clickedRow.classList.add("slide-down");
+  clickedBtn.innerText = isOpen ? "➕ Pokaż" : "➖ Ukryj";
+};
+
+
+
 
 
 
