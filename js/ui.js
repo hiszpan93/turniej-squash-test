@@ -3,6 +3,7 @@ import { allPlayers, matches, stats, generalStats, tournamentEnded,
         endTournament,
          loadDataFromFirebase,  
           } from './tournament.js';
+          import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
 
 // ======= RENDEROWANIE LISTY GRACZY Z CHECKBOXAMI =======
