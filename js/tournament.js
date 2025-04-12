@@ -421,7 +421,9 @@ function updateStats(match) {
 
 // ======= ZAKOŃCZENIE TURNIEJU =======
 export function endTournament() {
-  const confirmedMatches = JSON.parse(localStorage.getItem("turniej_matches") || "[]").filter(m => m.confirmed);
+  const currentMatches = matches.length > 0 ? matches : JSON.parse(localStorage.getItem("turniej_matches") || "[]");
+const confirmedMatches = currentMatches.filter(m => m.confirmed);
+
 
 if (confirmedMatches.length === 0) {
   alert("Nie można zakończyć turnieju – żaden mecz nie został rozegrany.");
@@ -471,7 +473,10 @@ localStorage.removeItem("turniej_in_progress");
     };
     
     const serieMap = new Map();
-    const savedMatches = [...matches]; // ✅ użyj aktualnych meczów z pamięci
+    const savedMatches = matches.length > 0
+  ? [...matches]
+  : JSON.parse(localStorage.getItem("turniej_matches") || "[]");
+
 
     
     savedMatches.forEach(match => {
