@@ -1,8 +1,8 @@
 import { allPlayers, matches, stats, generalStats, tournamentEnded,
-         addPlayer, confirmPlayers, generateMatches, confirmMatch,
-        endTournament,
-         loadDataFromFirebase,  
-          } from './tournament.js';
+  addPlayer, confirmPlayers, generateMatches, confirmMatch,
+  endTournament, loadDataFromFirebase, resetTournamentData
+} from './tournament.js';
+
           import {
             collection,
             getDocs
