@@ -341,13 +341,14 @@ export function confirmMatch(index) {
     saveDataToFirebase();
     saveLocalBackup();
 
+    window.renderMatches();
+
     if (matches.every(match => match.confirmed)) {
-      localStorage.setItem("turniej_series", match.series);
       matches = [];
       generateMatches();
     }
+    
 
-    window.renderMatches();
     window.renderStats();
 
     input1.style.backgroundColor = "";
@@ -473,9 +474,7 @@ localStorage.removeItem("turniej_in_progress");
     };
     
     const serieMap = new Map();
-    const savedMatches = matches.length > 0
-  ? [...matches]
-  : JSON.parse(localStorage.getItem("turniej_matches") || "[]");
+    const savedMatches = JSON.parse(localStorage.getItem("turniej_matches") || "[]");
 
 
     

@@ -221,7 +221,8 @@ function addResultToResultsTable(match) {
   const resultsTable = document.getElementById("resultsTable").getElementsByTagName("tbody")[0];
   const row = resultsTable.insertRow();
   row.innerHTML = `
-    <td>${resultsTable.rows.length + 1}</td>
+    <td>Mecz ${match.series || 1}-${match.round || 1}</td>
+
     <td>${match.player1}</td>
     <td>${match.player2}</td>
     <td>${match.result}</td>
