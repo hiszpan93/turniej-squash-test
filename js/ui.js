@@ -229,18 +229,33 @@ function renderGeneralStats() {
   fadeInElement(generalStatsTable.parentElement);
 
 }
-function renderArchiveView() {
+async function renderArchiveView() {
   const container = document.getElementById("tournamentArchive");
-  const archiveData = JSON.parse(localStorage.getItem("turniej_archiwum")) || [];
+  let archiveData = JSON.parse(localStorage.getItem("turniej_archiwum")) || [];
+
+  // 🔽 Spróbuj pobrać dane z Firebase (jeśli użytkownik zalogowany)
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (user) {
+    try {
+      const firebaseArchives = [];
+      const snapshot = await getDocs(collection(window.db, "archiwa"));
+      snapshot.forEach(doc => {
+        firebaseArchives.push(doc.data());
+      });
+      archiveData = archiveData.concat(firebaseArchives);
+    } catch (err) {
+      console.error("Błąd pobierania archiwum z Firebase:", err);
+    }
+  }
 
   if (archiveData.length === 0) {
     container.innerHTML = "<p>Brak zapisanych turniejów.</p>";
     return;
   }
 
-  const now = new Date();
-  const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
-
+  // 🔁 Grupowanie po miesiącach
   const grouped = {};
   archiveData.forEach(turniej => {
     const date = new Date(turniej.data);
@@ -248,6 +263,9 @@ function renderArchiveView() {
     grouped[key] = grouped[key] || [];
     grouped[key].push(turniej);
   });
+
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
 
   const monthList = Object.keys(grouped).sort().reverse();
   const monthSelect = `
@@ -313,6 +331,7 @@ function renderArchiveView() {
   renderForMonth(currentMonth);
   fadeInElement(container);
 }
+
 
 
 

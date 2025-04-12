@@ -1,6 +1,8 @@
 // Import bazy danych Firestore z modułu firebase.js
 import { doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 const db = window.db;
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
 // ======= GLOBALNE ZMIENNE TURNIEJU =======
 export let allPlayers = [];
@@ -461,7 +463,8 @@ localStorage.removeItem("turniej_in_progress");
     };
     
     const serieMap = new Map();
-    const savedMatches = JSON.parse(localStorage.getItem("turniej_matches")) || [];
+    const savedMatches = [...matches]; // ✅ użyj aktualnych meczów z pamięci
+
     
     savedMatches.forEach(match => {
       const key = `seria_${match.series}`;
@@ -487,7 +490,16 @@ localStorage.removeItem("turniej_in_progress");
     const fullArchive = JSON.parse(localStorage.getItem("turniej_archiwum")) || [];
     fullArchive.push(archive);
     localStorage.setItem("turniej_archiwum", JSON.stringify(fullArchive));
-  
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (user) {
+      const archiveRef = doc(db, "archiwa", `turniej_${new Date().toISOString()}`);
+      setDoc(archiveRef, archive)
+        .then(() => console.log("✅ Archiwum zapisane do Firebase"))
+        .catch(err => console.error("❌ Błąd zapisu archiwum do Firebase", err));
+    }
+    
+
     // 🔽 3. (tylko do wersji .apk - na razie zakomentowane)
     /*
     const fileName = `turniej_${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
