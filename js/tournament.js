@@ -333,6 +333,11 @@ export function confirmMatch(index) {
     match.result = result;
     match.confirmed = true;
 
+    // Dodaj potwierdzony mecz do pełnej historii
+const allMatches = JSON.parse(localStorage.getItem("turniej_all_matches") || "[]");
+allMatches.push({ ...match, timestamp: new Date().toISOString() });
+localStorage.setItem("turniej_all_matches", JSON.stringify(allMatches));
+
     const btn = document.getElementById(`confirmButton-${index}`);
     btn.classList.remove("btn-outline-success");
     btn.classList.add("btn-success");
@@ -429,7 +434,8 @@ function updateStats(match) {
 
 // ======= ZAKOŃCZENIE TURNIEJU =======
 export function endTournament() {
-  const savedMatches = JSON.parse(localStorage.getItem("turniej_matches") || "[]");
+  const savedMatches = JSON.parse(localStorage.getItem("turniej_all_matches") || "[]");
+
   const allConfirmedMatches = savedMatches.filter(m => m.confirmed);
   
   // ✅ pozwól zakończyć, jeśli przynajmniej jedna seria miała potwierdzone mecze
@@ -532,7 +538,8 @@ const archiveRef = doc(db, "archiwa", archiveId);
     localStorage.removeItem("turniej_series"); // 🔁 reset numeru serii
 
     if (window.renderArchiveView) window.renderArchiveView();
-  
+    localStorage.removeItem("turniej_all_matches");
+
 }
 
 

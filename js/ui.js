@@ -221,14 +221,13 @@ function addResultToResultsTable(match) {
   const resultsTable = document.getElementById("resultsTable").getElementsByTagName("tbody")[0];
   const row = resultsTable.insertRow();
   row.innerHTML = `
+    <td>${resultsTable.rows.length + 1}</td>
     <td>Mecz ${match.series || 1}-${match.round || 1}</td>
-
     <td>${match.player1}</td>
     <td>${match.player2}</td>
     <td>${match.result}</td>
   `;
   fadeInElement(resultsTable.parentElement);
-
 }
 
 // ======= RENDEROWANIE TABEL STATYSTYK GRACZY =======
@@ -309,119 +308,138 @@ function renderGeneralStats() {
   fadeInElement(generalStatsTable.parentElement);
 
 }
-async function renderArchiveView() {
+function addResultToResultsTable(match) {
+  const resultsTable = document.getElementById("resultsTable").getElementsByTagName("tbody")[0];
+  const row = resultsTable.insertRow();
+  row.innerHTML = `
+    <td>${resultsTable.rows.length + 1}</td>
+    <td>Mecz ${match.series || 1}-${match.round || 1}</td>
+    <td>${match.player1}</td>
+    <td>${match.player2}</td>
+    <td>${match.result}</td>
+  `;
+  fadeInElement(resultsTable.parentElement);
+}
+
+// ======= RENDEROWANIE TABELI ARCHIWUM Z GLOBALNĄ NUMERACJĄ =======
+function renderArchiveView() {
   document.getElementById("archiveLoading").style.display = "block";
-document.getElementById("tournamentArchive").innerHTML = "";
+  document.getElementById("tournamentArchive").innerHTML = "";
 
   const container = document.getElementById("tournamentArchive");
   let archiveData = JSON.parse(localStorage.getItem("turniej_archiwum")) || [];
 
-  // 🔽 Spróbuj pobrać dane z Firebase (jeśli użytkownik zalogowany)
   const auth = getAuth();
   const user = auth.currentUser;
 
   if (user) {
-    try {
-      const firebaseArchives = [];
-      const snapshot = await getDocs(collection(window.db, "archiwa"));
-      snapshot.forEach(doc => {
-        firebaseArchives.push(doc.data());
+    getDocs(collection(window.db, "archiwa"))
+      .then(snapshot => {
+        const firebaseArchives = [];
+        snapshot.forEach(doc => {
+          firebaseArchives.push(doc.data());
+        });
+        archiveData = archiveData.concat(firebaseArchives);
+        renderAllArchives();
+      })
+      .catch(err => {
+        console.error("Błąd pobierania archiwum z Firebase:", err);
+        renderAllArchives();
       });
-      archiveData = archiveData.concat(firebaseArchives);
-    } catch (err) {
-      console.error("Błąd pobierania archiwum z Firebase:", err);
+  } else {
+    renderAllArchives();
+  }
+
+  function renderAllArchives() {
+    if (archiveData.length === 0) {
+      container.innerHTML = "<p>Brak zapisanych turniejów.</p>";
+      return;
     }
-  }
 
-  if (archiveData.length === 0) {
-    container.innerHTML = "<p>Brak zapisanych turniejów.</p>";
-    return;
-  }
-
-  // 🔁 Grupowanie po miesiącach
-  const grouped = {};
-  archiveData.forEach(turniej => {
-    const date = new Date(turniej.data);
-    const key = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}`;
-    grouped[key] = grouped[key] || [];
-    grouped[key].push(turniej);
-  });
-
-  const now = new Date();
-  const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
-
-  const monthList = Object.keys(grouped).sort().reverse();
-  const monthSelect = `
-    <label for="monthSelect" class="form-label">Wybierz miesiąc:</label>
-    <select id="monthSelect" class="form-select form-select-sm mb-3">
-      ${monthList.map(m => `<option value="${m}" ${m === currentMonth ? "selected" : ""}>${m}</option>`).join("")}
-    </select>
-  `;
-
-  container.innerHTML = monthSelect + `<div id="archiveContent"></div>`;
-
-  const renderForMonth = (monthKey) => {
-    const data = grouped[monthKey] || [];
-    let html = "";
-
-    data.reverse().forEach(turniej => {
-      html += `
-        <div class="card mb-4">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <strong>📅 Turniej ${new Date(turniej.data).toLocaleString()}</strong>
-            <span class="badge bg-secondary">${turniej.gracze?.length || 0} graczy</span>
-          </div>
-          <div class="card-body">
-            <p><strong>Gracze:</strong> ${turniej.gracze?.join(", ") || "-"}</p>
-            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
-              <table class="table table-sm table-bordered">
-                <thead>
-                  <tr>
-                    <th>Seria</th>
-                    <th>Runda</th>
-                    <th>Gracz 1</th>
-                    <th>Gracz 2</th>
-                    <th>Wynik</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${(turniej.serie || []).flatMap(seria =>
-                    seria.mecze.map(m => `
-                      <tr>
-                        <td>${seria.numer.replace("seria_", "")}</td>
-                        <td>${m.runda}</td>
-                        <td>${m.gracz1}</td>
-                        <td>${m.gracz2}</td>
-                        <td>${m.wynik || "-"}</td>
-                      </tr>
-                    `)
-                  ).join("")}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      `;
+    const grouped = {};
+    archiveData.forEach(turniej => {
+      const date = new Date(turniej.data);
+      const key = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}`;
+      grouped[key] = grouped[key] || [];
+      grouped[key].push(turniej);
     });
 
-    document.getElementById("archiveContent").innerHTML = html || "<p>Brak danych.</p>";
-  };
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
 
-  document.getElementById("monthSelect").addEventListener("change", (e) => {
-    renderForMonth(e.target.value);
-  });
+    const monthList = Object.keys(grouped).sort().reverse();
+    const monthSelect = `
+      <label for="monthSelect" class="form-label">Wybierz miesiąc:</label>
+      <select id="monthSelect" class="form-select form-select-sm mb-3">
+        ${monthList.map(m => `<option value="${m}" ${m === currentMonth ? "selected" : ""}>${m}</option>`).join("")}
+      </select>
+    `;
 
-  renderForMonth(currentMonth);
-  document.getElementById("archiveLoading").style.display = "none";
+    container.innerHTML = monthSelect + `<div id="archiveContent"></div>`;
 
-  fadeInElement(container);
+    const renderForMonth = (monthKey) => {
+      const data = grouped[monthKey] || [];
+      let html = "";
+
+      data.reverse().forEach(turniej => {
+        let lp = 1;
+        html += `
+          <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <strong>📅 Turniej ${new Date(turniej.data).toLocaleString()}</strong>
+              <span class="badge bg-secondary">${turniej.gracze?.length || 0} graczy</span>
+            </div>
+            <div class="card-body">
+              <p><strong>Gracze:</strong> ${turniej.gracze?.join(", ") || "-"}</p>
+              <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                <table class="table table-sm table-bordered">
+                  <thead>
+                    <tr>
+                      <th>L.p.</th>
+                      <th>Seria</th>
+                      <th>Runda</th>
+                      <th>Gracz 1</th>
+                      <th>Gracz 2</th>
+                      <th>Wynik</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${(turniej.serie || []).flatMap(seria =>
+                      seria.mecze.map(m => `
+                        <tr>
+                          <td>${lp++}</td>
+                          <td>${seria.numer.replace("seria_", "")}</td>
+                          <td>${m.runda}</td>
+                          <td>${m.gracz1}</td>
+                          <td>${m.gracz2}</td>
+                          <td>${m.wynik || "-"}</td>
+                        </tr>
+                      `)
+                    ).join("")}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      document.getElementById("archiveContent").innerHTML = html || "<p>Brak danych.</p>";
+    };
+
+    document.getElementById("monthSelect").addEventListener("change", (e) => {
+      renderForMonth(e.target.value);
+    });
+
+    renderForMonth(currentMonth);
+    document.getElementById("archiveLoading").style.display = "none";
+
+    fadeInElement(container);
+  }
 }
 
-
-
-
-
 window.renderArchiveView = renderArchiveView;
+
 
 // Ustawienie funkcji renderujących w globalnym obiekcie `window` (dla dostępu z tournament.js)
 window.renderPlayersList = renderPlayersList;
