@@ -250,4 +250,25 @@
       .slide-up {
         animation: slideUp 0.25s ease-in-out;
       }
+      .winner-glow {
+        animation: glowWinner 1.2s ease-in-out infinite alternate;
+        color: #28a745 !important;
+        font-weight: bold;
+      }
+      
+      @keyframes glowWinner {
+        from {
+          text-shadow: 0 0 2px #28a745;
+          transform: scale(1);
+        }
+        to {
+          text-shadow: 0 0 12px #28a745;
+          transform: scale(1.05);
+        }
+      }
+      
+      .winner-summary {
+        font-size: 15px;
+        color: #155724;
+      }
       

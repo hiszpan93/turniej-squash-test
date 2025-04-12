@@ -87,20 +87,7 @@ function renderMatches() {
     }
   });
 }
-const score2 = document.getElementById(`score2-${index}`);
-if (score2) {
-  score2.addEventListener("input", () => {
-    if (score2.value.length >= 1) {
-      document.getElementById(`confirmButton-${index}`)?.focus();
-    }
-  });
-}
-const score1 = document.getElementById(`score1-${index}`);
-if (score1 && score2) {
-  const highlight = () => highlightWinner(index);
-  score1.addEventListener("input", highlight);
-  score2.addEventListener("input", highlight);
-}
+
 
 // Przełączanie widoczności kafelka
 window.toggleScoreRow = function(index) {
@@ -169,23 +156,57 @@ function highlightWinner(index) {
   const val1 = parseInt(input1.value);
   const val2 = parseInt(input2.value);
 
+  // Reset
   input1.style.backgroundColor = "";
   input2.style.backgroundColor = "";
   label1.innerHTML = matches[index].player1;
   label2.innerHTML = matches[index].player2;
+  label1.classList.remove("winner-glow");
+  label2.classList.remove("winner-glow");
 
-  if (isNaN(val1) || isNaN(val2)) return;
-  if (val1 === val2) return;
-
-  if (val1 > val2) {
-    input1.style.backgroundColor = "#d4edda";
-    input2.style.backgroundColor = "#f8d7da";
-    label1.innerHTML = `🏆 ${matches[index].player1}`;
-  } else {
-    input1.style.backgroundColor = "#f8d7da";
-    input2.style.backgroundColor = "#d4edda";
-    label2.innerHTML = `🏆 ${matches[index].player2}`;
+  // Sprawdzenie poprawnych danych
+  if (isNaN(val1) || isNaN(val2) || val1 === val2) {
+    removeWinnerSummary(index);
+    return;
   }
+
+  // Kolorowanie + 🏆 + animacja
+  const winnerLabel = val1 > val2 ? label1 : label2;
+  const loserLabel = val1 > val2 ? label2 : label1;
+  const winnerInput = val1 > val2 ? input1 : input2;
+  const loserInput = val1 > val2 ? input2 : input1;
+
+  winnerLabel.innerHTML = `🏆 ${val1 > val2 ? matches[index].player1 : matches[index].player2}`;
+  winnerLabel.classList.add("winner-glow");
+  loserLabel.classList.remove("winner-glow");
+
+  winnerInput.style.backgroundColor = "#d4edda";
+  loserInput.style.backgroundColor = "#f8d7da";
+
+  // Podpis zwycięzcy pod spodem
+  showWinnerSummary(index, matches[index].player1, matches[index].player2, val1, val2);
+}
+
+function showWinnerSummary(index, p1, p2, val1, val2) {
+  const summaryId = `winnerSummary-${index}`;
+  let summaryEl = document.getElementById(summaryId);
+  const container = document.getElementById(`confirmButton-${index}`)?.parentElement;
+  const winner = val1 > val2 ? p1 : p2;
+  const result = `${val1}:${val2}`;
+
+  if (!summaryEl) {
+    summaryEl = document.createElement("div");
+    summaryEl.id = summaryId;
+    summaryEl.className = "text-center mt-2 fade-in winner-summary";
+    container.appendChild(summaryEl);
+  }
+
+  summaryEl.innerHTML = `🏆 <strong>Zwycięzca:</strong> ${winner} (${result})`;
+}
+
+function removeWinnerSummary(index) {
+  const el = document.getElementById(`winnerSummary-${index}`);
+  if (el) el.remove();
 }
 
 
