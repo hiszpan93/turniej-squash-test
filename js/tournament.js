@@ -421,6 +421,12 @@ function updateStats(match) {
 
 // ======= ZAKOŃCZENIE TURNIEJU =======
 export function endTournament() {
+  const confirmedMatches = matches.filter(m => m.confirmed);
+if (confirmedMatches.length === 0) {
+  alert("Nie można zakończyć turnieju – żaden mecz nie został rozegrany.");
+  return;
+}
+
   if (tournamentEnded) return;
   tournamentEnded = true;
   const savedPlayers = JSON.parse(localStorage.getItem("turniej_players")) || [];
@@ -488,14 +494,7 @@ localStorage.removeItem("turniej_in_progress");
     }
     
   
-    // 🔽 2. Dodaj do localStorage do archiwum
-    const fullArchive = JSON.parse(localStorage.getItem("turniej_archiwum")) || [];
-    const exists = fullArchive.find(a => a.data === archive.data);
-    if (!exists) {
-      fullArchive.push(archive);
-    }
-    
-    localStorage.setItem("turniej_archiwum", JSON.stringify(fullArchive));
+   
     const auth = getAuth();
     const user = auth.currentUser;
     if (user) {
@@ -517,6 +516,8 @@ const archiveRef = doc(db, "archiwa", archiveId);
     */
   
     // 🔽 4. Renderuj widok archiwum (z `index.html`)
+    localStorage.removeItem("turniej_series"); // 🔁 reset numeru serii
+
     if (window.renderArchiveView) window.renderArchiveView();
   
 }
