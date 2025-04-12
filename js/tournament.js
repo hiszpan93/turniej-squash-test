@@ -578,12 +578,15 @@ function hideSetupControls() {
  export function resetTournamentData() {
   if (!confirm("Na pewno usunąć wszystkie dane trwającego turnieju?")) return;
 
-  localStorage.removeItem("turniej_matches");
-  localStorage.removeItem("turniej_stats");
-  localStorage.removeItem("turniej_series");
-  localStorage.removeItem("turniej_players");
-  localStorage.removeItem("turniej_in_progress");
-
+  [
+    "turniej_matches",
+    "turniej_stats",
+    "turniej_series",
+    "turniej_players",
+    "turniej_in_progress",
+    "turniej_archiwum" // 🔥 USUWA archiwum lokalne!
+  ].forEach(key => localStorage.removeItem(key));
+  
   matches = [];
   stats = {};
   tournamentEnded = false;
