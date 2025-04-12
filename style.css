@@ -196,8 +196,9 @@
       
       @media (max-width: 576px) {
         .score-input-tile {
-          font-size: 30px;
-          padding: 14px;
+          font-size: 22px;
+          padding: 8px;
+          max-height: 52px;
         }
       
         .score-row td {
@@ -207,8 +208,20 @@
         .score-row .card {
           border: none;
           box-shadow: none;
+          padding: 8px 10px !important;
+        }
+      
+        .player-label {
+          font-size: 11px;
+        }
+      
+        .score-row button {
+          font-size: 14px;
+          padding: 8px 10px;
+          margin-top: 12px;
         }
       }
+      
       @keyframes slideDown {
         from {
           opacity: 0;
@@ -222,5 +235,19 @@
       
       .slide-down {
         animation: slideDown 0.25s ease-in-out;
+      }
+      @keyframes slideUp {
+        from {
+          opacity: 1;
+          transform: scaleY(1);
+        }
+        to {
+          opacity: 0;
+          transform: scaleY(0.9);
+        }
+      }
+      
+      .slide-up {
+        animation: slideUp 0.25s ease-in-out;
       }
       

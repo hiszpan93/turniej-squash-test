@@ -83,8 +83,23 @@ function renderMatches() {
     const btn = document.getElementById(`confirmButton-${index}`);
     if (btn) {
       btn.addEventListener("click", () => confirmMatch(index));
+  
     }
   });
+}
+const score2 = document.getElementById(`score2-${index}`);
+if (score2) {
+  score2.addEventListener("input", () => {
+    if (score2.value.length >= 1) {
+      document.getElementById(`confirmButton-${index}`)?.focus();
+    }
+  });
+}
+const score1 = document.getElementById(`score1-${index}`);
+if (score1 && score2) {
+  const highlight = () => highlightWinner(index);
+  score1.addEventListener("input", highlight);
+  score2.addEventListener("input", highlight);
 }
 
 // Przełączanie widoczności kafelka
@@ -94,22 +109,40 @@ window.toggleScoreRow = function(index) {
 
   if (!clickedRow || !clickedBtn) return;
 
-  const allRows = document.querySelectorAll(".score-row");
-  const allButtons = document.querySelectorAll(".score-row-toggle");
+  const isCurrentlyOpen = clickedRow.style.display !== "none";
 
   // Zamknij wszystkie inne
-  allRows.forEach((row, i) => {
-    if (i !== index) row.style.display = "none";
+  document.querySelectorAll(".score-row").forEach((row, i) => {
+    if (i !== index) {
+      row.style.display = "none";
+      row.classList.remove("slide-down", "slide-up");
+    }
   });
-  allButtons.forEach((btn, i) => {
+  document.querySelectorAll(".score-row-toggle").forEach((btn, i) => {
     if (i !== index) btn.innerText = "➕ Pokaż";
   });
 
-  // Przełącz kliknięty
-  const isOpen = clickedRow.style.display !== "none";
-  clickedRow.style.display = isOpen ? "none" : "table-row";
-  clickedRow.classList.add("slide-down");
-  clickedBtn.innerText = isOpen ? "➕ Pokaż" : "➖ Ukryj";
+  // Przełącz aktualny
+  if (isCurrentlyOpen) {
+    clickedRow.classList.remove("slide-down");
+    clickedRow.classList.add("slide-up");
+    setTimeout(() => {
+      clickedRow.style.display = "none";
+      clickedRow.classList.remove("slide-up");
+    }, 250);
+    clickedBtn.innerText = "➕ Pokaż";
+  } else {
+    clickedRow.style.display = "table-row";
+    clickedRow.classList.remove("slide-up");
+    clickedRow.classList.add("slide-down");
+    clickedBtn.innerText = "➖ Ukryj";
+  
+    // 🔽 Autofocus po otwarciu
+    setTimeout(() => {
+      document.getElementById(`score1-${index}`)?.focus();
+    }, 100);
+  }
+  
 };
 
 
@@ -128,26 +161,33 @@ function autoFocusNext(currentInput, nextId) {
 function highlightWinner(index) {
   const input1 = document.getElementById(`score1-${index}`);
   const input2 = document.getElementById(`score2-${index}`);
+  const label1 = input1?.parentElement?.querySelector(".player-label");
+  const label2 = input2?.parentElement?.querySelector(".player-label");
 
-  if (!input1 || !input2) return;
+  if (!input1 || !input2 || !label1 || !label2) return;
 
   const val1 = parseInt(input1.value);
   const val2 = parseInt(input2.value);
 
   input1.style.backgroundColor = "";
   input2.style.backgroundColor = "";
+  label1.innerHTML = matches[index].player1;
+  label2.innerHTML = matches[index].player2;
 
   if (isNaN(val1) || isNaN(val2)) return;
   if (val1 === val2) return;
 
   if (val1 > val2) {
-    input1.style.backgroundColor = "#d4edda"; // zielony
-    input2.style.backgroundColor = "#f8d7da"; // czerwony
+    input1.style.backgroundColor = "#d4edda";
+    input2.style.backgroundColor = "#f8d7da";
+    label1.innerHTML = `🏆 ${matches[index].player1}`;
   } else {
     input1.style.backgroundColor = "#f8d7da";
     input2.style.backgroundColor = "#d4edda";
+    label2.innerHTML = `🏆 ${matches[index].player2}`;
   }
 }
+
 
 
 // ======= DODANIE WYNIKU DO TABELI WYNIKÓW =======
