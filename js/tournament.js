@@ -130,9 +130,18 @@ export function confirmPlayers() {
 
   const players = allPlayers.filter(p => p.selected);
   if (players.length < 2) {
-    alert("Wybierz co najmniej dwóch graczy!");
+    alert("Wybierz co najmniej dwóch graczy, aby wygenerować mecze.");
     return;
   }
+
+  const courtCount = parseInt(document.getElementById("numCourts").value, 10) || 1;
+
+  // ⚠️ Sprawdzenie minimalnej liczby graczy względem kortów
+  if (players.length < courtCount * 2) {
+    alert(`Za mało graczy na ${courtCount} kort${courtCount > 1 ? 'y' : ''}!\nPotrzebujesz co najmniej ${courtCount * 2} graczy.`);
+    return;
+  }
+
 
   players.forEach(player => {
     stats[player.name] = stats[player.name] || { wins: 0, losses: 0, pointsScored: 0, pointsConceded: 0 };
@@ -203,18 +212,24 @@ export function generateMatches() {
   while (pairings.length > 0) {
     const roundMatches = [];
     const roundPlayers = new Set();
+    const usedPlayersThisRound = new Set();
+
 
     for (let k = 0; k < pairings.length; k++) {
       const [p1, p2] = pairings[k];
       if (
         !roundPlayers.has(p1.name) &&
         !roundPlayers.has(p2.name) &&
-        !recentPlayers.includes(p1.name) &&
-        !recentPlayers.includes(p2.name)
+        !usedPlayersThisRound.has(p1.name) &&
+        !usedPlayersThisRound.has(p2.name)
       ) {
+
         roundMatches.push({ p1, p2 });
         roundPlayers.add(p1.name);
         roundPlayers.add(p2.name);
+        usedPlayersThisRound.add(p1.name);
+        usedPlayersThisRound.add(p2.name);
+
         pairings.splice(k, 1);
         k--; // fix index after removal
         if (roundMatches.length >= courtCount) break;
@@ -229,20 +244,22 @@ export function generateMatches() {
       }
     }
 
-    roundMatches.forEach((match, index) => {
-      newMatches.push({
-        player1: match.p1.name,
-        player2: match.p2.name,
-        court: index + 1,
-        result: "",
-        confirmed: false,
-        series: seriesNumber,
-        round: round
+    if (roundMatches.length > 0) {
+      roundMatches.forEach((match, index) => {
+        newMatches.push({
+          player1: match.p1.name,
+          player2: match.p2.name,
+          court: index + 1,
+          result: "",
+          confirmed: false,
+          series: seriesNumber,
+          round: round
+        });
       });
-    });
-
-    recentPlayers = Array.from(roundPlayers);
-    round++;
+      round++;
+      recentPlayers = Array.from(roundPlayers);
+    }
+  
   }
 
   matches = newMatches;

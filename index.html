@@ -46,8 +46,14 @@
 
     <!-- 🔹 Liczba kortów -->
     <div class="mb-3">
-      <label for="numCourts" class="form-label">Liczba dostępnych kortów:</label>
-      <input type="number" id="numCourts" class="form-control" value="1" min="1" style="width: 100px;" />
+      <select id="numCourts" class="form-select" style="max-width: 200px;">
+        <option value="1">🎾 1 kort</option>
+        <option value="2">🎾🎾 2 korty</option>
+        <option value="3">🎾🎾🎾 3 korty</option>
+        <option value="4">🎾🎾🎾🎾 4 korty</option>
+      </select>
+      
+
     </div>
 
     <!-- 🔹 Przycisk: wygeneruj mecze -->
