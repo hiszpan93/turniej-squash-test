@@ -596,6 +596,6 @@ function hideSetupControls() {
   document.getElementById("statsTable").getElementsByTagName("tbody")[0].innerHTML = "";
 
   alert("Dane turnieju zostały zresetowane.");
-  location.reload();
+  window.location.href = window.location.href.split("?")[0];
 }
 
