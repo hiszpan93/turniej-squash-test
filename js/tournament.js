@@ -421,7 +421,8 @@ function updateStats(match) {
 
 // ======= ZAKOŃCZENIE TURNIEJU =======
 export function endTournament() {
-  const confirmedMatches = matches.filter(m => m.confirmed);
+  const confirmedMatches = JSON.parse(localStorage.getItem("turniej_matches") || "[]").filter(m => m.confirmed);
+
 if (confirmedMatches.length === 0) {
   alert("Nie można zakończyć turnieju – żaden mecz nie został rozegrany.");
   return;
