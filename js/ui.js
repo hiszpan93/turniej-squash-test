@@ -309,6 +309,9 @@ function renderGeneralStats() {
 
 }
 async function renderArchiveView() {
+  document.getElementById("archiveLoading").style.display = "block";
+document.getElementById("tournamentArchive").innerHTML = "";
+
   const container = document.getElementById("tournamentArchive");
   let archiveData = JSON.parse(localStorage.getItem("turniej_archiwum")) || [];
 
@@ -408,6 +411,8 @@ async function renderArchiveView() {
   });
 
   renderForMonth(currentMonth);
+  document.getElementById("archiveLoading").style.display = "none";
+
   fadeInElement(container);
 }
 

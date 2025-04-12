@@ -14,6 +14,7 @@ export let stats = {};
 export let generalStats = {};
 export let tournamentEnded = false;
 
+
 // Zmienne do rund (round-robin)
 let allRounds = [];
 let currentRoundIndex = 0;
@@ -574,7 +575,7 @@ function hideSetupControls() {
   if (nc) nc.style.display = "none";
 }
 
-function resetTournamentData() {
+ export function resetTournamentData() {
   if (!confirm("Na pewno usunąć wszystkie dane trwającego turnieju?")) return;
 
   localStorage.removeItem("turniej_matches");
