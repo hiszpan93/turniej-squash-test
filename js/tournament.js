@@ -339,7 +339,10 @@ export function confirmMatch(index) {
     window.addResultToResultsTable(match);
     updateStats(match);
     saveDataToFirebase();
-    saveLocalBackup();
+    if (!matches.every(m => m.confirmed)) {
+      saveLocalBackup(); // tylko jeśli to nie ostatni mecz
+    }
+    
 
     window.renderMatches();
 
