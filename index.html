@@ -17,6 +17,7 @@
 <div id="viewTabs" class="container d-flex gap-2 justify-content-center mb-3" style="display: none;">
   <button id="showTournamentBtn" class="btn btn-outline-primary btn-sm px-4">🎾 Turniej</button>
   <button id="showArchiveBtn" class="btn btn-outline-secondary btn-sm px-4">📦 Archiwum</button>
+  <button id="showRankingBtn" class="btn btn-outline-secondary btn-sm px-4">📊 Rankingi</button>
 </div>
 
 <div id="authContainer" class="container">
@@ -27,6 +28,13 @@
   <button id="registerBtn" class="btn btn-secondary">Zarejestruj się</button>
 </div>
 
+<!-- 🔐 Informacje o logowaniu -->
+<div id="userInfoBar" class="container d-flex justify-content-between align-items-center mb-3" style="display: none;">
+  <div>
+    👤 Zalogowano jako: <span id="loggedInUserEmail" class="fw-bold"></span>
+  </div>
+  <button id="logoutBtn" class="btn btn-sm btn-outline-danger">Wyloguj</button>
+</div>
 
 <div id="mainContainer" class="container" style="display: none;">
 
@@ -103,6 +111,8 @@
           <th>Średnia pkt zdobytych</th>
           <th>Stracone punkty</th>
           <th>Średnia pkt straconych</th>
+          <th>ELO</th>
+          <th>Seria</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -116,6 +126,7 @@
       <thead>
         <tr>
           <th>Gracz</th>
+          <th>ELO</th>
           <th>Wygrane</th>
           <th>Porażki</th>
           <th>Rozegrane mecze</th>
@@ -124,6 +135,7 @@
           <th>Stracone punkty</th>
           <th>Średnia pkt straconych</th>
           <th>Obecność</th>
+          <th>Seria</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -141,14 +153,11 @@
   import "./js/firebase.js";
 
   window.firebaseAuthReady(() => {
-    import("./js/tournament.js").then(() => {
-      import("./js/ui.js");
-
-     
-
-    });
+    import("./js/tournament.js");
+    // ui.js załadujemy później – z firebase.js
   });
 </script>
+
 
 <!-- ✅ MODAL POTWIERDZENIA WYNIKU -->
 <div class="modal fade" id="matchConfirmModal" tabindex="-1" aria-labelledby="matchConfirmModalLabel" aria-hidden="true">
@@ -181,6 +190,66 @@
   <div id="tournamentArchive"></div>
 </div>
 
+<div id="rankingView" class="container" style="display: none;">
+  <h5 class="section-header">📊 Ranking ELO</h5>
+  <div class="table-responsive mb-4">
+    <table class="table table-bordered" id="eloRankingTable">
+      <thead>
+        <tr>
+          <th>Miejsce</th>
+          <th>Gracz</th>
+          <th>ELO</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+<!-- ℹ️ MODAL: Informacje o ELO -->
+<div class="modal fade" id="eloInfoModal" tabindex="-1" aria-labelledby="eloInfoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="eloInfoModalLabel">Jak działa ranking ELO?</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+      </div>
+      <div class="modal-body">
+        <p>Ranking ELO dynamicznie dostosowuje się do wyników graczy. Przy każdej grze brane są pod uwagę:</p>
+        <ul>
+          <li><strong>Różnica poziomu ELO:</strong> Pokonanie silniejszego gracza daje większy wzrost ELO. Pokonanie dużo słabszego – mniejszy.</li>
+          <li><strong>Przewaga punktowa:</strong> Im większa różnica punktów (np. 11:2), tym większa nagroda ELO dla zwycięzcy.</li>
+          <li><strong>Ochrona słabszych:</strong> Przegrana z silniejszym nie powoduje dużej straty ELO.</li>
+        </ul>
+        <p>Przykładowo:</p>
+        <ul>
+          <li>✅ <strong>Jan (ELO 980)</strong> pokonuje <strong>Adama (ELO 1020)</strong> wynikiem <strong>11:9</strong> → zyskuje więcej niż zwykle!</li>
+          <li>✅ <strong>Michał (ELO 1100)</strong> wygrywa z <strong>Krzysztofem (ELO 900)</strong> 11:1 → niewielki zysk ELO, bo wynik był spodziewany.</li>
+        </ul>
+        <p class="text-muted">System został zbalansowany, aby promować wyrównane i wartościowe mecze.</p>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- 🔔 Toast z liczbą meczów -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055">
+  <div id="restoreToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
+    <div class="d-flex">
+      <div class="toast-body" id="restoreToastContent">
+        ✅ Przywrócono turniej.
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Zamknij"></button>
+    </div>
+  </div>
+</div>
+
+
+<!-- 🔄 Loader przywracania -->
+<div id="restoreSpinner" class="text-center my-4" style="display: none;">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Trwa przywracanie danych...</span>
+  </div>
+  <p class="mt-2">Trwa przywracanie turnieju...</p>
+</div>
 
 </body>
 </html>

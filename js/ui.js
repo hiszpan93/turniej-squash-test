@@ -1,14 +1,14 @@
+
+
 import { allPlayers, matches, stats, generalStats, tournamentEnded,
   addPlayer, confirmPlayers, generateMatches, confirmMatch,
   endTournament, loadDataFromFirebase, resetTournamentData
 } from './tournament.js';
 
-          import {
-            collection,
-            getDocs
-          } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-          
-          import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+import { collection, getDocs, auth, getAuthFn } from "./firebase.js";
+
+
+
           
 // ======= RENDEROWANIE LISTY GRACZY Z CHECKBOXAMI =======
 function renderPlayersList() {
@@ -230,17 +230,46 @@ function addResultToResultsTable(match) {
   fadeInElement(resultsTable.parentElement);
 }
 
+
 // ======= RENDEROWANIE TABEL STATYSTYK GRACZY =======
 function renderStats() {
   const statsTable = document.getElementById("statsTable").getElementsByTagName("tbody")[0];
   statsTable.innerHTML = "";
-  const playersArr = Object.keys(stats).map(player => ({
-    name: player,
-    wins: stats[player].wins,
-    losses: stats[player].losses,
-    pointsScored: stats[player].pointsScored,
-    pointsConceded: stats[player].pointsConceded
-  }));
+  const playersArr = Object.keys(stats).map(player => {
+    const full = allPlayers.find(p => p.name === player);
+    return {
+      name: player,
+      wins: stats[player].wins,
+      losses: stats[player].losses,
+      pointsScored: stats[player].pointsScored,
+      pointsConceded: stats[player].pointsConceded,
+      elo: full?.elo ?? 1000
+    };
+  });
+  const getStreak = (name) => {
+    const history = JSON.parse(localStorage.getItem("turniej_all_matches") || "[]")
+      .filter(m => m.player1 === name || m.player2 === name);
+  
+    if (history.length === 0) return "-";
+  
+    const last = history.at(-1);
+    const [s1, s2] = (last.result || "").split(":").map(Number);
+    const isWinner = (last.player1 === name && s1 > s2) || (last.player2 === name && s2 > s1);
+    const type = isWinner ? "W" : "L";
+  
+    let count = 0;
+    for (let i = history.length - 1; i >= 0; i--) {
+      const m = history[i];
+      const [a, b] = (m.result || "").split(":").map(Number);
+      if (isNaN(a) || isNaN(b)) break;
+      const win = (m.player1 === name && a > b) || (m.player2 === name && b > a);
+      const current = win ? "W" : "L";
+      if (current !== type) break;
+      count++;
+    }
+    return count > 0 ? `${count}${type}` : "-";
+  };
+  
   playersArr.sort((a, b) => {
     if (b.wins !== a.wins) return b.wins - a.wins;
     const ratioA = a.pointsConceded > 0 ? a.pointsScored / a.pointsConceded : (a.pointsScored > 0 ? Infinity : 0);
@@ -261,6 +290,8 @@ function renderStats() {
       <td>${avgScored}</td>
       <td>${player.pointsConceded}</td>
       <td>${avgConceded}</td>
+      <td>${player.elo}</td>
+      <td>${getStreak(player.name)}</td>
     `;
   });
   fadeInElement(statsTable.parentElement);
@@ -274,14 +305,22 @@ function renderStats() {
 function renderGeneralStats() {
   const generalStatsTable = document.getElementById("generalStatsTable").getElementsByTagName("tbody")[0];
   generalStatsTable.innerHTML = "";
-  const playersArr = Object.keys(generalStats).map(player => ({
-    name: player,
-    wins: generalStats[player].wins,
-    losses: generalStats[player].losses,
-    pointsScored: generalStats[player].pointsScored,
-    pointsConceded: generalStats[player].pointsConceded,
-    obecnosc: generalStats[player].obecnosc || 0
-  }));
+  const playersArr = Object.keys(generalStats).map(player => {
+    const full = allPlayers.find(p => p.name === player);
+    return {
+      name: player,
+      wins: generalStats[player].wins,
+      losses: generalStats[player].losses,
+      pointsScored: generalStats[player].pointsScored,
+      pointsConceded: generalStats[player].pointsConceded,
+      obecnosc: generalStats[player].obecnosc || 0,
+      elo: full?.elo ?? 1000,
+      streakCount: generalStats[player].streakCount || 0,
+      streakType: generalStats[player].streakType || "-"
+    };
+    
+  });
+
   playersArr.sort((a, b) => {
     if (b.wins !== a.wins) return b.wins - a.wins;
     const ratioA = a.pointsConceded > 0 ? a.pointsScored / a.pointsConceded : (a.pointsScored > 0 ? Infinity : 0);
@@ -295,6 +334,7 @@ function renderGeneralStats() {
     const row = generalStatsTable.insertRow();
     row.innerHTML = `
       <td>${player.name}</td>
+      <td>${player.elo}</td>
       <td>${player.wins}</td>
       <td>${player.losses}</td>
       <td>${played}</td>
@@ -303,23 +343,36 @@ function renderGeneralStats() {
       <td>${player.pointsConceded}</td>
       <td>${avgConceded}</td>
       <td>${player.obecnosc}</td>
+      <td>${
+  player.streakCount ? `${player.streakCount}${player.streakType}` : "-"
+}</td>
+
     `;
   });
   fadeInElement(generalStatsTable.parentElement);
 
 }
-function addResultToResultsTable(match) {
-  const resultsTable = document.getElementById("resultsTable").getElementsByTagName("tbody")[0];
-  const row = resultsTable.insertRow();
-  row.innerHTML = `
-    <td>${resultsTable.rows.length + 1}</td>
-    <td>Mecz ${match.series || 1}-${match.round || 1}</td>
-    <td>${match.player1}</td>
-    <td>${match.player2}</td>
-    <td>${match.result}</td>
-  `;
-  fadeInElement(resultsTable.parentElement);
+
+function renderEloRanking() {
+  const tableBody = document.querySelector("#eloRankingTable tbody");
+  tableBody.innerHTML = "";
+
+  const ranked = [...allPlayers]
+    .filter(p => typeof p.elo === "number")
+    .sort((a, b) => b.elo - a.elo);
+
+  ranked.forEach((player, index) => {
+    const row = tableBody.insertRow();
+    row.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${player.name}</td>
+      <td>${player.elo}</td>
+    `;
+  });
+
+  fadeInElement(document.getElementById("rankingView"));
 }
+
 
 // ======= RENDEROWANIE TABELI ARCHIWUM Z GLOBALNĄ NUMERACJĄ =======
 function renderArchiveView() {
@@ -329,7 +382,8 @@ function renderArchiveView() {
   const container = document.getElementById("tournamentArchive");
   let archiveData = JSON.parse(localStorage.getItem("turniej_archiwum")) || [];
 
-  const auth = getAuth();
+  const auth = getAuthFn(); // 👈 Zamiast getAuth()
+
   const user = auth.currentUser;
 
   if (user) {
@@ -475,5 +529,27 @@ function fadeInElement(el) {
 
 window.fadeInElement = fadeInElement;
 
-// Wczytanie początkowych danych i sprawdzenie automatycznych resetów
-loadDataFromFirebase();
+
+
+window.renderEloRanking = renderEloRanking;
+// ======= OBSŁUGA ZAKŁADEK =======
+
+document.getElementById("showTournamentBtn").addEventListener("click", () => {
+  document.getElementById("mainContainer").style.display = "block";
+  document.getElementById("archiveView").style.display = "none";
+  document.getElementById("rankingView").style.display = "none";
+});
+
+document.getElementById("showArchiveBtn").addEventListener("click", () => {
+  document.getElementById("mainContainer").style.display = "none";
+  document.getElementById("archiveView").style.display = "block";
+  document.getElementById("rankingView").style.display = "none";
+  window.renderArchiveView?.();
+});
+
+document.getElementById("showRankingBtn").addEventListener("click", () => {
+  document.getElementById("mainContainer").style.display = "none";
+  document.getElementById("archiveView").style.display = "none";
+  document.getElementById("rankingView").style.display = "block";
+  window.renderEloRanking?.();
+});

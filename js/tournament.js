@@ -1,8 +1,11 @@
+console.log("✅ tournament.js załadowany");
+
 // Import bazy danych Firestore z modułu firebase.js
-import { doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-const db = window.db;
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+import { db, doc, setDoc, deleteDoc, getDoc, auth } from "./firebase.js";
+
+
+
+
 
 // ======= GLOBALNE ZMIENNE TURNIEJU =======
 export let allPlayers = [];
@@ -19,60 +22,11 @@ export let tournamentEnded = false;
 let allRounds = [];
 let currentRoundIndex = 0;
 
-function saveLocalBackup() {
-  const backupMatches = matches.map(m => ({
-    ...m,
-    result: m.confirmed ? m.result : "",     // wyczyść wynik jeśli niepotwierdzony
-    confirmed: !!m.confirmed                 // jawnie ustaw false
-  }));
-  localStorage.setItem("turniej_matches", JSON.stringify(backupMatches));
-  localStorage.setItem("turniej_stats", JSON.stringify(stats));
-  localStorage.setItem("turniej_series", getCurrentSeriesNumber());
-
-}
 
 
 
-function loadLocalBackup() {
-  const savedSeries = parseInt(localStorage.getItem("turniej_series"), 10) || 0;
-
-  const savedMatches = localStorage.getItem("turniej_matches");
-  const savedStats = localStorage.getItem("turniej_stats");
-
-  if (savedMatches && savedStats) {
-    matches = JSON.parse(savedMatches);
-    stats = JSON.parse(savedStats);
-
-    window.renderMatches();
-    window.renderStats();
-
-    matches.forEach(match => {
-      if (match.confirmed) {
-        window.addResultToResultsTable(match);
-      }
-    });
-
-    console.log("✅ Przywrócono dane turnieju z localStorage");
-
-    const allConfirmed = matches.length > 0 && matches.every(m => m.confirmed);
-    if (allConfirmed && !tournamentEnded) {
-      console.log("▶️ Wszystkie mecze potwierdzone – generuję nową rundę...");
-
-      // 💥 USUWAMY stare mecze (potwierdzone) przed kolejną rundą
-      matches = [];
-      generateMatches();
-    }
-  }
-}
 
 
-
-function clearLocalBackup() {
-  localStorage.removeItem("turniej_matches");
-  localStorage.removeItem("turniej_stats");
-  localStorage.removeItem("turniej_series");
-
-}
 
 // ======= FUNKCJA ZAPISUJĄCA DANE DO FIREBASE =======
 function saveDataToFirebase() {
@@ -84,6 +38,27 @@ function saveDataToFirebase() {
   .then(() => console.log("Dane zapisane do Firebase"))
   .catch(error => console.error("Błąd zapisu do Firebase: ", error));
 }
+async function saveDraftToFirebase() {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const draftData = {
+    gracze: allPlayers.filter(p => p.selected).map(p => p.name),
+    matches,
+    stats,
+    
+    series: getCurrentSeriesNumber(),
+    timestamp: new Date().toISOString()
+  };
+
+  try {
+    await setDoc(doc(window.db, "robocze_turnieje", user.uid), draftData);
+    console.log("📝 Zapisano roboczy stan turnieju do Firebase");
+  } catch (err) {
+    console.error("❌ Błąd zapisu roboczego turnieju:", err);
+  }
+}
+
 
 // ======= FUNKCJA ŁADUJĄCA CZCIONKĘ (DO GENEROWANIA PDF) =======
 function loadCustomFont(doc) {
@@ -105,7 +80,7 @@ export function addPlayer() {
     alert("Gracz o takiej nazwie już istnieje!");
     return;
   }
-  const newPlayer = { id: nextPlayerId++, name: name };
+  const newPlayer = { id: nextPlayerId++, name: name, elo: 1000 };
   allPlayers.push(newPlayer);
   nameInput.value = "";
   window.renderPlayersList();
@@ -151,7 +126,6 @@ export function confirmPlayers() {
     generalStats[player.name] = generalStats[player.name] || { wins: 0, losses: 0, pointsScored: 0, pointsConceded: 0, obecnosc: 0 };
   });
 
-  localStorage.setItem("turniej_players", JSON.stringify(selected));
 
   alert("Gracze zostali wybrani. Możesz teraz wygenerować mecze.");
   saveDataToFirebase();
@@ -198,7 +172,6 @@ export function generateMatches() {
   }
 
   const courtCount = parseInt(document.getElementById("numCourts").value, 10) || 1;
-  const lastSeries = parseInt(localStorage.getItem("turniej_series"), 10) || 0;
   let seriesNumber = lastSeries + 1;
 
   const pairings = [];
@@ -271,8 +244,6 @@ export function generateMatches() {
   }
 
   matches = allNewMatches;
-  localStorage.setItem("turniej_series", seriesNumber.toString());
-  localStorage.setItem("turniej_in_progress", "true");
 
   window.renderMatches();
 
@@ -282,6 +253,8 @@ export function generateMatches() {
     endWrapper.style.display = "block";
     fadeInElement(endWrapper);
   }
+  saveDraftToFirebase(); // 📝 zapis roboczy nowej serii
+
 }
 
 
@@ -311,16 +284,92 @@ export function confirmMatch(index) {
   }
 
   const result = `${score1}:${score2}`;
-  const winner = score1 > score2 ? match.player1 : match.player2;
+const winner = score1 > score2 ? match.player1 : match.player2;
 
-  // ✅ Wstaw dane do modala
-  const modalContent = document.getElementById("matchConfirmContent");
-  modalContent.innerHTML = `
-    <p><strong>${match.player1}:</strong> ${score1} pkt</p>
-    <p><strong>${match.player2}:</strong> ${score2} pkt</p>
-    <hr/>
-    <p>✅ <strong>Zwycięzca:</strong> ${winner}</p>
-  `;
+const p1 = allPlayers.find(p => p.name === match.player1);
+const p2 = allPlayers.find(p => p.name === match.player2);
+
+// 📊 Oblicz zmianę ELO przed aktualizacją
+const elo1Before = p1?.elo ?? 1000;
+const elo2Before = p2?.elo ?? 1000;
+
+const expected1 = 1 / (1 + 10 ** ((elo2Before - elo1Before) / 400));
+const expected2 = 1 - expected1;
+const actual1 = score1 > score2 ? 1 : 0;
+const actual2 = 1 - actual1;
+
+const margin = Math.abs(score1 - score2);
+const closeness = 1 - (margin / Math.max(score1, score2));
+const eloDiff = Math.abs(elo1Before - elo2Before);
+
+const fairnessFactor = 1 - Math.min(eloDiff / 400, 0.5);  // max -50%
+const marginFactor = 1 + (margin / 5);                    // max około x3
+
+const K = 32 * marginFactor;
+const fairnessPenalty = 1 - Math.min(eloDiff / 400, 0.5); // 0.5–1
+
+const delta1 = Math.round(K * (actual1 - expected1) * fairnessPenalty);
+const delta2 = Math.round(K * (actual2 - expected2) * fairnessPenalty);
+
+
+
+// ✅ Wstaw dane do modala
+const modalContent = document.getElementById("matchConfirmContent");
+const player1Data = allPlayers.find(p => p.name === match.player1);
+const player2Data = allPlayers.find(p => p.name === match.player2);
+
+
+const getStreakLabel = (player) => {
+  const gs = generalStats[player.name];
+  if (!gs || !gs.streakCount) return "";
+
+  const count = gs.streakCount;
+  const type = gs.streakType;
+  const icon = type === "W" ? "🔥" : "❌";
+
+  let badgeClass = "bg-secondary";
+  if (type === "W") {
+    if (count >= 9) badgeClass = "bg-warning text-dark";
+    else if (count >= 6) badgeClass = "bg-warning";
+    else if (count >= 3) badgeClass = "bg-success";
+  } else if (type === "L") {
+    if (count >= 9) badgeClass = "bg-danger text-white fw-bold";
+    else if (count >= 6) badgeClass = "bg-danger";
+    else if (count >= 3) badgeClass = "bg-secondary";
+  }
+
+  return ` <span class="badge ${badgeClass} ms-2">${icon} ${count}${type}</span>`;
+};
+
+
+
+const streak1 = getStreakLabel(player1Data);
+const streak2 = getStreakLabel(player2Data);
+
+
+modalContent.innerHTML = `
+  <p><strong>${match.player1}:</strong> ${score1} pkt${streak1}<br/>
+
+     ELO: ${elo1Before} → ${elo1Before + delta1} <span class="text-muted">(zmiana: ${delta1 >= 0 ? '+' : ''}${delta1})</span>
+  </p>
+  <p><strong>${match.player2}:</strong> ${score2} pkt${streak2}<br/>
+
+     ELO: ${elo2Before} → ${elo2Before + delta2} <span class="text-muted">(zmiana: ${delta2 >= 0 ? '+' : ''}${delta2})</span>
+  </p>
+  <hr/>
+  <p>✅ <strong>Zwycięzca:</strong> ${winner}</p>
+    <p class="text-muted" style="font-size: 13px;">
+    ⚖️ Modyfikator ELO: ×${(fairnessPenalty * marginFactor).toFixed(2)}<br/>
+    <small>(punktowy: ×${marginFactor.toFixed(2)} • fair play: ×${fairnessPenalty.toFixed(2)})</small>
+    <button class="btn btn-sm btn-outline-secondary ms-2 px-2 py-0" style="font-size: 12px;" data-bs-toggle="modal" data-bs-target="#eloInfoModal">
+      ❔
+    </button>
+  </p>
+
+`;
+
+
+
 
   // ✅ Pokaż modal
   const modal = new bootstrap.Modal(document.getElementById("matchConfirmModal"));
@@ -332,11 +381,13 @@ export function confirmMatch(index) {
 
     match.result = result;
     match.confirmed = true;
+// 🧮 Aktualizacja ELO
+const p1 = allPlayers.find(p => p.name === match.player1);
+const p2 = allPlayers.find(p => p.name === match.player2);
+if (p1 && p2) updateElo(p1, p2, score1, score2);
 
     // Dodaj potwierdzony mecz do pełnej historii
-const allMatches = JSON.parse(localStorage.getItem("turniej_all_matches") || "[]");
 allMatches.push({ ...match, timestamp: new Date().toISOString() });
-localStorage.setItem("turniej_all_matches", JSON.stringify(allMatches));
 
     const btn = document.getElementById(`confirmButton-${index}`);
     btn.classList.remove("btn-outline-success");
@@ -349,7 +400,8 @@ localStorage.setItem("turniej_all_matches", JSON.stringify(allMatches));
     window.addResultToResultsTable(match);
     updateStats(match);
     saveDataToFirebase();
-    saveLocalBackup(); // ZAWSZE zapisuj, nawet jeśli to ostatni mecz
+    
+    saveDraftToFirebase(); // 📝 zapis roboczy nowej serii
 
     
 
@@ -421,20 +473,101 @@ function updateStats(match) {
   generalStats[match.player1].pointsConceded += score2;
   generalStats[match.player2].pointsConceded += score1;
   
+  // 📊 AKTUALIZACJA SERII ZWYCIĘSTW / PORAŻEK
+function updateStreak(playerName, won) {
+  const obj = generalStats[playerName];
+  if (!obj) return;
+  if (!obj.streakType || !obj.streakCount) {
+    obj.streakType = won ? "W" : "L";
+    obj.streakCount = 1;
+  } else if ((won && obj.streakType === "W") || (!won && obj.streakType === "L")) {
+    obj.streakCount += 1;
+  } else {
+    obj.streakType = won ? "W" : "L";
+    obj.streakCount = 1;
+  }
+}
+
+updateStreak(match.player1, score1 > score2);
+updateStreak(match.player2, score2 > score1);
   window.renderStats();
   
   window.renderGeneralStats();
+  saveDraftToFirebase(); // 📝 zapis roboczy nowej serii
+  console.log("✅ updateStats działa, match:", match);
+
 }
 
 
 
 
+function updateElo(player1, player2, score1, score2) {
+  const elo1 = player1.elo ?? 1000;
+  const elo2 = player2.elo ?? 1000;
+
+  const expected1 = 1 / (1 + 10 ** ((elo2 - elo1) / 400));
+  const expected2 = 1 - expected1;
+  const actual1 = score1 > score2 ? 1 : 0;
+  const actual2 = 1 - actual1;
+
+  const margin = Math.abs(score1 - score2);
+  const eloDiff = Math.abs(elo1 - elo2);
+  const marginFactor = 1 + (margin / 5); // premiuje wysoką wygraną
+  const fairnessPenalty = 1 - Math.min(eloDiff / 400, 0.5); // chroni słabszego
+  const baseK = 32 * marginFactor;
+
+  // ✅ Pobierz streaki z generalStats
+  const gs1 = generalStats[player1.name] || {};
+  const gs2 = generalStats[player2.name] || {};
+
+  const streak1type = gs1.streakType || null;
+  const streak1count = gs1.streakCount || 0;
+  const streak2type = gs2.streakType || null;
+  const streak2count = gs2.streakCount || 0;
+
+  const getMultiplier = (type, count) => {
+    if (type === "W") {
+      if (count >= 9) return 1.4;
+      if (count >= 6) return 1.25;
+      if (count >= 3) return 1.1;
+    } else if (type === "L") {
+      if (count >= 9) return "onlyOne";
+      if (count >= 6) return 0.5;
+      if (count >= 3) return 0.9;
+    }
+    return 1;
+  };
+
+  const mult1 = getMultiplier(streak1type, streak1count);
+  const mult2 = getMultiplier(streak2type, streak2count);
+
+  let delta1 = baseK * (actual1 - expected1) * fairnessPenalty;
+  let delta2 = baseK * (actual2 - expected2) * fairnessPenalty;
+
+  if (mult1 === "onlyOne" && actual1 === 0) delta1 = -1;
+  else delta1 = Math.round(delta1 * (typeof mult1 === "number" ? mult1 : 1));
+
+  if (mult2 === "onlyOne" && actual2 === 0) delta2 = -1;
+  else delta2 = Math.round(delta2 * (typeof mult2 === "number" ? mult2 : 1));
+
+  // 💥 Przegrana z kimś z 9L = większa kara
+  if (mult1 === "onlyOne" && actual2 === 1) {
+    const ratio = Math.min(eloDiff / 400, 1);
+    delta2 = Math.round(delta2 * (1 + ratio));
+  }
+  if (mult2 === "onlyOne" && actual1 === 1) {
+    const ratio = Math.min(eloDiff / 400, 1);
+    delta1 = Math.round(delta1 * (1 + ratio));
+  }
+
+  player1.elo = Math.round(elo1 + delta1);
+  player2.elo = Math.round(elo2 + delta2);
+}
 
 
 
 // ======= ZAKOŃCZENIE TURNIEJU =======
-export function endTournament() {
-  const savedMatches = JSON.parse(localStorage.getItem("turniej_all_matches") || "[]");
+export async function endTournament() {
 
   const allConfirmedMatches = savedMatches.filter(m => m.confirmed);
   
@@ -447,7 +580,6 @@ export function endTournament() {
 
   if (tournamentEnded) return;
   tournamentEnded = true;
-  const savedPlayers = JSON.parse(localStorage.getItem("turniej_players")) || [];
 
 savedPlayers.forEach(name => {
   if (!generalStats[name]) {
@@ -456,8 +588,7 @@ savedPlayers.forEach(name => {
   generalStats[name].obecnosc += 1;
 });
 
-localStorage.removeItem("turniej_players"); // 🧹 sprzątamy
-localStorage.removeItem("turniej_in_progress");
+
 
 
   players.forEach(player => {
@@ -467,7 +598,7 @@ localStorage.removeItem("turniej_in_progress");
     generalStats[player.name].obecnosc = (generalStats[player.name].obecnosc || 0) + 1;
   });
   saveDataToFirebase();
-  clearLocalBackup(); // 🧹 usuń backup
+  
 
   window.renderGeneralStats();
   document.getElementById("addPlayerBtn").disabled = true;
@@ -514,7 +645,7 @@ localStorage.removeItem("turniej_in_progress");
     
   
    
-    const auth = getAuth();
+    
     const user = auth.currentUser;
     if (user) {
       const archiveId = `turniej_${archive.data.replace(/[:.]/g, "-")}`;
@@ -534,11 +665,29 @@ const archiveRef = doc(db, "archiwa", archiveId);
     // Użyj biblioteki do zapisu pliku w Cordova/Capacitor np. Filesystem.writeFile()
     */
   
+    
     // 🔽 4. Renderuj widok archiwum (z `index.html`)
-    localStorage.removeItem("turniej_series"); // 🔁 reset numeru serii
+   
+    if (user) {
+      deleteDoc(doc(window.db, "robocze_turnieje", user.uid))
+        .then(() => console.log("🧹 Usunięto wersję roboczą turnieju"))
+        .catch(err => console.error("❌ Błąd usuwania wersji roboczej:", err));
+    }
+    
+    // 🔄 Resetuj stan selected
+allPlayers.forEach(player => {
+  player.selected = false;
+});
+renderPlayersList();
+
+// 🔁 Zapisz do Firebase z resetem selected
+
+const playersRef = doc(window.db, "turniej", "stats");
+await setDoc(playersRef, { allPlayers }, { merge: true });
+
 
     if (window.renderArchiveView) window.renderArchiveView();
-    localStorage.removeItem("turniej_all_matches");
+
 
 }
 
@@ -551,7 +700,11 @@ export function loadDataFromFirebase() {
     .then(docSnap => {
       if (docSnap.exists()) {
         const data = docSnap.data();
-        allPlayers = data.allPlayers || [];
+        allPlayers = (data.allPlayers || []).map(p => ({
+          ...p,
+          elo: p.elo ?? 1000
+        }));
+        
         generalStats = data.generalStats || {};
         if (allPlayers.length > 0) {
           nextPlayerId = Math.max(...allPlayers.map(p => p.id)) + 1;
@@ -559,21 +712,10 @@ export function loadDataFromFirebase() {
         window.renderPlayersList();
         window.renderGeneralStats();
 
-        if (!tournamentEnded) {
-          loadLocalBackup(); // 🔁 przywróć dane jeśli turniej trwa
-        }
-
-        // ✅ Ukryj setupPanel jeśli turniej trwa
-        if (localStorage.getItem("turniej_in_progress") === "true") {
-          const panel = document.getElementById("setupPanel");
-          if (panel) panel.style.display = "none";
         
-          const endWrapper = document.getElementById("endTournamentWrapper");
-          if (endWrapper && !tournamentEnded) {
-            endWrapper.style.display = "block";
-            fadeInElement(endWrapper);
-          }
-        }
+
+        
+        
         
 
       } else {
@@ -606,14 +748,7 @@ function hideSetupControls() {
  export function resetTournamentData() {
   if (!confirm("Na pewno usunąć wszystkie dane trwającego turnieju?")) return;
 
-  [
-    "turniej_matches",
-    "turniej_stats",
-    "turniej_series",
-    "turniej_players",
-    "turniej_in_progress",
-    "turniej_archiwum" // 🔥 USUWA archiwum lokalne!
-  ].forEach(key => localStorage.removeItem(key));
+ 
   
   matches = [];
   stats = {};
@@ -626,4 +761,14 @@ function hideSetupControls() {
   alert("Dane turnieju zostały zresetowane.");
   window.location.href = window.location.href.split("?")[0];
 }
+// ======= AUTO-ZAPIS CO 10 SEKUND (jeśli turniej trwa) =======
+setInterval(() => {
+  const user = auth.currentUser;
+  if (!user || tournamentEnded) return;
 
+  const activeMatches = matches.filter(m => !m.confirmed);
+  if (activeMatches.length === 0) return; // nic do zapisu
+
+  saveDraftToFirebase();
+  console.log("🕒 Auto-zapis wykonany");
+}, 10000); // co 10 sekund

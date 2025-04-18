@@ -1,4 +1,5 @@
-// js/firebase.js
+
+// @ts-nocheck
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import {
   getAuth,
@@ -11,8 +12,14 @@ import {
   getFirestore,
   doc,
   setDoc,
-  getDoc
+  getDoc,
+  deleteDoc
 } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import {
+  matches,
+  stats,
+  allPlayers
+} from "./tournament.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAmWZmK1SJxyBZRrf61sLtyrGy4kctS3T8",
@@ -25,14 +32,12 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-window.db = getFirestore(app);
+const db = getFirestore(app);
+window.db = db;
 const auth = getAuth(app);
 
 window.firebaseAuthReady = (callback) => {
-  const loginBtn = document.getElementById("loginBtn");
-  const registerBtn = document.getElementById("registerBtn");
-
-  loginBtn.onclick = () => {
+  document.getElementById("loginBtn").onclick = () => {
     const email = document.getElementById("emailInput").value;
     const pass = document.getElementById("passwordInput").value;
     signInWithEmailAndPassword(auth, email, pass)
@@ -40,7 +45,7 @@ window.firebaseAuthReady = (callback) => {
       .catch(e => alert("Błąd logowania: " + e.message));
   };
 
-  registerBtn.onclick = async () => {
+  document.getElementById("registerBtn").onclick = async () => {
     const email = document.getElementById("emailInput").value;
     const pass = document.getElementById("passwordInput").value;
     const nick = prompt("Wprowadź swój nick (nazwa gracza):");
@@ -64,81 +69,99 @@ window.firebaseAuthReady = (callback) => {
     if (user) {
       document.getElementById("authContainer").style.display = "none";
       document.getElementById("viewTabs").style.display = "flex";
-      
       document.getElementById("mainContainer").style.display = "block";
-      
+      document.getElementById("userInfoBar").style.display = "flex";
+      document.getElementById("loggedInUserEmail").textContent = user.email || "(brak e-maila)";
 
-      // Obsługa zakładek
-      document.getElementById("showTournamentBtn").onclick = () => {
-        const main = document.getElementById("mainContainer");
-        main.style.display = "block";
-        fadeInElement(main);
-      
-        const archive = document.getElementById("archiveView");
-        archive.style.display = "none";
-      
-        document.getElementById("showTournamentBtn").classList.add("btn-primary");
-        document.getElementById("showTournamentBtn").classList.remove("btn-outline-primary");
-        document.getElementById("showArchiveBtn").classList.remove("btn-primary");
-        document.getElementById("showArchiveBtn").classList.add("btn-outline-secondary");
-      };
-      
-      document.getElementById("showArchiveBtn").onclick = () => {
-        document.getElementById("mainContainer").style.display = "none";
-        const archive = document.getElementById("archiveView");
-        archive.style.display = "block";
-        fadeInElement(archive);
-      
-        document.getElementById("showArchiveBtn").classList.add("btn-primary");
-        document.getElementById("showArchiveBtn").classList.remove("btn-outline-secondary");
-        document.getElementById("showTournamentBtn").classList.remove("btn-primary");
-        document.getElementById("showTournamentBtn").classList.add("btn-outline-primary");
-      
-        if (window.renderArchiveView) window.renderArchiveView();
-      };
-      
-      const docRef = doc(window.db, "users", user.uid);
-      const docSnap = await getDoc(docRef);
-      const nick = docSnap.exists() ? docSnap.data().nick : "(nieznany)";
+      document.getElementById("logoutBtn").addEventListener("click", async () => {
+        await signOut(auth);
+        location.reload();
+      });
 
-      const infoBox = document.createElement("div");
-      infoBox.id = "userInfoBox";
-      infoBox.className = "alert alert-info mt-3";
-      infoBox.innerHTML = `
-        Zalogowano jako: <strong>${nick}</strong> (${user.email})
-        <button id="logoutBtn" class="btn btn-sm btn-danger float-end">Wyloguj</button>
-      `;
-      document.body.prepend(infoBox);
+      // 🔄 Przywrócenie roboczego turnieju
+      const draftRef = doc(window.db, "robocze_turnieje", user.uid);
+      const draftSnap = await getDoc(draftRef);
 
-      document.getElementById("logoutBtn").onclick = () => {
-        signOut(auth).then(() => {
-          const infoBox = document.getElementById("userInfoBox");
-          if (infoBox) infoBox.remove();
-          document.getElementById("authContainer").style.display = "block";
-          hideAllMainElements();
-          localStorage.clear();
+      if (draftSnap.exists()) {
+        const confirmRestore = confirm(`Znaleziono zapisany turniej w chmurze.
+          Czy chcesz go przywrócić?`);
           
-        });
-      };
+        if (confirmRestore) {
+          const data = draftSnap.data();
+          document.getElementById("restoreSpinner").style.display = "block";
 
-      if (callback) callback();
+          matches.length = 0;
+          matches.push(...(data.matches || []));
+          Object.keys(stats).forEach(k => delete stats[k]);
+          Object.assign(stats, data.stats || {});
+          const selected = data.gracze || [];
+          allPlayers.forEach(p => {
+            p.selected = selected.includes(p.name);
+          });
+
+          await deleteDoc(draftRef);
+
+          import("./ui.js").then(() => {
+            window.renderPlayersList();
+            window.renderMatches();
+            window.renderStats();
+            window.renderGeneralStats();
+
+            matches.forEach(match => {
+              if (match.confirmed) {
+                window.addResultToResultsTable(match);
+              }
+            });
+
+            document.getElementById("restoreSpinner").style.display = "none";
+
+            const toastText = data.matches?.length
+              ? `✅ Przywrócono turniej z ${data.matches.length} meczami.`
+              : `✅ Przywrócono turniej.`;
+            document.getElementById("restoreToastContent").textContent = toastText;
+            const toastEl = document.getElementById("restoreToast");
+            new bootstrap.Toast(toastEl).show();
+
+            setTimeout(() => {
+              document.getElementById("matchesTable")?.scrollIntoView({ behavior: "smooth" });
+            }, 600);
+
+            if (callback) callback();
+          });
+
+          return;
+        } else {
+          await deleteDoc(draftRef);
+        }
+      }
+
+      const mod = await import("./tournament.js");
+      mod.loadDataFromFirebase();
+
+      import("./ui.js").then(() => {
+        if (callback) callback();
+      });
+
     } else {
       document.getElementById("authContainer").style.display = "block";
-hideAllMainElements();
-
+      document.getElementById("userInfoBar").style.display = "none";
+      document.getElementById("viewTabs").style.display = "none";
+      hideAllMainElements();
     }
   });
-};function hideAllMainElements() {
+};
+
+function hideAllMainElements() {
   [
     "mainContainer", "viewTabs", "archiveView", "playersList",
-    "setupPanel", "generateMatchesBtn", 
-    "resetTournamentBtn"
+    "setupPanel", "generateMatchesBtn", "resetTournamentBtn",
+    "rankingView", "tournamentArchive", "userInfoBar", "endTournamentWrapper"
   ].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = "none";
   });
 
-  ["matchesTable", "resultsTable", "statsTable", "generalStatsTable"].forEach(id => {
+  ["matchesTable", "resultsTable", "statsTable", "generalStatsTable", "eloRankingTable"].forEach(id => {
     const wrapper = document.getElementById(id)?.closest(".table-responsive");
     if (wrapper) wrapper.style.display = "none";
   });
@@ -146,3 +169,13 @@ hideAllMainElements();
   const nc = document.getElementById("numCourts")?.parentElement;
   if (nc) nc.style.display = "none";
 }
+
+export {
+  auth,
+  db,
+  doc,
+  setDoc,
+  getDoc,
+  deleteDoc,
+  signOut
+};
