@@ -562,7 +562,7 @@ import { collection, getDocs, auth, getAuthFn } from "./firebase.js";
     document.getElementById("rankingView").style.display = "block";
     window.renderEloRanking?.();
   });
-  }
+  
 }
 
 const user = getAuthFn().currentUser;
