@@ -3,8 +3,10 @@ import { getAuthFn } from "./firebase.js";
 const user = getAuthFn().currentUser;
 if (!user) {
   console.log("⛔ ui.js: użytkownik nie jest zalogowany – przerywam renderowanie");
-  return;
+} else {
+  initUI(); // ← nowy wrapper na całą logikę
 }
+
 
 
 import { allPlayers, matches, stats, generalStats, tournamentEnded,
@@ -16,7 +18,7 @@ import { collection, getDocs, auth, getAuthFn } from "./firebase.js";
 
 
 
-          
+function initUI() {         
 // ======= RENDEROWANIE LISTY GRACZY Z CHECKBOXAMI =======
 function renderPlayersList() {
   const playersForm = document.getElementById("playersForm");
@@ -560,3 +562,4 @@ document.getElementById("showRankingBtn").addEventListener("click", () => {
   document.getElementById("rankingView").style.display = "block";
   window.renderEloRanking?.();
 });
+}
