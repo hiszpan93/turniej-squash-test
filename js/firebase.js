@@ -173,6 +173,10 @@ function hideAllMainElements() {
   if (nc) nc.style.display = "none";
 }
 
+function getAuthFn() {
+  return auth;
+}
+
 export {
   auth,
   db,
@@ -182,6 +186,8 @@ export {
   deleteDoc,
   signOut,
   collection,
-  getDocs
+  getDocs,
+  getAuthFn // ✅ brakujący eksport
 };
+
 
