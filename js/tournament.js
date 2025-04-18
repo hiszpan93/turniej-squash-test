@@ -16,6 +16,7 @@ let results = [];
 export let stats = {};
 export let generalStats = {};
 export let tournamentEnded = false;
+export let allMatches = [];
 
 
 // Zmienne do rund (round-robin)
