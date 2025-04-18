@@ -177,5 +177,8 @@ export {
   setDoc,
   getDoc,
   deleteDoc,
-  signOut
+  signOut,
+  collection,
+  getDocs
 };
+

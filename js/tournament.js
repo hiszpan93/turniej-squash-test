@@ -704,19 +704,16 @@ export function loadDataFromFirebase() {
           ...p,
           elo: p.elo ?? 1000
         }));
-        
+
         generalStats = data.generalStats || {};
         if (allPlayers.length > 0) {
           nextPlayerId = Math.max(...allPlayers.map(p => p.id)) + 1;
         }
-        window.renderPlayersList();
-        window.renderGeneralStats();
 
-        
-
-        
-        
-        
+        import("./ui.js").then(() => {
+          window.renderPlayersList();
+          window.renderGeneralStats();
+        });
 
       } else {
         console.log("Brak dokumentu 'stats' w kolekcji 'turniej'");
@@ -726,6 +723,7 @@ export function loadDataFromFirebase() {
       console.error("Błąd odczytu danych z Firebase: ", error);
     });
 }
+
 
 function getCurrentSeriesNumber() {
   if (matches.length === 0) return 0;
