@@ -172,7 +172,8 @@ export function generateMatches() {
   }
 
   const courtCount = parseInt(document.getElementById("numCourts").value, 10) || 1;
-  let seriesNumber = lastSeries + 1;
+  let seriesNumber = getCurrentSeriesNumber() + 1;
+
 
   const pairings = [];
   for (let i = 0; i < players.length; i++) {

@@ -1,3 +1,10 @@
+import { getAuthFn } from "./firebase.js";
+
+const user = getAuthFn().currentUser;
+if (!user) {
+  console.log("⛔ ui.js: użytkownik nie jest zalogowany – przerywam renderowanie");
+  return;
+}
 
 
 import { allPlayers, matches, stats, generalStats, tournamentEnded,
