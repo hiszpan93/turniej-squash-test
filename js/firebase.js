@@ -13,8 +13,11 @@ import {
   doc,
   setDoc,
   getDoc,
-  deleteDoc
+  deleteDoc,
+  collection,
+  getDocs
 } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
 import {
   matches,
   stats,
