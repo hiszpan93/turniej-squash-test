@@ -571,7 +571,7 @@ function updateElo(player1, player2, score1, score2) {
 // ======= ZAKOŃCZENIE TURNIEJU =======
 export async function endTournament() {
 
-  const allConfirmedMatches = savedMatches.filter(m => m.confirmed);
+  const allConfirmedMatches = allMatches.filter(m => m.confirmed);
   
   // ✅ pozwól zakończyć, jeśli przynajmniej jedna seria miała potwierdzone mecze
   if (allConfirmedMatches.length === 0) {

@@ -135,15 +135,22 @@ window.firebaseAuthReady = (callback) => {
           return;
         } else {
           await deleteDoc(draftRef);
+        
+          const mod = await import("./tournament.js");
+          await mod.loadDataFromFirebase();
+        
+          // ⛔ NIE ŁADUJ UI OD RAZU — sprawdzimy ponownie, czy user nadal jest zalogowany
+          if (auth.currentUser) {
+            import("./ui.js").then(() => {
+              if (callback) callback();
+            });
+          }
         }
+        
       }
 
-      const mod = await import("./tournament.js");
-      mod.loadDataFromFirebase();
-
-      import("./ui.js").then(() => {
-        if (callback) callback();
-      });
+      
+      
 
     } else {
       document.getElementById("authContainer").style.display = "block";
