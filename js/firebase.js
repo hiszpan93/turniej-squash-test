@@ -18,11 +18,7 @@ import {
   getDocs
 } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-import {
-  matches,
-  stats,
-  allPlayers
-} from "./tournament.js";
+
 
 const firebaseConfig = {
   apiKey: "AIzaSyAmWZmK1SJxyBZRrf61sLtyrGy4kctS3T8",
@@ -85,14 +81,15 @@ window.firebaseAuthReady = (callback) => {
           const data = draftSnap.data();
           document.getElementById("restoreSpinner").style.display = "block";
   
-          matches.length = 0;
-          matches.push(...(data.matches || []));
-          Object.keys(stats).forEach(k => delete stats[k]);
-          Object.assign(stats, data.stats || {});
+          window.matches.length = 0;
+          window.matches.push(...(data.matches || []));
+          Object.keys(window.stats).forEach(k => delete window.stats[k]);
+          Object.assign(window.stats, data.stats || {});
           const selected = data.gracze || [];
-          allPlayers.forEach(p => {
+          window.allPlayers.forEach(p => {
             p.selected = selected.includes(p.name);
           });
+          
   
           await deleteDoc(draftRef);
   

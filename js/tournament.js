@@ -713,8 +713,12 @@ export async function loadDataFromFirebase() {
       }
 
       // ✅ ZAPISZ DO window.* – żeby initUI() miał do nich dostęp
+      // Najważniejsze linie
       window.allPlayers = allPlayers;
       window.generalStats = generalStats;
+      window.matches = matches;
+      window.stats = stats;
+
 
       window.renderPlayersList?.();
       window.renderGeneralStats?.();
