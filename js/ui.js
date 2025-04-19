@@ -41,13 +41,16 @@ function initUI() {
     allPlayers.forEach(player => {
       playersForm.innerHTML += `
         <div class="form-check">
-          <input class="form-check-input playerCheckbox" type="checkbox" value="${player.id}" ${tournamentEnded ? "disabled" : ""} id="player-${player.id}">
+          <input class="form-check-input playerCheckbox" type="checkbox" value="${player.id}" ${window.tournamentEnded ? "disabled" : ""}
+ id="player-${player.id}">
           <label class="form-check-label" for="player-${player.id}">
             ${player.name} (ID: ${player.id})
           </label>
         </div>
       `;
     });
+    console.log("📋 rendered players:", allPlayers.map(p => p.name));
+
   }
   
   
