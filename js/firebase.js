@@ -136,16 +136,17 @@ window.firebaseAuthReady = (callback) => {
         } else {
           await deleteDoc(draftRef);
         
+          // 🔄 Wczytaj dane z kolekcji "turniej" (stats)
           if (auth.currentUser) {
             import("./ui.js").then(async () => {
               const mod = await import("./tournament.js");
               await mod.loadDataFromFirebase();
-          
+        
               if (callback) callback();
             });
           }
-          
         }
+        
         
       }
 
