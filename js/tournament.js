@@ -706,13 +706,16 @@ export async function loadDataFromFirebase() {
         ...p,
         elo: p.elo ?? 1000
       }));
-
       generalStats = data.generalStats || {};
+
       if (allPlayers.length > 0) {
         nextPlayerId = Math.max(...allPlayers.map(p => p.id)) + 1;
       }
 
-      // ⬇️ dodaj render po załadowaniu danych
+      // ✅ ZAPISZ DO window.* – żeby initUI() miał do nich dostęp
+      window.allPlayers = allPlayers;
+      window.generalStats = generalStats;
+
       window.renderPlayersList?.();
       window.renderGeneralStats?.();
     } else {
