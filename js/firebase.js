@@ -96,11 +96,12 @@ window.firebaseAuthReady = (callback) => {
           const uiMod = await import("./ui.js");
           uiMod.initUI();
   
-          matches.forEach(match => {
+          window.matches?.forEach(match => {
             if (match.confirmed) {
               window.addResultToResultsTable(match);
             }
           });
+          
   
           document.getElementById("restoreSpinner").style.display = "none";
   
