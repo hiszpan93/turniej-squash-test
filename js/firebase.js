@@ -70,11 +70,19 @@ window.firebaseAuthReady = (callback) => {
   
     const uiMod = await import("./ui.js");
     uiMod.initUI();
-  
+
     window.renderPlayersList?.();
     window.renderGeneralStats?.();
+    window.renderMatches?.();
+    window.renderStats?.();
+
+    window.matches?.forEach(match => {
+    if (match.confirmed) {
+    window.addResultToResultsTable(match);
+     }
+    });
+
   }
-  
   onAuthStateChanged(auth, async user => {
     if (user) {
       document.getElementById("logoutBtn").addEventListener("click", async () => {
@@ -104,7 +112,7 @@ window.firebaseAuthReady = (callback) => {
           await deleteDoc(draftRef);
   
           await initTournamentUI();
-          console.log("✅ UI zainicjowane i dane załadowane");
+console.log("✅ UI zainicjowane i dane załadowane");
 
   
           window.matches?.forEach(match => {
