@@ -131,12 +131,16 @@ window.firebaseAuthReady = (callback) => {
         }
       }
   
-      // 🔄 Brak zapisu roboczego – standardowe ładowanie
-      const tournamentMod = await import("./tournament.js");
-      await tournamentMod.loadDataFromFirebase();
-  
       const uiMod = await import("./ui.js");
       uiMod.initUI();
+
+      const tournamentMod = await import("./tournament.js");
+      await tournamentMod.loadDataFromFirebase();
+
+      // ponowny render po załadowaniu danych
+      window.renderPlayersList?.();
+      window.renderGeneralStats?.();
+
   
       // ✅ Pokaż UI
       document.getElementById("authContainer").style.display = "none";
