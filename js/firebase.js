@@ -70,19 +70,11 @@ window.firebaseAuthReady = (callback) => {
 
   onAuthStateChanged(auth, async user => {
     if (user) {
-      document.getElementById("authContainer").style.display = "none";
-      document.getElementById("viewTabs").style.display = "flex";
-      document.getElementById("mainContainer").style.display = "block";
-      document.getElementById("userInfoBar").style.display = "flex";
-      document.getElementById("loggedInUserEmail").textContent = user.email || "(brak e-maila)";
-      document.body.classList.add("logged-in");
-  
       document.getElementById("logoutBtn").addEventListener("click", async () => {
         await signOut(auth);
         location.reload();
       });
   
-      // 🔄 Przywrócenie roboczego turnieju
       const draftRef = doc(window.db, "robocze_turnieje", user.uid);
       const draftSnap = await getDoc(draftRef);
   
@@ -126,24 +118,38 @@ window.firebaseAuthReady = (callback) => {
             document.getElementById("matchesTable")?.scrollIntoView({ behavior: "smooth" });
           }, 600);
   
+          // ✅ Pokaż UI po przywróceniu
+          document.getElementById("authContainer").style.display = "none";
+          document.getElementById("viewTabs").style.display = "flex";
+          document.getElementById("mainContainer").style.display = "block";
+          document.getElementById("userInfoBar").style.display = "flex";
+          document.getElementById("loggedInUserEmail").textContent = user.email || "(brak e-maila)";
+          document.body.classList.add("logged-in");
+  
           if (callback) callback();
           return;
         }
       }
   
-      // 🔄 Brak roboczego turnieju
-      const uiMod = await import("./ui.js");
-      uiMod.initUI();
-  
+      // 🔄 Brak zapisu roboczego – standardowe ładowanie
       const tournamentMod = await import("./tournament.js");
       await tournamentMod.loadDataFromFirebase();
   
-      window.renderPlayersList?.();
-      window.renderGeneralStats?.();
+      const uiMod = await import("./ui.js");
+      uiMod.initUI();
+  
+      // ✅ Pokaż UI
+      document.getElementById("authContainer").style.display = "none";
+      document.getElementById("viewTabs").style.display = "flex";
+      document.getElementById("mainContainer").style.display = "block";
+      document.getElementById("userInfoBar").style.display = "flex";
+      document.getElementById("loggedInUserEmail").textContent = user.email || "(brak e-maila)";
+      document.body.classList.add("logged-in");
   
       if (callback) callback();
+  
     } else {
-      // ❌ Użytkownik niezalogowany
+      // ❌ Użytkownik niezalogowany – pokaż tylko auth
       document.getElementById("authContainer").style.display = "block";
       document.getElementById("userInfoBar").style.display = "none";
       document.getElementById("viewTabs").style.display = "none";
@@ -152,6 +158,7 @@ window.firebaseAuthReady = (callback) => {
       hideAllMainElements();
     }
   });
+  
   
 };
 
