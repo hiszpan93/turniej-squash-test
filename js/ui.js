@@ -19,6 +19,8 @@ import { collection, getDocs, auth, getAuthFn } from "./firebase.js";
 
   
 function initUI() {
+  console.log("✅ initUI() odpalone");
+
   // Po zalogowaniu – pokazujemy całość UI
   document.getElementById("mainContainer").style.display = "block";
   document.getElementById("viewTabs").style.display = "flex";

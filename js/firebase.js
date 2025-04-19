@@ -64,6 +64,17 @@ window.firebaseAuthReady = (callback) => {
     }
   };
 
+  async function initTournamentUI() {
+    const tournamentMod = await import("./tournament.js");
+    await tournamentMod.loadDataFromFirebase();
+  
+    const uiMod = await import("./ui.js");
+    uiMod.initUI();
+  
+    window.renderPlayersList?.();
+    window.renderGeneralStats?.();
+  }
+  
   onAuthStateChanged(auth, async user => {
     if (user) {
       document.getElementById("logoutBtn").addEventListener("click", async () => {
@@ -89,19 +100,18 @@ window.firebaseAuthReady = (callback) => {
           window.allPlayers.forEach(p => {
             p.selected = selected.includes(p.name);
           });
-          
   
           await deleteDoc(draftRef);
   
-          const uiMod = await import("./ui.js");
-          uiMod.initUI();
+          await initTournamentUI();
+          console.log("✅ UI zainicjowane i dane załadowane");
+
   
           window.matches?.forEach(match => {
             if (match.confirmed) {
               window.addResultToResultsTable(match);
             }
           });
-          
   
           document.getElementById("restoreSpinner").style.display = "none";
   
@@ -129,15 +139,8 @@ window.firebaseAuthReady = (callback) => {
         }
       }
   
-      const uiMod = await import("./ui.js");
-      uiMod.initUI();
-
-      const tournamentMod = await import("./tournament.js");
-      await tournamentMod.loadDataFromFirebase();
-
-      // ponowny render po załadowaniu danych
-      window.renderPlayersList?.();
-      window.renderGeneralStats?.();
+      await initTournamentUI();
+      console.log("✅ UI zainicjowane i dane załadowane");
 
   
       // ✅ Pokaż UI
@@ -151,7 +154,7 @@ window.firebaseAuthReady = (callback) => {
       if (callback) callback();
   
     } else {
-      // ❌ Użytkownik niezalogowany – pokaż tylko auth
+      // ❌ Użytkownik niezalogowany – pokaż tylko logowanie
       document.getElementById("authContainer").style.display = "block";
       document.getElementById("userInfoBar").style.display = "none";
       document.getElementById("viewTabs").style.display = "none";

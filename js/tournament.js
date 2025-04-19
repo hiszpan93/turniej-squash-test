@@ -728,6 +728,8 @@ export async function loadDataFromFirebase() {
   } catch (error) {
     console.error("Błąd odczytu danych z Firebase: ", error);
   }
+  console.log("✅ Dane z Firebase:", { allPlayers, generalStats });
+
 }
 
 
