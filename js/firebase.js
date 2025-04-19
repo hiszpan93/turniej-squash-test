@@ -17,7 +17,7 @@ import {
   collection,
   getDocs
 } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-
+import { matches as matchesGlobal, allMatches as allMatchesGlobal } from "./tournament.js";
 
 
 const firebaseConfig = {
@@ -119,11 +119,14 @@ window.matches.push(...(restoreData.matches || []));
 window.allMatches = [...restoreData.allMatches || []];
 
 // DODAJ TO:
-import { matches as matchesGlobal, allMatches as allMatchesGlobal } from "./tournament.js";
+
 matchesGlobal.length = 0;
 matchesGlobal.push(...(restoreData.matches || []));
 allMatchesGlobal.length = 0;
 allMatchesGlobal.push(...(restoreData.allMatches || []));
+window.allMatches = [...allMatchesGlobal]; // ⬅️ ważne!
+
+console.log("📦 allMatches po przywróceniu:", allMatchesGlobal);
 
 
           Object.keys(window.stats).forEach(k => delete window.stats[k]);
