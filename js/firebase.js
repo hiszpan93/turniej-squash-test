@@ -75,24 +75,24 @@ window.firebaseAuthReady = (callback) => {
       document.getElementById("mainContainer").style.display = "block";
       document.getElementById("userInfoBar").style.display = "flex";
       document.getElementById("loggedInUserEmail").textContent = user.email || "(brak e-maila)";
-
+      document.body.classList.add("logged-in");
+  
       document.getElementById("logoutBtn").addEventListener("click", async () => {
         await signOut(auth);
         location.reload();
       });
-
+  
       // 🔄 Przywrócenie roboczego turnieju
       const draftRef = doc(window.db, "robocze_turnieje", user.uid);
       const draftSnap = await getDoc(draftRef);
-
+  
       if (draftSnap.exists()) {
-        const confirmRestore = confirm(`Znaleziono zapisany turniej w chmurze.
-          Czy chcesz go przywrócić?`);
-          
+        const confirmRestore = confirm(`Znaleziono zapisany turniej w chmurze.\nCzy chcesz go przywrócić?`);
+  
         if (confirmRestore) {
           const data = draftSnap.data();
           document.getElementById("restoreSpinner").style.display = "block";
-
+  
           matches.length = 0;
           matches.push(...(data.matches || []));
           Object.keys(stats).forEach(k => delete stats[k]);
@@ -101,70 +101,58 @@ window.firebaseAuthReady = (callback) => {
           allPlayers.forEach(p => {
             p.selected = selected.includes(p.name);
           });
-
+  
           await deleteDoc(draftRef);
-
-          
-          import("./ui.js").then(mod => {
-            mod.initUI();
-          
-            matches.forEach(match => {
-              if (match.confirmed) {
-                window.addResultToResultsTable(match);
-              }
-            });
-          
-            document.getElementById("restoreSpinner").style.display = "none";
-          
-            const toastText = data.matches?.length
-              ? `✅ Przywrócono turniej z ${data.matches.length} meczami.`
-              : `✅ Przywrócono turniej.`;
-            document.getElementById("restoreToastContent").textContent = toastText;
-            const toastEl = document.getElementById("restoreToast");
-            new bootstrap.Toast(toastEl).show();
-          
-            setTimeout(() => {
-              document.getElementById("matchesTable")?.scrollIntoView({ behavior: "smooth" });
-            }, 600);
-          
-            if (callback) callback();
+  
+          const uiMod = await import("./ui.js");
+          uiMod.initUI();
+  
+          matches.forEach(match => {
+            if (match.confirmed) {
+              window.addResultToResultsTable(match);
+            }
           });
-          
-
+  
+          document.getElementById("restoreSpinner").style.display = "none";
+  
+          const toastText = data.matches?.length
+            ? `✅ Przywrócono turniej z ${data.matches.length} meczami.`
+            : `✅ Przywrócono turniej.`;
+          document.getElementById("restoreToastContent").textContent = toastText;
+          const toastEl = document.getElementById("restoreToast");
+          new bootstrap.Toast(toastEl).show();
+  
+          setTimeout(() => {
+            document.getElementById("matchesTable")?.scrollIntoView({ behavior: "smooth" });
+          }, 600);
+  
+          if (callback) callback();
           return;
-        } else {
-          // 🔄 Brak roboczego turnieju – załaduj dane i UI normalnie
-          const tournamentMod = await import("./tournament.js");
-          await tournamentMod.loadDataFromFirebase();
-
-          // 💥 DOPIERO TERAZ – po wczytaniu danych – uruchom UI
-          import("./ui.js").then(uiMod => {
-            uiMod.initUI();
-
-            // 🛠 RĘCZNIE wywołujemy renderowanie (bo loadDataFromFirebase nie robi tego)
-            window.renderPlayersList?.();
-            window.renderGeneralStats?.();
-
-            if (callback) callback();
-          });
-
-          
         }
-
-        
-        
       }
-
-      
-      
-
+  
+      // 🔄 Brak roboczego turnieju
+      const uiMod = await import("./ui.js");
+      uiMod.initUI();
+  
+      const tournamentMod = await import("./tournament.js");
+      await tournamentMod.loadDataFromFirebase();
+  
+      window.renderPlayersList?.();
+      window.renderGeneralStats?.();
+  
+      if (callback) callback();
     } else {
+      // ❌ Użytkownik niezalogowany
       document.getElementById("authContainer").style.display = "block";
       document.getElementById("userInfoBar").style.display = "none";
       document.getElementById("viewTabs").style.display = "none";
+      document.getElementById("mainContainer").style.display = "none";
+      document.body.classList.remove("logged-in");
       hideAllMainElements();
     }
   });
+  
 };
 
 function hideAllMainElements() {

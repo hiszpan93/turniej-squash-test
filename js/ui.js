@@ -18,7 +18,13 @@ import { collection, getDocs, auth, getAuthFn } from "./firebase.js";
     
 
   
-  function initUI() {         
+function initUI() {
+  // Upewnij się, że UI nie wyświetla się automatycznie przy starcie aplikacji
+  document.getElementById("mainContainer").style.display = "none";
+  document.getElementById("viewTabs").style.display = "none";
+  document.getElementById("userInfoBar").style.display = "none";
+
+
   // ======= RENDEROWANIE LISTY GRACZY Z CHECKBOXAMI =======
   function renderPlayersList() {
     const playersForm = document.getElementById("playersForm");
