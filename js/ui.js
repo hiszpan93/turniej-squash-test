@@ -19,10 +19,10 @@ import { collection, getDocs, auth, getAuthFn } from "./firebase.js";
 
   
 function initUI() {
-  // Upewnij się, że UI nie wyświetla się automatycznie przy starcie aplikacji
-  document.getElementById("mainContainer").style.display = "none";
-  document.getElementById("viewTabs").style.display = "none";
-  document.getElementById("userInfoBar").style.display = "none";
+  // Po zalogowaniu – pokazujemy całość UI
+  document.getElementById("mainContainer").style.display = "block";
+  document.getElementById("viewTabs").style.display = "flex";
+  document.getElementById("userInfoBar").style.display = "flex";
 
 
   // ======= RENDEROWANIE LISTY GRACZY Z CHECKBOXAMI =======
