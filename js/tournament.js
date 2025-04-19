@@ -586,22 +586,15 @@ export async function endTournament() {
   if (tournamentEnded) return;
   tournamentEnded = true;
 
-savedPlayers.forEach(name => {
-  if (!generalStats[name]) {
-    generalStats[name] = { wins: 0, losses: 0, pointsScored: 0, pointsConceded: 0, obecnosc: 0 };
-  }
-  generalStats[name].obecnosc += 1;
-});
-
-
-
-
-  players.forEach(player => {
-    if (!generalStats[player.name]) {
-      generalStats[player.name] = { wins: 0, losses: 0, pointsScored: 0, pointsConceded: 0, obecnosc: 0 };
+  allPlayers.filter(p => p.selected).forEach(player => {
+    const name = player.name;
+    if (!generalStats[name]) {
+      generalStats[name] = { wins: 0, losses: 0, pointsScored: 0, pointsConceded: 0, obecnosc: 0 };
     }
-    generalStats[player.name].obecnosc = (generalStats[player.name].obecnosc || 0) + 1;
+    generalStats[name].obecnosc = (generalStats[name].obecnosc || 0) + 1;
   });
+  
+
   saveDataToFirebase();
   
 
