@@ -712,10 +712,7 @@ export function loadDataFromFirebase() {
           nextPlayerId = Math.max(...allPlayers.map(p => p.id)) + 1;
         }
 
-        import("./ui.js").then(() => {
-          window.renderPlayersList();
-          window.renderGeneralStats();
-        });
+        
 
       } else {
         console.log("Brak dokumentu 'stats' w kolekcji 'turniej'");

@@ -134,14 +134,14 @@ window.firebaseAuthReady = (callback) => {
           return;
         } else {
           // 🔄 Brak roboczego turnieju – załaduj dane i UI normalnie
-          const mod = await import("./tournament.js");
-          await mod.loadDataFromFirebase();
-
-          import("./ui.js").then(() => {
-            window.renderPlayersList?.();
-            window.renderGeneralStats?.();
+          const tournamentMod = await import("./tournament.js");
+          await tournamentMod.loadDataFromFirebase();
+          
+          import("./ui.js").then(uiMod => {
+            uiMod.initUI(); // tu masz już render wszystkiego
             if (callback) callback();
           });
+          
         }
 
         
