@@ -23,12 +23,19 @@ function initUI() {
 
   // Po zalogowaniu – pokazujemy całość UI
   document.getElementById("mainContainer").style.display = "block";
+  console.log("DOM refs:", {
+    main: document.getElementById("mainContainer"),
+    tabs: document.getElementById("viewTabs"),
+    bar: document.getElementById("userInfoBar"),
+  });
+  
   document.getElementById("viewTabs").style.display = "flex";
   document.getElementById("userInfoBar").style.display = "flex";
 
 
   // ======= RENDEROWANIE LISTY GRACZY Z CHECKBOXAMI =======
   function renderPlayersList() {
+    console.log("renderPlayersList uruchomione");
     const playersForm = document.getElementById("playersForm");
     playersForm.innerHTML = "";
     allPlayers.forEach(player => {
@@ -42,6 +49,7 @@ function initUI() {
       `;
     });
   }
+  
   
   // ======= RENDEROWANIE TABELI MECZÓW =======
   function renderMatches() {
@@ -250,6 +258,8 @@ function initUI() {
   
   // ======= RENDEROWANIE TABEL STATYSTYK GRACZY =======
   function renderStats() {
+    console.log("renderGeneralStats uruchomione");
+
     const statsTable = document.getElementById("statsTable").getElementsByTagName("tbody")[0];
     statsTable.innerHTML = "";
     const playersArr = Object.keys(stats).map(player => {
