@@ -696,32 +696,33 @@ await setDoc(playersRef, { allPlayers }, { merge: true });
 
 
 // ======= WCZYTANIE DANYCH Z FIREBASE =======
-export function loadDataFromFirebase() {
+export async function loadDataFromFirebase() {
   const docRef = doc(db, "turniej", "stats");
-  getDoc(docRef)
-    .then(docSnap => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        allPlayers = (data.allPlayers || []).map(p => ({
-          ...p,
-          elo: p.elo ?? 1000
-        }));
+  try {
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      allPlayers = (data.allPlayers || []).map(p => ({
+        ...p,
+        elo: p.elo ?? 1000
+      }));
 
-        generalStats = data.generalStats || {};
-        if (allPlayers.length > 0) {
-          nextPlayerId = Math.max(...allPlayers.map(p => p.id)) + 1;
-        }
-
-        
-
-      } else {
-        console.log("Brak dokumentu 'stats' w kolekcji 'turniej'");
+      generalStats = data.generalStats || {};
+      if (allPlayers.length > 0) {
+        nextPlayerId = Math.max(...allPlayers.map(p => p.id)) + 1;
       }
-    })
-    .catch(error => {
-      console.error("Błąd odczytu danych z Firebase: ", error);
-    });
+
+      // ⬇️ dodaj render po załadowaniu danych
+      window.renderPlayersList?.();
+      window.renderGeneralStats?.();
+    } else {
+      console.log("Brak dokumentu 'stats' w kolekcji 'turniej'");
+    }
+  } catch (error) {
+    console.error("Błąd odczytu danych z Firebase: ", error);
+  }
 }
+
 
 
 function getCurrentSeriesNumber() {
