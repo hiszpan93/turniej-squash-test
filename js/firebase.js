@@ -110,7 +110,7 @@ window.firebaseAuthReady = (callback) => {
       document.getElementById("loggedInUserEmail").textContent = user.email || "(brak e-maila)";
       document.body.classList.add("logged-in");
   
-      // ✅ Dopiero teraz pytamy o przywrócenie
+      // ✅ Dopiero teraz pytanie o przywrócenie
       if (restoreData) {
         const confirmRestore = confirm(`Znaleziono zapisany turniej w chmurze.\nCzy chcesz go przywrócić?`);
         if (confirmRestore) {
@@ -122,6 +122,22 @@ window.firebaseAuthReady = (callback) => {
           window.allPlayers.forEach(p => {
             p.selected = selected.includes(p.name);
           });
+  
+          // 🟡 OD TWÓJ NOWY KAWAŁEK
+          if (restoreData.turniejTrwa) {
+            ["setupPanel", "playersList", "generateMatchesBtn"].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.style.display = "none";
+            });
+  
+            const endWrapper = document.getElementById("endTournamentWrapper");
+            if (endWrapper && !restoreData.tournamentEnded) {
+              endWrapper.style.display = "block";
+            }
+          }
+  
+          // 🟡 Zapamiętaj stan zakończenia turnieju
+          window.tournamentEnded = restoreData.tournamentEnded || false;
   
           window.renderPlayersList?.();
           window.renderGeneralStats?.();
@@ -159,6 +175,7 @@ window.firebaseAuthReady = (callback) => {
       hideAllMainElements();
     }
   });
+  
   
 };
 function hideAllMainElements() {

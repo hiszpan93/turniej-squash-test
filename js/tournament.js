@@ -47,10 +47,13 @@ async function saveDraftToFirebase() {
     gracze: allPlayers.filter(p => p.selected).map(p => p.name),
     matches,
     stats,
-    
     series: getCurrentSeriesNumber(),
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    turniejTrwa: matches.length > 0,
+    tournamentEnded: tournamentEnded
   };
+  
+  
 
   try {
     await setDoc(doc(window.db, "robocze_turnieje", user.uid), draftData);
