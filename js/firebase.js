@@ -93,27 +93,40 @@ window.firebaseAuthReady = (callback) => {
       const draftRef = doc(window.db, "robocze_turnieje", user.uid);
       const draftSnap = await getDoc(draftRef);
   
+      let restoreData = null;
       if (draftSnap.exists()) {
+        restoreData = draftSnap.data();
+        await deleteDoc(draftRef);
+      }
+  
+      await initTournamentUI();
+      console.log("✅ UI zainicjowane i dane załadowane");
+  
+      // ✅ Pokaż UI dopiero po init
+      document.getElementById("authContainer").style.display = "none";
+      document.getElementById("viewTabs").style.display = "flex";
+      document.getElementById("mainContainer").style.display = "block";
+      document.getElementById("userInfoBar").style.display = "flex";
+      document.getElementById("loggedInUserEmail").textContent = user.email || "(brak e-maila)";
+      document.body.classList.add("logged-in");
+  
+      // ✅ Dopiero teraz pytamy o przywrócenie
+      if (restoreData) {
         const confirmRestore = confirm(`Znaleziono zapisany turniej w chmurze.\nCzy chcesz go przywrócić?`);
-  
         if (confirmRestore) {
-          const data = draftSnap.data();
-          document.getElementById("restoreSpinner").style.display = "block";
-  
           window.matches.length = 0;
-          window.matches.push(...(data.matches || []));
+          window.matches.push(...(restoreData.matches || []));
           Object.keys(window.stats).forEach(k => delete window.stats[k]);
-          Object.assign(window.stats, data.stats || {});
-          const selected = data.gracze || [];
+          Object.assign(window.stats, restoreData.stats || {});
+          const selected = restoreData.gracze || [];
           window.allPlayers.forEach(p => {
             p.selected = selected.includes(p.name);
           });
   
-          await deleteDoc(draftRef);
-  
-          await initTournamentUI();
-console.log("✅ UI zainicjowane i dane załadowane");
-
+          window.renderPlayersList?.();
+          window.renderGeneralStats?.();
+          window.renderMatches?.();
+          window.renderStats?.();
   
           window.matches?.forEach(match => {
             if (match.confirmed) {
@@ -121,10 +134,8 @@ console.log("✅ UI zainicjowane i dane załadowane");
             }
           });
   
-          document.getElementById("restoreSpinner").style.display = "none";
-  
-          const toastText = data.matches?.length
-            ? `✅ Przywrócono turniej z ${data.matches.length} meczami.`
+          const toastText = restoreData.matches?.length
+            ? `✅ Przywrócono turniej z ${restoreData.matches.length} meczami.`
             : `✅ Przywrócono turniej.`;
           document.getElementById("restoreToastContent").textContent = toastText;
           const toastEl = document.getElementById("restoreToast");
@@ -133,31 +144,8 @@ console.log("✅ UI zainicjowane i dane załadowane");
           setTimeout(() => {
             document.getElementById("matchesTable")?.scrollIntoView({ behavior: "smooth" });
           }, 600);
-  
-          // ✅ Pokaż UI po przywróceniu
-          document.getElementById("authContainer").style.display = "none";
-          document.getElementById("viewTabs").style.display = "flex";
-          document.getElementById("mainContainer").style.display = "block";
-          document.getElementById("userInfoBar").style.display = "flex";
-          document.getElementById("loggedInUserEmail").textContent = user.email || "(brak e-maila)";
-          document.body.classList.add("logged-in");
-  
-          if (callback) callback();
-          return;
         }
       }
-  
-      await initTournamentUI();
-      console.log("✅ UI zainicjowane i dane załadowane");
-
-  
-      // ✅ Pokaż UI
-      document.getElementById("authContainer").style.display = "none";
-      document.getElementById("viewTabs").style.display = "flex";
-      document.getElementById("mainContainer").style.display = "block";
-      document.getElementById("userInfoBar").style.display = "flex";
-      document.getElementById("loggedInUserEmail").textContent = user.email || "(brak e-maila)";
-      document.body.classList.add("logged-in");
   
       if (callback) callback();
   
@@ -172,9 +160,7 @@ console.log("✅ UI zainicjowane i dane załadowane");
     }
   });
   
-  
 };
-
 function hideAllMainElements() {
   [
     "mainContainer", "viewTabs", "archiveView", "playersList",
@@ -192,6 +178,7 @@ function hideAllMainElements() {
 
   const nc = document.getElementById("numCourts")?.parentElement;
   if (nc) nc.style.display = "none";
+  console.log("[HIDE] Ukryto wszystkie elementy turniejowe")
 }
 
 function getAuthFn() {
