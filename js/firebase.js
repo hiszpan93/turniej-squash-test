@@ -136,11 +136,18 @@ window.firebaseAuthReady = (callback) => {
           // 🔄 Brak roboczego turnieju – załaduj dane i UI normalnie
           const tournamentMod = await import("./tournament.js");
           await tournamentMod.loadDataFromFirebase();
-          
+
+          // 💥 DOPIERO TERAZ – po wczytaniu danych – uruchom UI
           import("./ui.js").then(uiMod => {
-            uiMod.initUI(); // tu masz już render wszystkiego
+            uiMod.initUI();
+
+            // 🛠 RĘCZNIE wywołujemy renderowanie (bo loadDataFromFirebase nie robi tego)
+            window.renderPlayersList?.();
+            window.renderGeneralStats?.();
+
             if (callback) callback();
           });
+
           
         }
 
