@@ -573,30 +573,33 @@ function updateElo(player1, player2, score1, score2) {
 
 // ======= ZAKOŃCZENIE TURNIEJU =======
 export async function endTournament() {
-
   const allConfirmedMatches = allMatches.filter(m => m.confirmed);
-  
-  // ✅ pozwól zakończyć, jeśli przynajmniej jedna seria miała potwierdzone mecze
+
   if (allConfirmedMatches.length === 0) {
     alert("Nie można zakończyć turnieju – żaden mecz nie został rozegrany.");
     return;
   }
-  
 
   if (tournamentEnded) return;
   tournamentEnded = true;
+  window.tournamentEnded = true;
 
+  // ✅ Dodaj obecność
   allPlayers.filter(p => p.selected).forEach(player => {
     const name = player.name;
     if (!generalStats[name]) {
-      generalStats[name] = { wins: 0, losses: 0, pointsScored: 0, pointsConceded: 0, obecnosc: 0 };
+      generalStats[name] = {
+        wins: 0,
+        losses: 0,
+        pointsScored: 0,
+        pointsConceded: 0,
+        obecnosc: 0
+      };
     }
     generalStats[name].obecnosc = (generalStats[name].obecnosc || 0) + 1;
   });
-  
 
   saveDataToFirebase();
-  
 
   window.renderGeneralStats();
   document.getElementById("addPlayerBtn").disabled = true;
@@ -608,86 +611,70 @@ export async function endTournament() {
   endTournamentBtn.classList.remove("btn-danger");
   endTournamentBtn.classList.add("btn-secondary");
   alert("Turniej został zakończony. Nie można już generować meczy ani wpisywać wyników.");
-  
-    // 🔽 1. Zbuduj strukturę archiwum turnieju
-    const archive = {
-      data: new Date().toISOString(),
-      gracze: allPlayers.filter(p => p.selected).map(p => p.name),
-      serie: [],
-    };
-    
-    const serieMap = new Map();
-    
 
+  // ✅ ARCHIWUM
+  const archive = {
+    data: new Date().toISOString(),
+    gracze: allPlayers.filter(p => p.selected).map(p => p.name),
+    serie: []
+  };
 
-    
-    savedMatches.forEach(match => {
-      const key = `seria_${match.series ?? 1}`;
+  const serieMap = new Map();
 
-      if (!serieMap.has(key)) serieMap.set(key, []);
-      serieMap.get(key).push(match);
+  allMatches.forEach(match => {
+    const key = `seria_${match.series ?? 1}`;
+    if (!serieMap.has(key)) serieMap.set(key, []);
+    serieMap.get(key).push({
+      ...match,
+      timestamp: match.timestamp || new Date().toISOString()
     });
-    
-    for (const [seriaKey, serieMatches] of serieMap.entries()) {
-      archive.serie.push({
-        numer: seriaKey,
-        mecze: serieMatches.map(m => ({
-          gracz1: m.player1,
-          gracz2: m.player2,
-          runda: m.round,
-          wynik: typeof m.result === "string" && m.result.trim() !== "" ? m.result : "-",
-          timestamp: m.timestamp || new Date().toISOString()
-        }))
-      });
-    }
-    
-  
-   
-    
-    const user = auth.currentUser;
-    if (user) {
-      const archiveId = `turniej_${archive.data.replace(/[:.]/g, "-")}`;
-const archiveRef = doc(db, "archiwa", archiveId);
+  });
 
-      setDoc(archiveRef, archive)
-        .then(() => console.log("✅ Archiwum zapisane do Firebase"))
-        .catch(err => console.error("❌ Błąd zapisu archiwum do Firebase", err));
-    }
-    
+  for (const [seriaKey, serieMatches] of serieMap.entries()) {
+    archive.serie.push({
+      numer: seriaKey,
+      mecze: serieMatches.map(m => ({
+        gracz1: m.player1,
+        gracz2: m.player2,
+        runda: m.round,
+        wynik: typeof m.result === "string" && m.result.trim() !== "" ? m.result : "-",
+        timestamp: m.timestamp || new Date().toISOString()
+      }))
+    });
+  }
 
-    // 🔽 3. (tylko do wersji .apk - na razie zakomentowane)
-    /*
-    const fileName = `turniej_${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
-    const fileContent = JSON.stringify(archive, null, 2);
-    const filePath = `/storage/emulated/0/Android/data/turniej_squasha/files/${fileName}`;
-    // Użyj biblioteki do zapisu pliku w Cordova/Capacitor np. Filesystem.writeFile()
-    */
-  
-    
-    // 🔽 4. Renderuj widok archiwum (z `index.html`)
-   
-    if (user) {
-      deleteDoc(doc(window.db, "robocze_turnieje", user.uid))
-        .then(() => console.log("🧹 Usunięto wersję roboczą turnieju"))
-        .catch(err => console.error("❌ Błąd usuwania wersji roboczej:", err));
-    }
-    
-    // 🔄 Resetuj stan selected
-allPlayers.forEach(player => {
-  player.selected = false;
-});
-renderPlayersList();
+  // ✅ Zapisz do Firebase (archiwum + usunięcie roboczego)
+  const user = auth.currentUser;
+  if (user) {
+    const archiveId = `turniej_${archive.data.replace(/[:.]/g, "-")}`;
+    const archiveRef = doc(db, "archiwa", archiveId);
 
-// 🔁 Zapisz do Firebase z resetem selected
+    setDoc(archiveRef, archive)
+      .then(() => console.log("✅ Archiwum zapisane do Firebase"))
+      .catch(err => console.error("❌ Błąd zapisu archiwum do Firebase", err));
 
-const playersRef = doc(window.db, "turniej", "stats");
-await setDoc(playersRef, { allPlayers }, { merge: true });
+    deleteDoc(doc(window.db, "robocze_turnieje", user.uid))
+      .then(() => console.log("🧹 Usunięto wersję roboczą turnieju"))
+      .catch(err => console.error("❌ Błąd usuwania wersji roboczej:", err));
+  }
 
+  // ✅ Resetuj selected
+  allPlayers.forEach(player => {
+    player.selected = false;
+  });
+  renderPlayersList();
 
-    if (window.renderArchiveView) window.renderArchiveView();
+  // ✅ Zapisz reset graczy
+  const playersRef = doc(window.db, "turniej", "stats");
+  await setDoc(playersRef, {
+    allPlayers,
+    generalStats,
+    tournamentEnded
+  }, { merge: true });
 
-
+  if (window.renderArchiveView) window.renderArchiveView();
 }
+
 
 
 
@@ -703,7 +690,9 @@ export async function loadDataFromFirebase() {
         elo: p.elo ?? 1000
       }));
       generalStats = data.generalStats || {};
-
+      tournamentEnded = data.tournamentEnded || false;
+      window.tournamentEnded = tournamentEnded;
+      
       if (allPlayers.length > 0) {
         nextPlayerId = Math.max(...allPlayers.map(p => p.id)) + 1;
       }
