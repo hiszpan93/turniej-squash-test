@@ -105,33 +105,31 @@ window.firebaseAuthReady = (callback) => {
           await deleteDoc(draftRef);
 
           
-          import("./ui.js").then(() => {
-            window.renderPlayersList();
-            window.renderMatches();
-            window.renderStats();
-            window.renderGeneralStats();
-
+          import("./ui.js").then(mod => {
+            mod.initUI();
+          
             matches.forEach(match => {
               if (match.confirmed) {
                 window.addResultToResultsTable(match);
               }
             });
-
+          
             document.getElementById("restoreSpinner").style.display = "none";
-
+          
             const toastText = data.matches?.length
               ? `✅ Przywrócono turniej z ${data.matches.length} meczami.`
               : `✅ Przywrócono turniej.`;
             document.getElementById("restoreToastContent").textContent = toastText;
             const toastEl = document.getElementById("restoreToast");
             new bootstrap.Toast(toastEl).show();
-
+          
             setTimeout(() => {
               document.getElementById("matchesTable")?.scrollIntoView({ behavior: "smooth" });
             }, 600);
-
+          
             if (callback) callback();
           });
+          
 
           return;
         } else {

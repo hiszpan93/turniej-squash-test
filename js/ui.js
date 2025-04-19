@@ -564,9 +564,4 @@ import { collection, getDocs, auth, getAuthFn } from "./firebase.js";
   });
   }
 
-const user = getAuthFn().currentUser;
-if (user) {
-  initUI();
-} else {
-  console.log("⛔ ui.js: użytkownik niezalogowany – przerywam wykonywanie initUI()");
-}
+  export { initUI };
