@@ -46,12 +46,14 @@ async function saveDraftToFirebase() {
   const draftData = {
     gracze: allPlayers.filter(p => p.selected).map(p => p.name),
     matches,
+    allMatches,
     stats,
     series: getCurrentSeriesNumber(),
     timestamp: new Date().toISOString(),
     turniejTrwa: matches.length > 0,
     tournamentEnded: tournamentEnded
   };
+  
   
   
 
@@ -641,7 +643,14 @@ export async function endTournament() {
         timestamp: m.timestamp || new Date().toISOString()
       }))
     });
+    matches = [];
+stats = {};
+window.matches = [];
+window.stats = {};
+await saveDraftToFirebase();
+
   }
+
 
   // ✅ Zapisz do Firebase (archiwum + usunięcie roboczego)
   const user = auth.currentUser;

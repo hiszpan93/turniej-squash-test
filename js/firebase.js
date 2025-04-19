@@ -116,6 +116,8 @@ window.firebaseAuthReady = (callback) => {
         if (confirmRestore) {
           window.matches.length = 0;
           window.matches.push(...(restoreData.matches || []));
+          window.allMatches = [...restoreData.allMatches || []];
+
           Object.keys(window.stats).forEach(k => delete window.stats[k]);
           Object.assign(window.stats, restoreData.stats || {});
           const selected = restoreData.gracze || [];
