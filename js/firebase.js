@@ -104,6 +104,7 @@ window.firebaseAuthReady = (callback) => {
 
           await deleteDoc(draftRef);
 
+          
           import("./ui.js").then(() => {
             window.renderPlayersList();
             window.renderMatches();
@@ -133,13 +134,18 @@ window.firebaseAuthReady = (callback) => {
           });
 
           return;
-        } else if (draftSnap.exists() === false) {
-          import("./ui.js").then(async () => {
-            const mod = await import("./tournament.js");
-            await mod.loadDataFromFirebase();
+        } else {
+          // 🔄 Brak roboczego turnieju – załaduj dane i UI normalnie
+          const mod = await import("./tournament.js");
+          await mod.loadDataFromFirebase();
+
+          import("./ui.js").then(() => {
+            window.renderPlayersList?.();
+            window.renderGeneralStats?.();
             if (callback) callback();
           });
         }
+
         
         
       }
