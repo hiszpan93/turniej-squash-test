@@ -115,8 +115,16 @@ window.firebaseAuthReady = (callback) => {
         const confirmRestore = confirm(`Znaleziono zapisany turniej w chmurze.\nCzy chcesz go przywrócić?`);
         if (confirmRestore) {
           window.matches.length = 0;
-          window.matches.push(...(restoreData.matches || []));
-          window.allMatches = [...restoreData.allMatches || []];
+window.matches.push(...(restoreData.matches || []));
+window.allMatches = [...restoreData.allMatches || []];
+
+// DODAJ TO:
+import { matches as matchesGlobal, allMatches as allMatchesGlobal } from "./tournament.js";
+matchesGlobal.length = 0;
+matchesGlobal.push(...(restoreData.matches || []));
+allMatchesGlobal.length = 0;
+allMatchesGlobal.push(...(restoreData.allMatches || []));
+
 
           Object.keys(window.stats).forEach(k => delete window.stats[k]);
           Object.assign(window.stats, restoreData.stats || {});
