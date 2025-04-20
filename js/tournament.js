@@ -418,7 +418,7 @@ allMatches.push({ ...match, timestamp: new Date().toISOString() });
     window.renderMatches();
 
     if (matches.every(match => match.confirmed)) {
-      allMatches.push(...matches); // dodaj stare mecze do historii
+      
       matches = [];
       generateMatches(); // generuj kolejną serię
     }
