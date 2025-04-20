@@ -1,7 +1,6 @@
 
 import {
-  allPlayers, matches, stats, generalStats, tournamentEnded,
-  addPlayer, confirmPlayers, generateMatches, confirmMatch,
+  allPlayers, matches, stats, generalStats, addPlayer, confirmPlayers, generateMatches, confirmMatch,
   endTournament, loadDataFromFirebase, resetTournamentData
 } from './tournament.js';
 
@@ -42,7 +41,8 @@ function initUI() {
     allPlayers.forEach(player => {
       playersForm.innerHTML += `
         <div class="form-check">
-          <input class="form-check-input playerCheckbox" type="checkbox" value="${player.id}" ${tournamentEnded ? "disabled" : ""}
+          <input class="form-check-input playerCheckbox" type="checkbox" value="${player.id}" ${window.tournamentEnded ? "disabled" : ""}
+
 
  id="player-${player.id}">
           <label class="form-check-label" for="player-${player.id}">
