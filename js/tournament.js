@@ -15,7 +15,11 @@ export let matches = [];
 let results = [];
 export let stats = {};
 export let generalStats = {};
-export let tournamentEnded = false;
+let tournamentEnded = false;
+window.tournamentEnded = tournamentEnded;
+
+export { tournamentEnded };
+
 export let allMatches = [];
 
 
@@ -723,6 +727,7 @@ export async function loadDataFromFirebase() {
     console.error("Błąd odczytu danych z Firebase: ", error);
   }
   console.log("✅ Dane z Firebase:", { allPlayers, generalStats });
+  console.log("🎯 tournamentEnded z bazy:", tournamentEnded);
 
 }
 
