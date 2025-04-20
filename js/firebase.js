@@ -118,6 +118,10 @@ window.firebaseAuthReady = (callback) => {
           window.matches.length = 0;
 window.matches.push(...(restoreData.matches || []));
 window.allMatches = [...restoreData.allMatches || []];
+matches = [...window.matches];
+allMatches = [...window.allMatches];
+console.log("🧩 Zsynchronizowano matches:", matches);
+console.log("🧩 Zsynchronizowano allMatches:", allMatches);
 
 // DODAJ TO:
 
