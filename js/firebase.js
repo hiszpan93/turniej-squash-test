@@ -18,6 +18,7 @@ import {
   getDocs
 } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 import { matches as matchesGlobal, allMatches as allMatchesGlobal } from "./tournament.js";
+import * as tournament from './tournament.js';
 
 
 const firebaseConfig = {
@@ -151,7 +152,8 @@ console.log("📦 allMatches po przywróceniu:", allMatchesGlobal);
   
           // 🟡 Zapamiętaj stan zakończenia turnieju
           window.tournamentEnded = restoreData.tournamentEnded || false;
-  
+          tournament.tournamentEnded = window.tournamentEnded;
+
           window.renderPlayersList?.();
           window.renderGeneralStats?.();
           window.renderMatches?.();
