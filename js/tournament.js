@@ -270,7 +270,7 @@ export function generateMatches() {
 
 
 // ======= POTWIERDZANIE MECZU =======
-export function confirmMatch(index) {
+export async function confirmMatch(index) {
   if (tournamentEnded) {
     alert("Turniej został zakończony. Nie można wpisywać wyników.");
     return;
@@ -386,7 +386,8 @@ modalContent.innerHTML = `
   modal.show();
 
   // ✅ Obsługa kliknięcia „Potwierdź” w modalu
-  document.getElementById("confirmMatchBtnFinal").onclick = () => {
+  document.getElementById("confirmMatchBtnFinal").onclick = async () => {
+
     modal.hide();
 
     match.result = result;
@@ -398,6 +399,7 @@ if (p1 && p2) updateElo(p1, p2, score1, score2);
 
     // Dodaj potwierdzony mecz do pełnej historii
 allMatches.push({ ...match, timestamp: new Date().toISOString() });
+await saveDraftToFirebase();
 
     const btn = document.getElementById(`confirmButton-${index}`);
     btn.classList.remove("btn-outline-success");
