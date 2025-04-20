@@ -761,7 +761,7 @@ function hideSetupControls() {
   if (nc) nc.style.display = "none";
 }
 
- export function resetTournamentData() {
+ export async function resetTournamentData() {
   if (!confirm("Na pewno usunąć wszystkie dane trwającego turnieju?")) return;
 
  
@@ -777,9 +777,14 @@ function hideSetupControls() {
   alert("Dane turnieju zostały zresetowane.");
   window.location.href = window.location.href.split("?")[0];
   prepareForNewTournament();
+  const playersRef = doc(window.db, "turniej", "stats");
+await setDoc(playersRef, {
+  tournamentEnded: false
+}, { merge: true });
+
 
 }
-export function prepareForNewTournament() {
+export async function prepareForNewTournament() {
   console.log("🔁 Przygotowanie nowego turnieju");
 
   tournamentEnded = false;
@@ -812,12 +817,21 @@ export function prepareForNewTournament() {
 
   window.renderPlayersList?.();
   window.renderGeneralStats?.();
+  const user = auth.currentUser;
+if (user) {
+  const playersRef = doc(window.db, "turniej", "stats");
+  await setDoc(playersRef, {
+    tournamentEnded: false
+  }, { merge: true });
+}
+
 }
 
 // ======= AUTO-ZAPIS CO 10 SEKUND (jeśli turniej trwa) =======
 setInterval(() => {
   const user = auth.currentUser;
-  if (!user || tournamentEnded) return;
+  if (!user || window.tournamentEnded) return;
+
 
   const activeMatches = matches.filter(m => !m.confirmed);
   if (activeMatches.length === 0) return; // nic do zapisu
