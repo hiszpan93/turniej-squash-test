@@ -6,7 +6,7 @@ import {
 } from './tournament.js';
 
 import { collection, getDocs, auth, getAuthFn } from "./firebase.js";
-import { tournamentEnded } from './tournament.js';
+
 
 
   
