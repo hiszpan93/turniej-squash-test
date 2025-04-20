@@ -180,7 +180,8 @@ export function generateMatches() {
   }
 
   const courtCount = parseInt(document.getElementById("numCourts").value, 10) || 1;
-  let seriesNumber = getCurrentSeriesNumber() + 1;
+  let seriesNumber = (allMatches.at(-1)?.series || 0) + 1;
+
 
 
   const pairings = [];
@@ -417,9 +418,11 @@ allMatches.push({ ...match, timestamp: new Date().toISOString() });
     window.renderMatches();
 
     if (matches.every(match => match.confirmed)) {
+      allMatches.push(...matches); // dodaj stare mecze do historii
       matches = [];
-      generateMatches();
+      generateMatches(); // generuj kolejną serię
     }
+    
     
 
     window.renderStats();
