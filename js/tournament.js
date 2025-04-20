@@ -677,11 +677,11 @@ await saveDraftToFirebase();
 
   // ✅ Zapisz reset graczy
   const playersRef = doc(window.db, "turniej", "stats");
-  await setDoc(playersRef, {
-    allPlayers,
-    generalStats,
-    tournamentEnded
-  }, { merge: true });
+await setDoc(playersRef, {
+  allPlayers,
+  generalStats
+}, { merge: true });
+
 
   if (window.renderArchiveView) window.renderArchiveView();
   // Przygotuj aplikację do nowego turnieju
@@ -778,9 +778,7 @@ function hideSetupControls() {
   window.location.href = window.location.href.split("?")[0];
   prepareForNewTournament();
   const playersRef = doc(window.db, "turniej", "stats");
-await setDoc(playersRef, {
-  tournamentEnded: false
-}, { merge: true });
+
 
 
 }
@@ -820,9 +818,7 @@ export async function prepareForNewTournament() {
   const user = auth.currentUser;
 if (user) {
   const playersRef = doc(window.db, "turniej", "stats");
-  await setDoc(playersRef, {
-    tournamentEnded: false
-  }, { merge: true });
+  
 }
 
 }
