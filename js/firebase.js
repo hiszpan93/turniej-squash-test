@@ -138,17 +138,16 @@ console.log("📦 allMatches po przywróceniu:", allMatchesGlobal);
           });
   
           // 🟡 OD TWÓJ NOWY KAWAŁEK
-          if (restoreData.turniejTrwa) {
+          if (restoreData.turniejTrwa && !restoreData.tournamentEnded) {
             ["setupPanel", "playersList", "generateMatchesBtn"].forEach(id => {
               const el = document.getElementById(id);
               if (el) el.style.display = "none";
             });
-  
+          
             const endWrapper = document.getElementById("endTournamentWrapper");
-            if (endWrapper && !restoreData.tournamentEnded) {
-              endWrapper.style.display = "block";
-            }
+            if (endWrapper) endWrapper.style.display = "block";
           }
+          
   
           // 🟡 Zapamiętaj stan zakończenia turnieju
           window.tournamentEnded = restoreData.tournamentEnded || false;
