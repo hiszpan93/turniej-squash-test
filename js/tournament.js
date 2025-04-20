@@ -15,10 +15,8 @@ export let matches = [];
 let results = [];
 export let stats = {};
 export let generalStats = {};
-let tournamentEnded = false;
-window.tournamentEnded = tournamentEnded;
+window.tournamentEnded = false;
 
-export { tournamentEnded };
 
 export let allMatches = [];
 

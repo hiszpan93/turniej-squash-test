@@ -151,7 +151,7 @@ console.log("📦 allMatches po przywróceniu:", allMatchesGlobal);
   
           // 🟡 Zapamiętaj stan zakończenia turnieju
           window.tournamentEnded = restoreData.tournamentEnded || false;
-          tournament.tournamentEnded = window.tournamentEnded;
+          
 
           window.renderPlayersList?.();
           window.renderGeneralStats?.();
