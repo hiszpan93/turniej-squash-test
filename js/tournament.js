@@ -686,6 +686,18 @@ await saveDraftToFirebase();
   }, { merge: true });
 
   if (window.renderArchiveView) window.renderArchiveView();
+  // Przygotuj aplikację do nowego turnieju
+tournamentEnded = false;
+window.tournamentEnded = false;
+
+// 🔄 Pokaż setup panel
+["setupPanel", "playersList", "generateMatchesBtn"].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.style.display = "block";
+});
+const nc = document.getElementById("numCourts")?.parentElement;
+if (nc) nc.style.display = "block";
+
 }
 
 
