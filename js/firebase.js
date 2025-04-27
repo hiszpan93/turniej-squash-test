@@ -86,6 +86,13 @@ window.firebaseAuthReady = (callback) => {
   }
   onAuthStateChanged(auth, async user => {
     if (user) {
+        // co 45 minut wymuś odświeżenie ID tokenu, żeby utrzymać sesję aktywną
+  setInterval(() => {
+    user.getIdToken(true)
+      .then(() => console.log("✅ Token Firebase odświeżony"))
+      .catch(err => console.error("⚠️ Błąd odświeżania tokenu:", err));
+  }, 45 * 60 * 1000);
+
       document.getElementById("logoutBtn").addEventListener("click", async () => {
         await signOut(auth);
         location.reload();
