@@ -531,29 +531,30 @@ function updateStats(match) {
 
 
 function updateElo(player1, player2, score1, score2) {
-  const R1 = player1.elo, R2 = player2.elo;
-  const E1 = 1 / (1 + 10 ** ((R2 - R1) / 400));
-  const E2 = 1 - E1;
-  const actual1 = score1 > score2 ? 1 : 0;
-  const actual2 = 1 - actual1;
+  const R1 = player1.elo ?? 1000, R2 = player2.elo ?? 1000;
+  const E1 = 1/(1+10**((R2-R1)/400)), E2 = 1 - E1;
+  const a1 = score1 > score2 ? 1 : 0, a2 = 1 - a1;
   const margin = Math.abs(score1 - score2);
-  const baseK = 32;
-  const marginFactor = 1 + Math.min(margin / 5, 1);
+  const isExtended = score1 > 11 || score2 > 11;
+  const K = 32;
+
+  let mf;
+  if (margin <= 2)          mf = 1.0;
+  else if (isExtended)      mf = 0.9;
+  else                      mf = 1 + Math.min((margin - 2) / 5, 1);
 
   let deltaWin, deltaLose;
-
-  // Jeśli wygrywa faworyt (wyższe ELO):
-  if ((actual1 === 1 && R1 > R2) || (actual2 === 1 && R2 > R1)) {
-    deltaWin  = Math.round(baseK * (actual1 - E1) * marginFactor);
-    deltaLose = Math.round(baseK * ( (actual2) - E2 ));
-  }
-  // Jeśli wygrywa underdog (niższe ELO):
-  else {
-    deltaWin  = Math.round(baseK * (actual1 - E1));               // bez marginFactor
-    deltaLose = Math.round(baseK * ((actual2 - E2) * marginFactor)); // marginFactor przy karze
+  if ((a1===1 && R1>R2) || (a2===1 && R2>R1)) {
+    // faworyt wygrywa → bonus dla niego, standard dla przegranego
+    deltaWin  = Math.round(K * (a1 - E1) * mf);
+    deltaLose = Math.round(K * (a2 - E2));
+  } else {
+    // underdog wygrywa → on bez bonusu, silniejszy traci wg bonusu
+    deltaWin  = Math.round(K * (a1 - E1));
+    deltaLose = Math.round(K * (a2 - E2) * mf);
   }
 
-  if (actual1 === 1) {
+  if (a1 === 1) {
     player1.elo += deltaWin;
     player2.elo += deltaLose;
   } else {
@@ -563,22 +564,31 @@ function updateElo(player1, player2, score1, score2) {
 }
 
 
+
 // w dorozumianym miejscu tuż obok updateElo:
 export function getEloDelta(p1, p2, s1, s2) {
   const R1 = p1.elo, R2 = p2.elo;
   const E1 = 1/(1+10**((R2-R1)/400)), E2 = 1-E1;
-  const a1 = s1>s2?1:0, a2 = 1-a1;
-  const m = Math.abs(s1-s2), K = 32, mf = 1+Math.min(m/5,1);
+  const a1 = s1 > s2 ? 1 : 0, a2 = 1 - a1;
+  const margin = Math.abs(s1 - s2);
+  const isExtended = s1 > 11 || s2 > 11;
+  const K = 32;
+
+  let mf;
+  if (margin <= 2)          mf = 1.0;
+  else if (isExtended)      mf = 0.9;
+  else                      mf = 1 + Math.min((margin - 2) / 5, 1);
+
   let dWin, dLose;
-
-  if ((a1===1&&R1>R2) || (a2===1&&R2>R1)) {
-    dWin  = Math.round(K*(a1-E1)*mf);
-    dLose = Math.round(K*(a2-E2));
+  // faworyt wygrywa?
+  if ((a1===1 && R1>R2) || (a2===1 && R2>R1)) {
+    dWin  = Math.round(K * (a1 - E1) * mf);
+    dLose = Math.round(K * (a2 - E2));
   } else {
-    dWin  = Math.round(K*(a1-E1));
-    dLose = Math.round(K*(a2-E2)*mf);
+    // underdog wygrywa → karę mnożymy mf
+    dWin  = Math.round(K * (a1 - E1));
+    dLose = Math.round(K * (a2 - E2) * mf);
   }
-
   return [dWin, dLose, mf];
 }
 
