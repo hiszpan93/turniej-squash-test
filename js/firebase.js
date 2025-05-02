@@ -6,7 +6,8 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   onAuthStateChanged,
-  signOut
+  signOut,
+  onIdTokenChanged
 } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 import {
   getFirestore,
@@ -86,6 +87,41 @@ window.firebaseAuthReady = (callback) => {
   }
   onAuthStateChanged(auth, async user => {
     if (user) {
+       let refreshTimeoutId;
+
+    // funkcja planująca kolejne odświeżenie
+    const scheduleTokenRefresh = async () => {
+      try {
+        const idTokenResult = await user.getIdTokenResult();
+        const expTime = new Date(idTokenResult.expirationTime).getTime();
+        const now = Date.now();
+        // odświeżaj 5 minut przed wygaśnięciem
+        const delay = expTime - now - 5 * 60 * 1000;
+        if (delay > 0) {
+          refreshTimeoutId = setTimeout(async () => {
+            await user.getIdToken(true);
+            console.log("✅ Token Firebase odświeżony");
+            scheduleTokenRefresh();
+          }, delay);
+        }
+      } catch (err) {
+        console.error("⚠️ Błąd planowania odświeżenia tokenu:", err);
+      }
+    };
+
+    // kiedy stan tokenu się zmieni (np. po re-loginie), re-plan
+    onIdTokenChanged(auth, u => {
+      if (u) {
+        if (refreshTimeoutId) clearTimeout(refreshTimeoutId);
+        scheduleTokenRefresh();
+      } else {
+        if (refreshTimeoutId) clearTimeout(refreshTimeoutId);
+      }
+    });
+
+    // od razu zaplanuj pierwsze odświeżenie
+    scheduleTokenRefresh();
+
       document.getElementById("logoutBtn").addEventListener("click", async () => {
         await signOut(auth);
         location.reload();

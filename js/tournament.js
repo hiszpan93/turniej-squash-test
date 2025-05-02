@@ -399,7 +399,7 @@ if (p1 && p2) updateElo(p1, p2, score1, score2);
 
     // Dodaj potwierdzony mecz do pełnej historii
 allMatches.push({ ...match, timestamp: new Date().toISOString() });
-await saveDraftToFirebase();
+saveDraftToFirebase();
 
     const btn = document.getElementById(`confirmButton-${index}`);
     btn.classList.remove("btn-outline-success");
