@@ -535,13 +535,16 @@ function updateElo(player1, player2, score1, score2) {
   const E1 = 1/(1+10**((R2-R1)/400)), E2 = 1 - E1;
   const a1 = score1 > score2 ? 1 : 0, a2 = 1 - a1;
   const margin = Math.abs(score1 - score2);
-  const isExtended = score1 > 11 || score2 > 11;
-  const K = 32;
+const K = 32;
 
-  let mf;
-  if (margin <= 2)          mf = 1.0;
-  else if (isExtended)      mf = 0.9;
-  else                      mf = 1 + Math.min((margin - 2) / 5, 1);
+let mf;
+if (margin <= 2) {
+  // standardowa wygrana (różnica ≤2) – brak bonusu
+  mf = 1.0;
+} else {
+  // wyraźna wygrana (marża >2) – bonus jak dotąd
+  mf = 1 + Math.min((margin - 2) / 5, 1);
+}
 
   let deltaWin, deltaLose;
   if ((a1===1 && R1>R2) || (a2===1 && R2>R1)) {
@@ -570,14 +573,17 @@ export function getEloDelta(p1, p2, s1, s2) {
   const R1 = p1.elo, R2 = p2.elo;
   const E1 = 1/(1+10**((R2-R1)/400)), E2 = 1-E1;
   const a1 = s1 > s2 ? 1 : 0, a2 = 1 - a1;
-  const margin = Math.abs(s1 - s2);
-  const isExtended = s1 > 11 || s2 > 11;
-  const K = 32;
+  const margin = Math.abs(score1 - score2);
+const K = 32;
 
-  let mf;
-  if (margin <= 2)          mf = 1.0;
-  else if (isExtended)      mf = 0.9;
-  else                      mf = 1 + Math.min((margin - 2) / 5, 1);
+let mf;
+if (margin <= 2) {
+  // standardowa wygrana (różnica ≤2) – brak bonusu
+  mf = 1.0;
+} else {
+  // wyraźna wygrana (marża >2) – bonus jak dotąd
+  mf = 1 + Math.min((margin - 2) / 5, 1);
+}
 
   let dWin, dLose;
   // faworyt wygrywa?
