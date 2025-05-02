@@ -278,29 +278,7 @@ function initUI() {
         elo: full?.elo ?? 1000
       };
     });
-    const getStreak = (name) => {
-      const history = JSON.parse(localStorage.getItem("turniej_all_matches") || "[]")
-        .filter(m => m.player1 === name || m.player2 === name);
     
-      if (history.length === 0) return "-";
-    
-      const last = history.at(-1);
-      const [s1, s2] = (last.result || "").split(":").map(Number);
-      const isWinner = (last.player1 === name && s1 > s2) || (last.player2 === name && s2 > s1);
-      const type = isWinner ? "W" : "L";
-    
-      let count = 0;
-      for (let i = history.length - 1; i >= 0; i--) {
-        const m = history[i];
-        const [a, b] = (m.result || "").split(":").map(Number);
-        if (isNaN(a) || isNaN(b)) break;
-        const win = (m.player1 === name && a > b) || (m.player2 === name && b > a);
-        const current = win ? "W" : "L";
-        if (current !== type) break;
-        count++;
-      }
-      return count > 0 ? `${count}${type}` : "-";
-    };
     
     playersArr.sort((a, b) => {
       if (b.wins !== a.wins) return b.wins - a.wins;
@@ -323,7 +301,12 @@ function initUI() {
         <td>${player.pointsConceded}</td>
         <td>${avgConceded}</td>
         <td>${player.elo}</td>
-        <td>${getStreak(player.name)}</td>
+        <td>${
+  generalStats[player.name] && generalStats[player.name].streakCount
+    ? generalStats[player.name].streakCount + generalStats[player.name].streakType
+    : "-"
+}</td>
+
       `;
     });
     fadeInElement(statsTable.parentElement);

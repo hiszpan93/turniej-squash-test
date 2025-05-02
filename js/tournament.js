@@ -3,6 +3,26 @@ console.log("✅ tournament.js załadowany");
 // Import bazy danych Firestore z modułu firebase.js
 import { db, doc, setDoc, deleteDoc, getDoc, auth } from "./firebase.js";
 
+// ─── Funkcja do aktualizacji serii zwycięstw/porażek ───
+function updateStreak(playerName, won) {
+  // Pobierz istniejące statystyki lub utwórz nowe
+  const gs = generalStats[playerName] ||= { wins:0, losses:0, pointsScored:0, pointsConceded:0, obecnosc:0 };
+  // Jeśli jeszcze nie było serii, ustaw ją na 1W lub 1L
+  if (!gs.streakType) {
+    gs.streakType = won ? "W" : "L";
+    gs.streakCount = 1;
+  }
+  // Jeśli ten sam typ serii co poprzednio, zwiększ licznik
+  else if ((won && gs.streakType === "W") || (!won && gs.streakType === "L")) {
+    gs.streakCount++;
+  }
+  // Inaczej zacznij serię od nowa
+  else {
+    gs.streakType = won ? "W" : "L";
+    gs.streakCount = 1;
+  }
+}
+
 
 
 
@@ -60,6 +80,8 @@ async function saveDraftToFirebase() {
   
 
   try {
+    // odświeżenie tokenu przed zapisem
+    await user.getIdToken(true);
     await setDoc(doc(window.db, "robocze_turnieje", user.uid), draftData);
     console.log("📝 Zapisano roboczy stan turnieju do Firebase");
   } catch (err) {
@@ -303,23 +325,8 @@ const p2 = allPlayers.find(p => p.name === match.player2);
 const elo1Before = p1?.elo ?? 1000;
 const elo2Before = p2?.elo ?? 1000;
 
-const expected1 = 1 / (1 + 10 ** ((elo2Before - elo1Before) / 400));
-const expected2 = 1 - expected1;
-const actual1 = score1 > score2 ? 1 : 0;
-const actual2 = 1 - actual1;
-
-const margin = Math.abs(score1 - score2);
-const closeness = 1 - (margin / Math.max(score1, score2));
-const eloDiff = Math.abs(elo1Before - elo2Before);
-
-const fairnessFactor = 1 - Math.min(eloDiff / 400, 0.5);  // max -50%
-const marginFactor = 1 + (margin / 5);                    // max około x3
-
-const K = 32 * marginFactor;
-const fairnessPenalty = 1 - Math.min(eloDiff / 400, 0.5); // 0.5–1
-
-const delta1 = Math.round(K * (actual1 - expected1) * fairnessPenalty);
-const delta2 = Math.round(K * (actual2 - expected2) * fairnessPenalty);
+// 📊 Oblicz delty „na sucho”
+const [delta1, delta2, marginFactor] = getEloDelta(p1, p2, score1, score2);
 
 
 
@@ -369,12 +376,9 @@ modalContent.innerHTML = `
   <hr/>
   <p>✅ <strong>Zwycięzca:</strong> ${winner}</p>
     <p class="text-muted" style="font-size: 13px;">
-    ⚖️ Modyfikator ELO: ×${(fairnessPenalty * marginFactor).toFixed(2)}<br/>
-    <small>(punktowy: ×${marginFactor.toFixed(2)} • fair play: ×${fairnessPenalty.toFixed(2)})</small>
-    <button class="btn btn-sm btn-outline-secondary ms-2 px-2 py-0" style="font-size: 12px;" data-bs-toggle="modal" data-bs-target="#eloInfoModal">
-      ❔
-    </button>
-  </p>
+  ⚡️ Bonus za przewagę punktową: ×${marginFactor.toFixed(2)}
+</p>
+
 
 `;
 
@@ -392,14 +396,18 @@ modalContent.innerHTML = `
 
     match.result = result;
     match.confirmed = true;
-// 🧮 Aktualizacja ELO
+// ─── Najpierw zaktualizuj serię ───
+updateStreak(match.player1, score1 > score2);
+updateStreak(match.player2, score2 > score1);
+
+    // 🧮 Aktualizacja ELO
 const p1 = allPlayers.find(p => p.name === match.player1);
 const p2 = allPlayers.find(p => p.name === match.player2);
 if (p1 && p2) updateElo(p1, p2, score1, score2);
 
     // Dodaj potwierdzony mecz do pełnej historii
 allMatches.push({ ...match, timestamp: new Date().toISOString() });
-saveDraftToFirebase();
+await saveDraftToFirebase();
 
     const btn = document.getElementById(`confirmButton-${index}`);
     btn.classList.remove("btn-outline-success");
@@ -487,23 +495,9 @@ function updateStats(match) {
   generalStats[match.player1].pointsConceded += score2;
   generalStats[match.player2].pointsConceded += score1;
   
-  // 📊 AKTUALIZACJA SERII ZWYCIĘSTW / PORAŻEK
-function updateStreak(playerName, won) {
-  const obj = generalStats[playerName];
-  if (!obj) return;
-  if (!obj.streakType || !obj.streakCount) {
-    obj.streakType = won ? "W" : "L";
-    obj.streakCount = 1;
-  } else if ((won && obj.streakType === "W") || (!won && obj.streakType === "L")) {
-    obj.streakCount += 1;
-  } else {
-    obj.streakType = won ? "W" : "L";
-    obj.streakCount = 1;
-  }
-}
+  
 
-updateStreak(match.player1, score1 > score2);
-updateStreak(match.player2, score2 > score1);
+
   window.renderStats();
   
   window.renderGeneralStats();
@@ -516,68 +510,55 @@ updateStreak(match.player2, score2 > score1);
 
 
 function updateElo(player1, player2, score1, score2) {
-  const elo1 = player1.elo ?? 1000;
-  const elo2 = player2.elo ?? 1000;
+  const R1 = player1.elo ?? 1000;
+  const R2 = player2.elo ?? 1000;
 
-  const expected1 = 1 / (1 + 10 ** ((elo2 - elo1) / 400));
-  const expected2 = 1 - expected1;
+  // 1) Oczekiwana szansa według klasycznego ELO
+  const E1 = 1 / (1 + 10 ** ((R2 - R1) / 400));
+
+  // 2) Kto wygrał?
   const actual1 = score1 > score2 ? 1 : 0;
   const actual2 = 1 - actual1;
 
+  // 3) Oblicz „margin” i ogranicz bonus do max ×2
   const margin = Math.abs(score1 - score2);
-  const eloDiff = Math.abs(elo1 - elo2);
-  const marginFactor = 1 + (margin / 5); // premiuje wysoką wygraną
-  const fairnessPenalty = 1 - Math.min(eloDiff / 400, 0.5); // chroni słabszego
-  const baseK = 32 * marginFactor;
+  const marginFactor = 1 + Math.min(margin / 5, 1);
 
-  // ✅ Pobierz streaki z generalStats
-  const gs1 = generalStats[player1.name] || {};
-  const gs2 = generalStats[player2.name] || {};
+  // 4) Bazowe K – możesz zmienić na 20–32, w zależności od dynamiki ligi
+  const K = 32;
 
-  const streak1type = gs1.streakType || null;
-  const streak1count = gs1.streakCount || 0;
-  const streak2type = gs2.streakType || null;
-  const streak2count = gs2.streakCount || 0;
+  // 5) Zysk zwycięzcy z marginFactor
+  const deltaWin = Math.round(K * (actual1 - E1) * marginFactor);
 
-  const getMultiplier = (type, count) => {
-    if (type === "W") {
-      if (count >= 9) return 1.4;
-      if (count >= 6) return 1.25;
-      if (count >= 3) return 1.1;
-    } else if (type === "L") {
-      if (count >= 9) return "onlyOne";
-      if (count >= 6) return 0.5;
-      if (count >= 3) return 0.9;
-    }
-    return 1;
-  };
+  // 6) Strata przegranego BEZ marginFactor (asymetria)
+  const deltaLose = Math.round(K * (actual2 - (1 - E1)));
 
-  const mult1 = getMultiplier(streak1type, streak1count);
-  const mult2 = getMultiplier(streak2type, streak2count);
-
-  let delta1 = baseK * (actual1 - expected1) * fairnessPenalty;
-  let delta2 = baseK * (actual2 - expected2) * fairnessPenalty;
-
-  if (mult1 === "onlyOne" && actual1 === 0) delta1 = -1;
-  else delta1 = Math.round(delta1 * (typeof mult1 === "number" ? mult1 : 1));
-
-  if (mult2 === "onlyOne" && actual2 === 0) delta2 = -1;
-  else delta2 = Math.round(delta2 * (typeof mult2 === "number" ? mult2 : 1));
-
-  // 💥 Przegrana z kimś z 9L = większa kara
-  if (mult1 === "onlyOne" && actual2 === 1) {
-    const ratio = Math.min(eloDiff / 400, 1);
-    delta2 = Math.round(delta2 * (1 + ratio));
+  // 7) Zastosuj zmiany
+  if (actual1 === 1) {
+    player1.elo = R1 + deltaWin;
+    player2.elo = R2 + deltaLose;
+  } else {
+    player2.elo = R2 + deltaWin;
+    player1.elo = R1 + deltaLose;
   }
-  if (mult2 === "onlyOne" && actual1 === 1) {
-    const ratio = Math.min(eloDiff / 400, 1);
-    delta1 = Math.round(delta1 * (1 + ratio));
-  }
-
-  player1.elo = Math.round(elo1 + delta1);
-  player2.elo = Math.round(elo2 + delta2);
 }
 
+
+// w dorozumianym miejscu tuż obok updateElo:
+export function getEloDelta(player1, player2, score1, score2) {
+  const R1 = player1.elo ?? 1000;
+  const R2 = player2.elo ?? 1000;
+  const E1 = 1/(1+10**((R2-R1)/400));
+  const actual1 = score1>score2?1:0;
+  const actual2 = 1-actual1;
+  const margin = Math.abs(score1-score2);
+  const marginFactor = 1 + Math.min(margin/5,1);
+  const K = 32;
+  const deltaWin  = Math.round(K*(actual1 - E1)*marginFactor);
+  const E2 = 1 - E1;
+  const deltaLose = Math.round(K*(actual2 - E2));  // BEZ marginFactor
+  return [deltaWin, deltaLose, marginFactor];
+}
 
 
 // ======= ZAKOŃCZENIE TURNIEJU =======
