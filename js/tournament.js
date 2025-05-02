@@ -217,13 +217,21 @@ export function generateMatches() {
     const newMatches = [];
     let round = 1;
     const pairingsCopy = [...pairings];
+     // 1) Inicjalizujemy licznik pod rząd
+    const consecCounts = {};
+    players.forEach(p => consecCounts[p.name] = 0);
+
     while (pairingsCopy.length > 0) {
       const roundMatches = [];
       const roundPlayers = new Set();
       const usedPlayersThisRound = new Set();
 
       for (let k = 0; k < pairingsCopy.length; k++) {
+
         const [p1, p2] = pairingsCopy[k];
+        if (consecCounts[p1.name] >= 2 || consecCounts[p2.name] >= 2) {
+         continue; // skip — już dwa mecze z rzędu
+                 }
         if (
           !roundPlayers.has(p1.name) &&
           !roundPlayers.has(p2.name) &&
@@ -245,9 +253,22 @@ export function generateMatches() {
         for (let k = 0; k < courtCount && k < pairingsCopy.length; k++) {
           const [p1, p2] = pairingsCopy.shift();
           roundMatches.push({ p1, p2 });
+          roundPlayers.add(p1.name);
+roundPlayers.add(p2.name);
+usedPlayersThisRound.add(p1.name);
+usedPlayersThisRound.add(p2.name);
+
         }
       }
-
+ // 4) Aktualizujemy liczniki consecCounts:
+       players.forEach(p => {
+          if (roundPlayers.has(p.name)) {
+           consecCounts[p.name] += 1;
+          } else {
+           consecCounts[p.name] = 0;
+          }
+       });
+  
       if (roundMatches.length > 0) {
         roundMatches.forEach((match, index) => {
           newMatches.push({
@@ -510,55 +531,57 @@ function updateStats(match) {
 
 
 function updateElo(player1, player2, score1, score2) {
-  const R1 = player1.elo ?? 1000;
-  const R2 = player2.elo ?? 1000;
-
-  // 1) Oczekiwana szansa według klasycznego ELO
+  const R1 = player1.elo, R2 = player2.elo;
   const E1 = 1 / (1 + 10 ** ((R2 - R1) / 400));
-
-  // 2) Kto wygrał?
+  const E2 = 1 - E1;
   const actual1 = score1 > score2 ? 1 : 0;
   const actual2 = 1 - actual1;
-
-  // 3) Oblicz „margin” i ogranicz bonus do max ×2
   const margin = Math.abs(score1 - score2);
+  const baseK = 32;
   const marginFactor = 1 + Math.min(margin / 5, 1);
 
-  // 4) Bazowe K – możesz zmienić na 20–32, w zależności od dynamiki ligi
-  const K = 32;
+  let deltaWin, deltaLose;
 
-  // 5) Zysk zwycięzcy z marginFactor
-  const deltaWin = Math.round(K * (actual1 - E1) * marginFactor);
+  // Jeśli wygrywa faworyt (wyższe ELO):
+  if ((actual1 === 1 && R1 > R2) || (actual2 === 1 && R2 > R1)) {
+    deltaWin  = Math.round(baseK * (actual1 - E1) * marginFactor);
+    deltaLose = Math.round(baseK * ( (actual2) - E2 ));
+  }
+  // Jeśli wygrywa underdog (niższe ELO):
+  else {
+    deltaWin  = Math.round(baseK * (actual1 - E1));               // bez marginFactor
+    deltaLose = Math.round(baseK * ((actual2 - E2) * marginFactor)); // marginFactor przy karze
+  }
 
-  // 6) Strata przegranego BEZ marginFactor (asymetria)
-  const deltaLose = Math.round(K * (actual2 - (1 - E1)));
-
-  // 7) Zastosuj zmiany
   if (actual1 === 1) {
-    player1.elo = R1 + deltaWin;
-    player2.elo = R2 + deltaLose;
+    player1.elo += deltaWin;
+    player2.elo += deltaLose;
   } else {
-    player2.elo = R2 + deltaWin;
-    player1.elo = R1 + deltaLose;
+    player2.elo += deltaWin;
+    player1.elo += deltaLose;
   }
 }
 
 
 // w dorozumianym miejscu tuż obok updateElo:
-export function getEloDelta(player1, player2, score1, score2) {
-  const R1 = player1.elo ?? 1000;
-  const R2 = player2.elo ?? 1000;
-  const E1 = 1/(1+10**((R2-R1)/400));
-  const actual1 = score1>score2?1:0;
-  const actual2 = 1-actual1;
-  const margin = Math.abs(score1-score2);
-  const marginFactor = 1 + Math.min(margin/5,1);
-  const K = 32;
-  const deltaWin  = Math.round(K*(actual1 - E1)*marginFactor);
-  const E2 = 1 - E1;
-  const deltaLose = Math.round(K*(actual2 - E2));  // BEZ marginFactor
-  return [deltaWin, deltaLose, marginFactor];
+export function getEloDelta(p1, p2, s1, s2) {
+  const R1 = p1.elo, R2 = p2.elo;
+  const E1 = 1/(1+10**((R2-R1)/400)), E2 = 1-E1;
+  const a1 = s1>s2?1:0, a2 = 1-a1;
+  const m = Math.abs(s1-s2), K = 32, mf = 1+Math.min(m/5,1);
+  let dWin, dLose;
+
+  if ((a1===1&&R1>R2) || (a2===1&&R2>R1)) {
+    dWin  = Math.round(K*(a1-E1)*mf);
+    dLose = Math.round(K*(a2-E2));
+  } else {
+    dWin  = Math.round(K*(a1-E1));
+    dLose = Math.round(K*(a2-E2)*mf);
+  }
+
+  return [dWin, dLose, mf];
 }
+
 
 
 // ======= ZAKOŃCZENIE TURNIEJU =======

@@ -23,7 +23,7 @@ import * as tournament from './tournament.js';
 
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAmWZmK1SJxyBZRrf61sLtyrGy4kctS3T8",
+  apiKey: "AIzaSyBsZrIabUINi6KeOAbUmjBWNWjsV8ViHU4",
   authDomain: "turniej-squash.firebaseapp.com",
   projectId: "turniej-squash",
   storageBucket: "turniej-squash.appspot.com",
