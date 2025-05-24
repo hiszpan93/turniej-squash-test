@@ -31,6 +31,24 @@ function initUI() {
   
   document.getElementById("viewTabs").style.display = "flex";
   document.getElementById("userInfoBar").style.display = "flex";
+// ——— Inicjalizacja formularza Rozliczeń ———
+const players = allPlayers;  // już masz listę z tournament.js
+// wypełnij selecty
+players.forEach(p => {
+  const opt = `<option value="${p.id}">${p.name}</option>`;
+  document.getElementById("payer-select").insertAdjacentHTML("beforeend", opt);
+  document.querySelectorAll(".prod-buyer, .prod-recipients")
+    .forEach(sel => sel.insertAdjacentHTML("beforeend", opt));
+});
+// obsługa przycisków
+document.getElementById("add-product-btn").addEventListener("click", () => {
+  const tpl = document.querySelector(".product-row.template");
+  const row = tpl.cloneNode(true);
+  row.classList.remove("template"); row.hidden = false;
+  tpl.parentNode.appendChild(row);
+  row.querySelector(".remove-product").addEventListener("click", () => row.remove());
+});
+document.getElementById("calc-btn").addEventListener("click", () => calculatePayout(allPlayers));
 
 
   // ======= RENDEROWANIE LISTY GRACZY Z CHECKBOXAMI =======
@@ -418,7 +436,38 @@ function initUI() {
     } else {
       renderAllArchives();
     }
-  
+  function calculatePayout(players) {
+  const HOURS_COST = 44, DISCOUNT = 15;
+  const hours = +document.getElementById("court-hours").value;
+  const cards = +document.getElementById("multisport-cards").value;
+  const payer = document.getElementById("payer-select").value;
+
+  // 1) Korty
+  const baseCost = hours * HOURS_COST;
+  const used = Math.min(cards, hours*2);
+  const courtCost = baseCost - used * DISCOUNT;
+  // przygotuj mapę długów
+  const debt = new Map(players.map(p=>[p.id,0]));
+  const sharers = players.filter(p=>p.id!==payer);
+  sharers.forEach(p=>debt.set(p.id, courtCost/sharers.length));
+
+  // 2) Produkty
+  document.querySelectorAll(".product-row:not(.template)").forEach(r => {
+    const price = +r.querySelector(".prod-price").value;
+    const recs = Array.from(r.querySelector(".prod-recipients").selectedOptions).map(o=>o.value);
+    recs.forEach(id => debt.set(id, debt.get(id)+(price/recs.length)));
+  });
+
+  // 3) Render
+  const tbody = document.querySelector("#payout-table tbody");
+  tbody.innerHTML = "";
+  players.forEach(p => {
+    if(p.id===payer) return;
+    const kw = (debt.get(p.id)||0).toFixed(2)+" zł";
+    tbody.insertAdjacentHTML("beforeend", `<tr><td>${p.name}</td><td>${kw}</td></tr>`);
+  });
+}
+
     function renderAllArchives() {
       if (archiveData.length === 0) {
         container.innerHTML = "<p>Brak zapisanych turniejów.</p>";
@@ -569,5 +618,11 @@ function initUI() {
     window.renderEloRanking?.();
   });
   }
+document.getElementById("showPayoutBtn").addEventListener("click", () => {
+  // Schowaj inne widoki
+  ["mainContainer","archiveView","rankingView"].forEach(id => document.getElementById(id).style.display = "none");
+  // Pokaż rozliczenia
+  document.getElementById("payoutView").style.display = "block";
+});
 
   export { initUI };
