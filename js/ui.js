@@ -14,8 +14,37 @@ import { collection, getDocs, auth, getAuthFn } from "./firebase.js";
     
     
     
-      
-    
+  function calculatePayout(players) {
+  const HOURS_COST = 44, DISCOUNT = 15;
+  const hours = +document.getElementById("court-hours").value;
+  const cards = +document.getElementById("multisport-cards").value;
+  const payer = document.getElementById("payer-select").value;
+
+  // 1) Korty
+  const baseCost = hours * HOURS_COST;
+  const used = Math.min(cards, hours*2);
+  const courtCost = baseCost - used * DISCOUNT;
+  // przygotuj mapę długów
+  const debt = new Map(players.map(p=>[p.id,0]));
+  const sharers = players.filter(p=>p.id!==payer);
+  sharers.forEach(p=>debt.set(p.id, courtCost/sharers.length));
+
+  // 2) Produkty
+  document.querySelectorAll(".product-row:not(.template)").forEach(r => {
+    const price = +r.querySelector(".prod-price").value;
+    const recs = Array.from(r.querySelector(".prod-recipients").selectedOptions).map(o=>o.value);
+    recs.forEach(id => debt.set(id, debt.get(id)+(price/recs.length)));
+  });
+
+  // 3) Render
+  const tbody = document.querySelector("#payout-table tbody");
+  tbody.innerHTML = "";
+  players.forEach(p => {
+    if(p.id===payer) return;
+    const kw = (debt.get(p.id)||0).toFixed(2)+" zł";
+    tbody.insertAdjacentHTML("beforeend", `<tr><td>${p.name}</td><td>${kw}</td></tr>`);
+  });
+}
 
   
 function initUI() {
@@ -436,37 +465,7 @@ document.getElementById("calc-btn").addEventListener("click", () => calculatePay
     } else {
       renderAllArchives();
     }
-  function calculatePayout(players) {
-  const HOURS_COST = 44, DISCOUNT = 15;
-  const hours = +document.getElementById("court-hours").value;
-  const cards = +document.getElementById("multisport-cards").value;
-  const payer = document.getElementById("payer-select").value;
-
-  // 1) Korty
-  const baseCost = hours * HOURS_COST;
-  const used = Math.min(cards, hours*2);
-  const courtCost = baseCost - used * DISCOUNT;
-  // przygotuj mapę długów
-  const debt = new Map(players.map(p=>[p.id,0]));
-  const sharers = players.filter(p=>p.id!==payer);
-  sharers.forEach(p=>debt.set(p.id, courtCost/sharers.length));
-
-  // 2) Produkty
-  document.querySelectorAll(".product-row:not(.template)").forEach(r => {
-    const price = +r.querySelector(".prod-price").value;
-    const recs = Array.from(r.querySelector(".prod-recipients").selectedOptions).map(o=>o.value);
-    recs.forEach(id => debt.set(id, debt.get(id)+(price/recs.length)));
-  });
-
-  // 3) Render
-  const tbody = document.querySelector("#payout-table tbody");
-  tbody.innerHTML = "";
-  players.forEach(p => {
-    if(p.id===payer) return;
-    const kw = (debt.get(p.id)||0).toFixed(2)+" zł";
-    tbody.insertAdjacentHTML("beforeend", `<tr><td>${p.name}</td><td>${kw}</td></tr>`);
-  });
-}
+  
 
     function renderAllArchives() {
       if (archiveData.length === 0) {
@@ -602,12 +601,16 @@ document.getElementById("calc-btn").addEventListener("click", () => calculatePay
     document.getElementById("mainContainer").style.display = "block";
     document.getElementById("archiveView").style.display = "none";
     document.getElementById("rankingView").style.display = "none";
+    document.getElementById("payoutView").style.display = "none";
+
   });
   
   document.getElementById("showArchiveBtn").addEventListener("click", () => {
     document.getElementById("mainContainer").style.display = "none";
     document.getElementById("archiveView").style.display = "block";
     document.getElementById("rankingView").style.display = "none";
+    document.getElementById("payoutView").style.display = "none";
+
     window.renderArchiveView?.();
   });
   
@@ -615,14 +618,17 @@ document.getElementById("calc-btn").addEventListener("click", () => calculatePay
     document.getElementById("mainContainer").style.display = "none";
     document.getElementById("archiveView").style.display = "none";
     document.getElementById("rankingView").style.display = "block";
+    document.getElementById("payoutView").style.display = "none";
+
     window.renderEloRanking?.();
   });
   }
 document.getElementById("showPayoutBtn").addEventListener("click", () => {
-  // Schowaj inne widoki
-  ["mainContainer","archiveView","rankingView"].forEach(id => document.getElementById(id).style.display = "none");
-  // Pokaż rozliczenia
+  ["mainContainer","archiveView","rankingView","payoutView"].forEach(id =>
+    document.getElementById(id).style.display = "none"
+  );
   document.getElementById("payoutView").style.display = "block";
 });
+
 
   export { initUI };
