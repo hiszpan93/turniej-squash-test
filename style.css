@@ -230,14 +230,4 @@ input[type=number]::-webkit-inner-spin-button {
   font-size: 15px;
   color: #155724;
 }
-/* ⚡️ Uczyń pasek przewijalnym zamiast łamać przyciski na full-width */
-#viewTabs {
-  display: flex !important;
-  overflow-x: auto;
-  flex-wrap: nowrap;
-  gap: .5rem;
-}
-#viewTabs .btn {
-  flex: none;        /* nie rosną na 100% */
-  white-space: nowrap;
-}
+
