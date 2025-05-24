@@ -530,73 +530,72 @@ function updateStats(match) {
 
 
 
-function updateElo(player1, player2, score1, score2) {
-  const R1 = player1.elo ?? 1000, R2 = player2.elo ?? 1000;
-  const E1 = 1/(1+10**((R2-R1)/400)), E2 = 1 - E1;
-  const a1 = score1 > score2 ? 1 : 0, a2 = 1 - a1;
+/**
+ * Aktualizuje punkty Elo obu graczy po meczu, z łagodniejszymi zmianami
+ * i max. mnożnikiem przewagi 1.5.
+ * @param {Object} player1 – obiekt gracza 1, .elo
+ * @param {Object} player2 – obiekt gracza 2, .elo
+ * @param {number} score1  – wynik gracza 1
+ * @param {number} score2  – wynik gracza 2
+ * @param {number} [K=24]  – bazowy współczynnik K (domyślnie 24)
+ * @param {number} [D=0.75]– globalne tłumienie zmian (0.0–1.0)
+ */
+function updateElo(player1, player2, score1, score2, K = 24, D = 0.75) {
+  // 1. Oczekiwane wyniki
+  const R1 = player1.elo, R2 = player2.elo;
+  const E1 = 1 / (1 + 10 ** ((R2 - R1) / 400));
+  const E2 = 1 - E1;
+
+  // 2. Rzeczywisty wynik
+  const a1 = score1 > score2 ? 1 : 0;
+  const a2 = 1 - a1;
+
+  // 3. Mnożnik za przewagę, rośnie powoli i max 1.5
   const margin = Math.abs(score1 - score2);
-const K = 32;
+  // przykład: (margin - 2) * 0.1 ⇒ by margin=7 dać 0.5 ⇒ mf=1.5
+  const mf = margin <= 2
+    ? 1
+    : 1 + Math.min((margin - 2) * 0.1, 0.5);
 
-let mf;
-if (margin <= 2) {
-  // standardowa wygrana (różnica ≤2) – brak bonusu
-  mf = 1.0;
-} else {
-  // wyraźna wygrana (marża >2) – bonus jak dotąd
-  mf = 1 + Math.min((margin - 2) / 5, 1);
+  // 4. Liczymy zmiany ELO i tłumimy je D
+  const raw1 = K * (a1 - E1) * (a1 === 1 ? mf : 1);
+  const raw2 = K * (a2 - E2) * (a2 === 1 ? mf : 1);
+
+  // 5. Zaokrąglamy i nakładamy tłumienie
+  const delta1 = Math.round(raw1 * D);
+  const delta2 = Math.round(raw2 * D);
+
+  // 6. Aktualizacja
+  player1.elo += delta1;
+  player2.elo += delta2;
+
+  return { delta1, delta2, marginFactor: mf };
 }
 
-  let deltaWin, deltaLose;
-  if ((a1===1 && R1>R2) || (a2===1 && R2>R1)) {
-    // faworyt wygrywa → bonus dla niego, standard dla przegranego
-    deltaWin  = Math.round(K * (a1 - E1) * mf);
-    deltaLose = Math.round(K * (a2 - E2));
-  } else {
-    // underdog wygrywa → on bez bonusu, silniejszy traci wg bonusu
-    deltaWin  = Math.round(K * (a1 - E1));
-    deltaLose = Math.round(K * (a2 - E2) * mf);
-  }
-
-  if (a1 === 1) {
-    player1.elo += deltaWin;
-    player2.elo += deltaLose;
-  } else {
-    player2.elo += deltaWin;
-    player1.elo += deltaLose;
-  }
-}
-
-
-
-// w dorozumianym miejscu tuż obok updateElo:
-export function getEloDelta(p1, p2, s1, s2) {
+/**
+ * Zwraca, ile ELO zmieni się dla obu graczy (do popupu),
+ * z tymi samymi parametrami K, D i mf jak wyżej.
+ */
+export function getEloDelta(p1, p2, s1, s2, K = 24, D = 0.75) {
   const R1 = p1.elo, R2 = p2.elo;
-  const E1 = 1/(1+10**((R2-R1)/400)), E2 = 1-E1;
-  const a1 = s1 > s2 ? 1 : 0, a2 = 1 - a1;
-  const margin = Math.abs(score1 - score2);
-const K = 32;
+  const E1 = 1 / (1 + 10 ** ((R2 - R1) / 400));
+  const E2 = 1 - E1;
+  const a1 = s1 > s2 ? 1 : 0;
+  const a2 = 1 - a1;
+  const margin = Math.abs(s1 - s2);
+  const mf = margin <= 2
+    ? 1
+    : 1 + Math.min((margin - 2) * 0.1, 0.5);
 
-let mf;
-if (margin <= 2) {
-  // standardowa wygrana (różnica ≤2) – brak bonusu
-  mf = 1.0;
-} else {
-  // wyraźna wygrana (marża >2) – bonus jak dotąd
-  mf = 1 + Math.min((margin - 2) / 5, 1);
+  const raw1 = K * (a1 - E1) * (a1 === 1 ? mf : 1);
+  const raw2 = K * (a2 - E2) * (a2 === 1 ? mf : 1);
+
+  const d1 = Math.round(raw1 * D);
+  const d2 = Math.round(raw2 * D);
+
+  return [d1, d2, mf];
 }
 
-  let dWin, dLose;
-  // faworyt wygrywa?
-  if ((a1===1 && R1>R2) || (a2===1 && R2>R1)) {
-    dWin  = Math.round(K * (a1 - E1) * mf);
-    dLose = Math.round(K * (a2 - E2));
-  } else {
-    // underdog wygrywa → karę mnożymy mf
-    dWin  = Math.round(K * (a1 - E1));
-    dLose = Math.round(K * (a2 - E2) * mf);
-  }
-  return [dWin, dLose, mf];
-}
 
 
 
