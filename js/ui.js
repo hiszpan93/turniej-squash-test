@@ -23,7 +23,8 @@ const numCourts   = +document.getElementById("num-courts").value;
 const hours       = +document.getElementById("court-hours").value;
 const normalCnt = +document.getElementById("ms-normal").value;
 const lightCnt  = +document.getElementById("ms-light").value;
-const payer = document.getElementById("payer-select").value;
+// pobierz ID płatnika jako liczbę, nie string
+ const payerId = parseInt(document.getElementById("payer-select").value, 10);
 
 // podstawowy koszt
 const baseCost       = numCourts * hours * COST_PER_HOUR;
@@ -60,7 +61,7 @@ if (normalCnt + lightCnt > maxCards) {
   const debt = new Map(participants.map(p => [p.id, 0]));
 
   // 4a) Koszty kortów (bez płatnika)
-  const sharers = participants.filter(p => p.id !== payer);
+  const sharers = participants.filter(p => p.id !== payerId);
   const shareCourt = sharers.length ? (courtCost / sharers.length) : 0;
   sharers.forEach(p => debt.set(p.id, shareCourt));
 
@@ -83,20 +84,24 @@ const tbody = document.querySelector("#payout-table tbody");
 tbody.innerHTML = "";
 
 // znajdź imię płatnika
-const payerName = allPlayers.find(p => p.id.toString() === payer)?.name || "";
+const payerName = allPlayers.find(p => p.id === payerId)?.name || "";
 
-// wypisz wszystkich uczestników (Dłużnik → Wierzyciel)
-participants.forEach(p => {
-  const amount   = (debt.get(p.id) || 0).toFixed(2);
-  const creditor = p.id.toString() === payer ? "" : payerName;
+// wypisz wszystkich dłużników (sharers), bez kolumny Wierzyciel
+sharers.forEach(p => {
+  const amount = (debt.get(p.id) || 0).toFixed(2);
   tbody.insertAdjacentHTML("beforeend", `
     <tr>
       <td>${p.name}</td>
-      <td>${creditor}</td>
       <td>${amount} zł</td>
+      <td>
+        <button class="btn btn-sm btn-outline-success settle-btn">
+          Rozliczono
+        </button>
+      </td>
     </tr>
   `);
 });
+
   }
 async function loadPayouts(players) {
   const tbody = document.querySelector("#payout-table tbody");
@@ -109,32 +114,29 @@ async function loadPayouts(players) {
   try {
     const snapshot = await getDocs(payoutsCol);
     snapshot.forEach(docSnap => {
-      const pId   = docSnap.id;
-      const data  = docSnap.data();
-      // docSnap.id jest stringiem – p.id.toString() to stringowa wersja
-const player = players.find(p => p.id.toString() === docSnap.id);
+  const pId   = docSnap.id;
+  const data  = docSnap.data();
+  const player = players.find(p => p.id.toString() === pId);
+  if (!player) return;
 
-      if (!player) return;
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td>${player.name}</td>
+    <td>${(data.debt || 0).toFixed(2)} zł</td>
+    <td>
+      <button class="btn btn-sm btn-outline-success settle-btn">
+        Rozliczono
+      </button>
+    </td>`;
 
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${player.name}</td>
-        <td>${(data.debt || 0).toFixed(2)} zł</td>
-        <td>
-          <button class="btn btn-sm btn-outline-success settle-btn">
-            Rozliczono
-          </button>
-        </td>`;
+  tr.querySelector(".settle-btn").addEventListener("click", async () => {
+    await deleteDoc(doc(payoutsCol, pId));
+    tr.remove();
+  });
 
-      // przycisk Rozliczono
-      tr.querySelector(".settle-btn").addEventListener("click", async () => {
-        const payoutDoc = doc(payoutsCol, pId);
-        await deleteDoc(payoutDoc);
-        tr.remove();
-      });
+  tbody.appendChild(tr);
+});
 
-      tbody.appendChild(tr);
-    });
   } catch (err) {
     console.error("Błąd odczytu rozliczeń:", err);
   }
@@ -654,7 +656,15 @@ document.getElementById("calc-btn").addEventListener("click", () => calculatePay
   if (endBtn) endBtn.addEventListener("click", endTournament);
   
   
-  
+  document.querySelectorAll("#payout-table .settle-btn")
+  .forEach((btn, i) => {
+    btn.addEventListener("click", async () => {
+      const p = sharers[i];
+      await deleteDoc(doc(payoutsCol, p.id.toString()));
+      btn.closest("tr").remove();
+    });
+  });
+
   
   
   document.getElementById("resetTournamentBtn").addEventListener("click", () => {
