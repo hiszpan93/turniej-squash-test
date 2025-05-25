@@ -71,10 +71,11 @@ const payoutsCol  = collection(payoutsPath, "rozliczenia");
 
 // zapis długu dla każdego „sharera”
 sharers.forEach(p => {
-  const payoutDoc = doc(payoutsCol, p.id);
-  setDoc(payoutDoc, { debt: debt.get(p.id) || 0 })
-    .catch(err => console.error("Błąd zapisu rozliczenia:", err));
+  // p.id jest liczbą – musimy przekazać string
+  const payoutDoc = doc(payoutsCol, p.id.toString());
+  setDoc(payoutDoc, { debt: debt.get(p.id) || 0 });
 });
+
 
 
   // 5. Render tabeli
@@ -99,7 +100,9 @@ async function loadPayouts(players) {
     snapshot.forEach(docSnap => {
       const pId   = docSnap.id;
       const data  = docSnap.data();
-      const player = players.find(p => p.id === pId);
+      // docSnap.id jest stringiem – p.id.toString() to stringowa wersja
+const player = players.find(p => p.id.toString() === docSnap.id);
+
       if (!player) return;
 
       const tr = document.createElement("tr");
