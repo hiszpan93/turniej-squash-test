@@ -70,21 +70,7 @@ if (normalCnt + lightCnt > maxCards) {
 const payoutsPath = doc(db, "turniej", "stats"); 
 const payoutsCol  = collection(payoutsPath, "rozliczenia");
 
-// zapis długu dla każdego „sharera”
-sharers.forEach(p => {
-  const amount = (debt.get(p.id) || 0).toFixed(2);
-  tbody.insertAdjacentHTML("beforeend", `
-    <tr>
-      <td>${p.name}</td>
-      <td>${amount} zł</td>
-      <td>
-        <button class="btn btn-sm btn-outline-success settle-btn">
-          Rozliczono
-        </button>
-      </td>
-    </tr>
-  `);
-});
+
 
 
 // po pobraniu payerId:
