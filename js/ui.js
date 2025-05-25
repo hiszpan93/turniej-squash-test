@@ -15,36 +15,69 @@ import { collection, getDocs, auth, getAuthFn } from "./firebase.js";
     
     
   function calculatePayout(players) {
-  const HOURS_COST = 44, DISCOUNT = 15;
-  const hours = +document.getElementById("court-hours").value;
-  const cards = +document.getElementById("multisport-cards").value;
-  const payer = document.getElementById("payer-select").value;
+  const COST_PER_HOUR = 44;
+  const NORMAL_DISCOUNT = 15;
+  const LIGHT_DISCOUNT = 15;
 
-  // 1) Korty
-  const baseCost = hours * HOURS_COST;
-  const used = Math.min(cards, hours*2);
-  const courtCost = baseCost - used * DISCOUNT;
-  // przygotuj mapę długów
-  const debt = new Map(players.map(p=>[p.id,0]));
-  const sharers = players.filter(p=>p.id!==payer);
-  sharers.forEach(p=>debt.set(p.id, courtCost/sharers.length));
+  const numCourts = +document.getElementById("num-courts").value;
+  const hours     = +document.getElementById("court-hours").value;
+  let normalCnt   = +document.getElementById("ms-normal").value;
+  let lightCnt    = +document.getElementById("ms-light").value;
+  const payer     = document.getElementById("payer-select").value;
+if(normalCnt + lightCnt > 4){
+  alert("Łącznie można użyć maksymalnie 4 kart Multisport!");
+  return;
+}
 
-  // 2) Produkty
+  // 1. Podstawowy koszt
+  const baseCost = numCourts * hours * COST_PER_HOUR;
+
+  // 2. Rabat Normal: każda karta × godziny
+  const discountNormal = normalCnt * hours * NORMAL_DISCOUNT;
+
+  // 3. Rabat Light: każda karta raz na dzień,
+  //    ale przydzielamy je po kolei na godziny i korty:
+  let remainingLight = lightCnt;
+  let discountLight = 0;
+  for(let h=1; h<=hours; h++){
+    // ile kart możemy użyć w tej godzinie?
+    const use = Math.min(remainingLight, numCourts);
+    discountLight += use * LIGHT_DISCOUNT;
+    remainingLight -= use;
+    if(remainingLight <= 0) break;
+  }
+
+  const totalDiscount = discountNormal + discountLight;
+  const courtCost = Math.max(0, baseCost - totalDiscount);
+
+  // 4. Podział na uczestników
+  const participants = players.filter(p => p.selected);
+  const debt = new Map(participants.map(p => [p.id, 0]));
+
+  // 4a) Koszty kortów (bez płatnika)
+  const sharers = participants.filter(p => p.id !== payer);
+  const shareCourt = sharers.length ? (courtCost / sharers.length) : 0;
+  sharers.forEach(p => debt.set(p.id, shareCourt));
+
+  // 4b) Produkty
   document.querySelectorAll(".product-row:not(.template)").forEach(r => {
     const price = +r.querySelector(".prod-price").value;
-    const recs = Array.from(r.querySelector(".prod-recipients").selectedOptions).map(o=>o.value);
-    recs.forEach(id => debt.set(id, debt.get(id)+(price/recs.length)));
+    const buyer = r.querySelector(".prod-buyer").value;
+    const recs  = Array.from(r.querySelector(".prod-recipients").selectedOptions).map(o => o.value);
+    const per   = recs.length ? (price / recs.length) : 0;
+    recs.forEach(id => debt.set(id, debt.get(id) + per));
   });
 
-  // 3) Render
+  // 5. Render tabeli
   const tbody = document.querySelector("#payout-table tbody");
   tbody.innerHTML = "";
-  players.forEach(p => {
-    if(p.id===payer) return;
-    const kw = (debt.get(p.id)||0).toFixed(2)+" zł";
-    tbody.insertAdjacentHTML("beforeend", `<tr><td>${p.name}</td><td>${kw}</td></tr>`);
+  participants.forEach(p => {
+    if(p.id === payer) return; 
+    const val = (debt.get(p.id) || 0).toFixed(2);
+    tbody.insertAdjacentHTML("beforeend", `<tr><td>${p.name}</td><td>${val} zł</td></tr>`);
   });
 }
+
 
   
 function initUI() {
