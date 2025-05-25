@@ -72,11 +72,25 @@ const payoutsCol  = collection(payoutsPath, "rozliczenia");
 
 // zapis długu dla każdego „sharera”
 sharers.forEach(p => {
-  // p.id jest liczbą – musimy przekazać string
-  const payoutDoc = doc(payoutsCol, p.id.toString());
-  setDoc(payoutDoc, { debt: debt.get(p.id) || 0 });
+  const amount = (debt.get(p.id) || 0).toFixed(2);
+  tbody.insertAdjacentHTML("beforeend", `
+    <tr>
+      <td>${p.name}</td>
+      <td>${amount} zł</td>
+      <td>
+        <button class="btn btn-sm btn-outline-success settle-btn">
+          Rozliczono
+        </button>
+      </td>
+    </tr>
+  `);
 });
 
+
+// po pobraniu payerId:
+const creditorLabel = document.getElementById("creditor-label");
+
+creditorLabel.textContent = `Wierzyciel: ${payerName}`;
 
 
   // 5. Render tabeli „globalnej” długu
