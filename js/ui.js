@@ -4,7 +4,7 @@ import {
   endTournament, loadDataFromFirebase, resetTournamentData
 } from './tournament.js';
 
-import { collection, getDocs, auth, getAuthFn } from "./firebase.js";
+import { collection, getDocs, auth, getAuthFn, db, doc, setDoc, deleteDoc } from "./firebase.js";
 
 
 
@@ -15,43 +15,48 @@ import { collection, getDocs, auth, getAuthFn } from "./firebase.js";
     
     
   function calculatePayout(players) {
-  const COST_PER_HOUR = 44;
-  const NORMAL_DISCOUNT = 15;
-  const LIGHT_DISCOUNT = 15;
+  const COST_PER_HOUR       = 44;
+const MIN_PRICE_PER_HOUR  = 14;
+const MAX_DISCOUNT_HOUR   = COST_PER_HOUR - MIN_PRICE_PER_HOUR; // = 30
 
-  const numCourts = +document.getElementById("num-courts").value;
-  const hours     = +document.getElementById("court-hours").value;
-  let normalCnt   = +document.getElementById("ms-normal").value;
-  let lightCnt    = +document.getElementById("ms-light").value;
-  const payer     = document.getElementById("payer-select").value;
-if(normalCnt + lightCnt > 4){
-  alert("Łącznie można użyć maksymalnie 4 kart Multisport!");
-  return;
+const numCourts   = +document.getElementById("num-courts").value;
+const hours       = +document.getElementById("court-hours").value;
+const normalCnt = +document.getElementById("ms-normal").value;
+const lightCnt  = +document.getElementById("ms-light").value;
+const payer = document.getElementById("payer-select").value;
+
+// podstawowy koszt
+const baseCost       = numCourts * hours * COST_PER_HOUR;
+// normalne karty
+const discountNormal = normalCnt * hours * 15;
+
+// light – maks. numCourts kart na każdy z hours dni:
+let remainingLight = lightCnt;
+let discountLight  = 0;
+for (let h = 1; h <= hours; h++) {
+  const use   = Math.min(remainingLight, numCourts);
+  discountLight += use * 15;
+  remainingLight -= use;
+  if (!remainingLight) break;
 }
 
-  // 1. Podstawowy koszt
-  const baseCost = numCourts * hours * COST_PER_HOUR;
+// surowy rabat i jego kapowanie
+const rawDiscount   = discountNormal + discountLight;
+const capDiscount   = numCourts * hours * MAX_DISCOUNT_HOUR;
+const totalDiscount = Math.min(rawDiscount, capDiscount);
 
-  // 2. Rabat Normal: każda karta × godziny
-  const discountNormal = normalCnt * hours * NORMAL_DISCOUNT;
-
-  // 3. Rabat Light: każda karta raz na dzień,
-  //    ale przydzielamy je po kolei na godziny i korty:
-  let remainingLight = lightCnt;
-  let discountLight = 0;
-  for(let h=1; h<=hours; h++){
-    // ile kart możemy użyć w tej godzinie?
-    const use = Math.min(remainingLight, numCourts);
-    discountLight += use * LIGHT_DISCOUNT;
-    remainingLight -= use;
-    if(remainingLight <= 0) break;
-  }
-
-  const totalDiscount = discountNormal + discountLight;
-  const courtCost = Math.max(0, baseCost - totalDiscount);
+// koszt po rabacie
+const courtCost     = baseCost - totalDiscount;
 
   // 4. Podział na uczestników
   const participants = players.filter(p => p.selected);
+  const maxCards = participants.length;
+
+if (normalCnt + lightCnt > maxCards) {
+  alert(`Maksymalnie ${maxCards} kart MS (tylu jest graczy).`);
+  return;
+}
+
   const debt = new Map(participants.map(p => [p.id, 0]));
 
   // 4a) Koszty kortów (bez płatnika)
@@ -59,14 +64,18 @@ if(normalCnt + lightCnt > 4){
   const shareCourt = sharers.length ? (courtCost / sharers.length) : 0;
   sharers.forEach(p => debt.set(p.id, shareCourt));
 
-  // 4b) Produkty
-  document.querySelectorAll(".product-row:not(.template)").forEach(r => {
-    const price = +r.querySelector(".prod-price").value;
-    const buyer = r.querySelector(".prod-buyer").value;
-    const recs  = Array.from(r.querySelector(".prod-recipients").selectedOptions).map(o => o.value);
-    const per   = recs.length ? (price / recs.length) : 0;
-    recs.forEach(id => debt.set(id, debt.get(id) + per));
-  });
+ 
+// ścieżka do subkolekcji rozliczenia
+const payoutsPath = doc(db, "turniej", "stats"); 
+const payoutsCol  = collection(payoutsPath, "rozliczenia");
+
+// zapis długu dla każdego „sharera”
+sharers.forEach(p => {
+  const payoutDoc = doc(payoutsCol, p.id);
+  setDoc(payoutDoc, { debt: debt.get(p.id) || 0 })
+    .catch(err => console.error("Błąd zapisu rozliczenia:", err));
+});
+
 
   // 5. Render tabeli
   const tbody = document.querySelector("#payout-table tbody");
@@ -76,6 +85,45 @@ if(normalCnt + lightCnt > 4){
     const val = (debt.get(p.id) || 0).toFixed(2);
     tbody.insertAdjacentHTML("beforeend", `<tr><td>${p.name}</td><td>${val} zł</td></tr>`);
   });
+}
+async function loadPayouts(players) {
+  const tbody = document.querySelector("#payout-table tbody");
+  tbody.innerHTML = "";
+
+  // referencja do subkolekcji
+  const payoutsPath = doc(db, "turniej", "stats");
+  const payoutsCol  = collection(payoutsPath, "rozliczenia");
+  
+  try {
+    const snapshot = await getDocs(payoutsCol);
+    snapshot.forEach(docSnap => {
+      const pId   = docSnap.id;
+      const data  = docSnap.data();
+      const player = players.find(p => p.id === pId);
+      if (!player) return;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${player.name}</td>
+        <td>${(data.debt || 0).toFixed(2)} zł</td>
+        <td>
+          <button class="btn btn-sm btn-outline-success settle-btn">
+            Rozliczono
+          </button>
+        </td>`;
+
+      // przycisk Rozliczono
+      tr.querySelector(".settle-btn").addEventListener("click", async () => {
+        const payoutDoc = doc(payoutsCol, pId);
+        await deleteDoc(payoutDoc);
+        tr.remove();
+      });
+
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("Błąd odczytu rozliczeń:", err);
+  }
 }
 
 
@@ -99,17 +147,10 @@ const players = allPlayers;  // już masz listę z tournament.js
 players.forEach(p => {
   const opt = `<option value="${p.id}">${p.name}</option>`;
   document.getElementById("payer-select").insertAdjacentHTML("beforeend", opt);
-  document.querySelectorAll(".prod-buyer, .prod-recipients")
-    .forEach(sel => sel.insertAdjacentHTML("beforeend", opt));
+  
 });
-// obsługa przycisków
-document.getElementById("add-product-btn").addEventListener("click", () => {
-  const tpl = document.querySelector(".product-row.template");
-  const row = tpl.cloneNode(true);
-  row.classList.remove("template"); row.hidden = false;
-  tpl.parentNode.appendChild(row);
-  row.querySelector(".remove-product").addEventListener("click", () => row.remove());
-});
+
+
 document.getElementById("calc-btn").addEventListener("click", () => calculatePayout(allPlayers));
 
 
@@ -660,7 +701,9 @@ document.getElementById("showPayoutBtn").addEventListener("click", () => {
   ["mainContainer","archiveView","rankingView","payoutView"].forEach(id =>
     document.getElementById(id).style.display = "none"
   );
+
   document.getElementById("payoutView").style.display = "block";
+  loadPayouts(allPlayers);
 });
 
 
