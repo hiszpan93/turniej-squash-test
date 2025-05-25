@@ -78,15 +78,26 @@ sharers.forEach(p => {
 
 
 
-  // 5. Render tabeli
-  const tbody = document.querySelector("#payout-table tbody");
-  tbody.innerHTML = "";
-  participants.forEach(p => {
-    if(p.id === payer) return; 
-    const val = (debt.get(p.id) || 0).toFixed(2);
-    tbody.insertAdjacentHTML("beforeend", `<tr><td>${p.name}</td><td>${val} zł</td></tr>`);
-  });
-}
+  // 5. Render tabeli „globalnej” długu
+const tbody = document.querySelector("#payout-table tbody");
+tbody.innerHTML = "";
+
+// znajdź imię płatnika
+const payerName = allPlayers.find(p => p.id.toString() === payer)?.name || "";
+
+// wypisz wszystkich uczestników (Dłużnik → Wierzyciel)
+participants.forEach(p => {
+  const amount   = (debt.get(p.id) || 0).toFixed(2);
+  const creditor = p.id.toString() === payer ? "" : payerName;
+  tbody.insertAdjacentHTML("beforeend", `
+    <tr>
+      <td>${p.name}</td>
+      <td>${creditor}</td>
+      <td>${amount} zł</td>
+    </tr>
+  `);
+});
+  }
 async function loadPayouts(players) {
   const tbody = document.querySelector("#payout-table tbody");
   tbody.innerHTML = "";
@@ -144,14 +155,7 @@ function initUI() {
   
   document.getElementById("viewTabs").style.display = "flex";
   document.getElementById("userInfoBar").style.display = "flex";
-// ——— Inicjalizacja formularza Rozliczeń ———
-const players = allPlayers;  // już masz listę z tournament.js
-// wypełnij selecty
-players.forEach(p => {
-  const opt = `<option value="${p.id}">${p.name}</option>`;
-  document.getElementById("payer-select").insertAdjacentHTML("beforeend", opt);
-  
-});
+
 
 
 document.getElementById("calc-btn").addEventListener("click", () => calculatePayout(allPlayers));
@@ -706,7 +710,20 @@ document.getElementById("showPayoutBtn").addEventListener("click", () => {
   );
 
   document.getElementById("payoutView").style.display = "block";
-  loadPayouts(allPlayers);
+  // 1) Pobierz aktualnych uczestników
+const participants = allPlayers.filter(p => p.selected);
+
+// 2) Opróżnij i wypełnij select płatnika tylko nimi
+const payerSelect = document.getElementById("payer-select");
+payerSelect.innerHTML = "";
+participants.forEach(p => {
+  const opt = `<option value="${p.id}">${p.name}</option>`;
+  payerSelect.insertAdjacentHTML("beforeend", opt);
+});
+
+// Teraz pokaz i ładuj dane
+loadPayouts(allPlayers);
+
 });
 
 
