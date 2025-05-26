@@ -695,11 +695,7 @@ await saveDraftToFirebase();
       .catch(err => console.error("❌ Błąd usuwania wersji roboczej:", err));
   }
 
-  // ✅ Resetuj selected
-  allPlayers.forEach(player => {
-    player.selected = false;
-  });
-  renderPlayersList();
+  
 
   // ✅ Zapisz reset graczy
   const playersRef = doc(window.db, "turniej", "stats");
@@ -821,7 +817,10 @@ export async function prepareForNewTournament() {
   window.matches = [];
   window.allMatches = [];
   window.stats = {};
-
+// Teraz czyścimy zaznaczenie graczy,
+  // bo faktycznie zaczynamy od nowa
+  allPlayers.forEach(player => player.selected = false);
+  window.renderPlayersList();
   // Oczyść interfejs
   document.getElementById("matchesTable").innerHTML = "";
   document.getElementById("resultsTable").getElementsByTagName("tbody")[0].innerHTML = "";
