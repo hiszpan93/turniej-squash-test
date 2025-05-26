@@ -639,6 +639,8 @@ export async function endTournament() {
   endTournamentBtn.classList.remove("btn-danger");
   endTournamentBtn.classList.add("btn-secondary");
   alert("Turniej został zakończony. Nie można już generować meczy ani wpisywać wyników.");
+// po zapisaniu archiwum i ustawieniu tournamentEnded = true
+document.getElementById("showPayoutBtn").style.display = "";  // odblokuj zakładkę
 
   // ✅ ARCHIWUM
   const archive = {

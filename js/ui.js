@@ -4,9 +4,7 @@ import {
   endTournament, loadDataFromFirebase, resetTournamentData
 } from './tournament.js';
 
-import { collection, getDocs, auth, getAuthFn, db, doc, setDoc, deleteDoc } from "./firebase.js";
-
-
+import { collection, getDocs, getDoc, auth, getAuthFn, db, doc, setDoc, deleteDoc } from "./firebase.js";
 
   
   
@@ -25,7 +23,10 @@ import { collection, getDocs, auth, getAuthFn, db, doc, setDoc, deleteDoc } from
   const normalCnt = +document.getElementById("ms-normal").value;
   const lightCnt  = +document.getElementById("ms-light").value;
   const payerId   = parseInt(document.getElementById("payer-select").value, 10);
-
+if (window.payoutsCalculated) {
+  alert("Podział kosztów już został obliczony dla tego turnieju.");
+  return;
+}
   // ── 2. Lista uczestników i walidacja kart ──────────────────────────────
   const participants = players.filter(p => p.selected);
   const maxCards     = participants.length;
@@ -52,22 +53,31 @@ import { collection, getDocs, auth, getAuthFn, db, doc, setDoc, deleteDoc } from
 
   // ── 4. Podział kosztów na uczestników (bez płatnika) ──────────────────
   const debt   = new Map(participants.map(p => [p.id, 0]));
+  const shareCourt = courtCost / participants.length;
   const sharers = participants.filter(p => p.id !== payerId);
-  const shareCourt = sharers.length ? (courtCost / sharers.length) : 0;
   sharers.forEach(p => debt.set(p.id, shareCourt));
 
   // ── 5. Zapis do Firestore ───────────────────────────────────────────────
   const payoutsPath = doc(db, "turniej", "stats");
   const payoutsCol  = collection(payoutsPath, "rozliczenia");
-  sharers.forEach(p => {
-    const payoutDoc = doc(payoutsCol, p.id.toString());
-    setDoc(payoutDoc, { debt: debt.get(p.id) || 0 });
-  });
+  // 5. Zapis i akumulacja długu
+ for (const p of sharers) {
+  const payoutDoc = doc(payoutsCol, p.id.toString());
+   // 1) pobierz dotychczasowy dług (jeśli istnieje)
+   const snap    = await getDoc(payoutDoc);
+   const oldDebt = snap.exists() ? snap.data().debt : 0;
+   // 2) dodaj nową część długi z bieżącego turnieju
+   const newDebt = oldDebt + (debt.get(p.id) || 0);
+   // 3) zapisz z merge, żeby nie nadpisywać ewentualnych innych pól
+   await setDoc(payoutDoc, { debt: newDebt }, { merge: true });
+ }
 
   // ── 6. Ustawienie labelki „Wierzyciel” ─────────────────────────────────
   const payerName      = players.find(p => p.id === payerId)?.name || "";
   document.getElementById("creditor-label")
           .textContent = `Wierzyciel: ${payerName}`;
+const caption = document.getElementById("payout-caption");
+caption.textContent = `Wierzyciel: ${payerName}`;
 
   // ── 7. Renderowanie tabeli ──────────────────────────────────────────────
   const tbody = document.querySelector("#payout-table tbody");
@@ -84,6 +94,7 @@ import { collection, getDocs, auth, getAuthFn, db, doc, setDoc, deleteDoc } from
           Rozliczono
         </button>
       </td>`;
+
     // listener usuwający dług po kliknięciu
     tr.querySelector(".settle-btn").addEventListener("click", async () => {
       await deleteDoc(doc(payoutsCol, p.id.toString()));
@@ -91,7 +102,11 @@ import { collection, getDocs, auth, getAuthFn, db, doc, setDoc, deleteDoc } from
     });
     tbody.appendChild(tr);
   });
+  window.payoutsCalculated = true;
+document.getElementById("calc-btn").disabled = true;
+
 }
+
 
 async function loadPayouts(players) {
   const tbody = document.querySelector("#payout-table tbody");
@@ -147,6 +162,8 @@ function initUI() {
   
   document.getElementById("viewTabs").style.display = "flex";
   document.getElementById("userInfoBar").style.display = "flex";
+// w initUI (ui.js)
+document.getElementById("showPayoutBtn").style.display = "none";
 
 
 
