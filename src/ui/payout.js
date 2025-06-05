@@ -1,5 +1,5 @@
 import { allPlayers } from '../tournament.js';
-import { collection, getDocs, getDoc, doc, setDoc, deleteDoc } from '../firebase.js';
+import { collection, getDocs, getDoc, doc, setDoc, deleteDoc } from '../../firebase.js';
 
 
 async function calculatePayout(players) {
