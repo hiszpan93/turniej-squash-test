@@ -18,8 +18,9 @@ import {
   collection,
   getDocs
 } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-import { matches as matchesGlobal, allMatches as allMatchesGlobal } from "./tournament.js";
-import * as tournament from './tournament.js';
+import { matches as matchesGlobal, allMatches as allMatchesGlobal } from "./src/tournament.js";
+import * as tournament from './src/tournament.js';
+
 
 
 const firebaseConfig = {
