@@ -1,7 +1,8 @@
 // src/utils/firebaseSync.js
 
-import { db, doc, setDoc } from '../firebase.js';
-import { auth } from '../firebase.js';
+import { db, doc, setDoc } from '../../firebase.js';
+import { auth } from '../../firebase.js';
+
 
 /**
  * Zapisuje dane turnieju (statystyki i listę graczy) do Firestore.
