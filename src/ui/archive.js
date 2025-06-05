@@ -1,7 +1,7 @@
 // src/ui/archive.js
 
 import { getAuthFn } from '../../firebase.js';
-import { collection, getDocs } from 'firebase/firestore'; // upewnij się, że masz prawidłową ścieżkę
+import { collection, getDocs } from '../../firebase.js';
 import { fadeInElement } from './tournamentsNav.js'; // (lub innego modułu, jeśli fade-in jest globalny)
 
 /**
