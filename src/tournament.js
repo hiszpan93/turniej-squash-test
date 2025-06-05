@@ -412,7 +412,7 @@ export async function loadDataFromFirebase() {
 
 
 
-function getCurrentSeriesNumber() {
+export function getCurrentSeriesNumber() {
   if (matches.length === 0) return 0;
   const allConfirmed = matches.every(m => m.confirmed);
   return allConfirmed ? matches[matches.length - 1].series || 0 : matches[0].series || 1;
