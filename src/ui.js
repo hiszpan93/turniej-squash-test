@@ -14,7 +14,7 @@ import {
   loadDataFromFirebase,
   resetTournamentData
 } from './tournament.js';
-
+//
 // ===== Importy modułów UI =====
 import { renderPlayersList }     from './ui/players.js';
 import { renderMatches }         from './ui/matches.js';
