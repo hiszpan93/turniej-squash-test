@@ -1,6 +1,6 @@
 
 
-// @ts-nocheck
+// @ts-nocheckjezu
 
 // 1) Importy z CDN Firebase (wersja 9.22.1)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
