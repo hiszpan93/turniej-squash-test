@@ -1,7 +1,14 @@
 // src/utils/firebaseSync.js
 
+// src/utils/firebaseSync.js
+
 import { db, doc, setDoc } from '../../firebase.js';
-import { auth } from '../../firebase.js';
+import { auth }           from '../../firebase.js';
+
+// Importujemy z tournament.js:
+//   – allPlayers, generalStats (jeśli ich używasz)
+//   – getCurrentSeriesNumber (której potrzebujesz w saveDraft)
+import { allPlayers, generalStats, getCurrentSeriesNumber } from '../tournament.js';
 
 
 /**
