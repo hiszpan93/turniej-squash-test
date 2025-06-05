@@ -1,4 +1,4 @@
-// firebase.js (w katalogu głównym projektu)
+
 
 // @ts-nocheck
 
