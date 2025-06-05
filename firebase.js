@@ -67,10 +67,10 @@ window.firebaseAuthReady = (callback) => {
   };
 
   async function initTournamentUI() {
-    const tournamentMod = await import("./tournament.js");
+    const tournamentMod = await import("./src/tournament.js");
     await tournamentMod.loadDataFromFirebase();
   
-    const uiMod = await import("./ui.js");
+    const uiMod = await import("./src/ui.js");
     uiMod.initUI();
 
     window.renderPlayersList?.();

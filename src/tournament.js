@@ -4,7 +4,7 @@ import { updateElo, getEloDelta } from './utils/elo.js';
 import { validateResult, updateStats } from './utils/stats.js';
 import { generateRoundRobinRounds, generateMatchesForSeries } from './utils/pairing.js';
 import { saveData, saveDraft } from './utils/firebaseSync.js';
-import { db, doc, getDoc, deleteDoc, auth } from './firebase.js';
+import { db, doc, getDoc, deleteDoc, auth } from '../firebase.js';
 
 // ─── Funkcja do aktualizacji serii zwycięstw/porażek ───
 function updateStreak(playerName, won) {
