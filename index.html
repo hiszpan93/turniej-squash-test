@@ -185,14 +185,29 @@
 
 
 <script type="module">
-  import "./js/firebase.js";
+  // 1) Załaduj główną konfigurację Firebase:
+  import "./firebase.js";
 
+  // 2) Poczekaj, aż użytkownik się zaloguje (firebaseAuthReady)…
   window.firebaseAuthReady(() => {
-    import("./js/tournament.js");
-    
-    // ui.js załadujemy później – z firebase.js
+    // 3) Załaduj logikę turnieju (tournament.js)
+    import("./src/tournament.js")
+      .then(() => {
+        // 4) Po załadowaniu tournament.js załaduj UI i uruchom initUI()
+        import("./src/ui.js")
+          .then(({ initUI }) => {
+            initUI();
+          })
+          .catch(err => {
+            console.error("Błąd podczas ładowania ui.js:", err);
+          });
+      })
+      .catch(err => {
+        console.error("Błąd podczas ładowania tournament.js:", err);
+      });
   });
 </script>
+
 
 
 <!-- ✅ MODAL POTWIERDZENIA WYNIKU -->

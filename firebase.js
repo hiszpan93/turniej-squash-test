@@ -266,7 +266,8 @@ export {
   signOut,
   collection,
   getDocs,
-  getAuthFn // ✅ brakujący eksport
+  getAuthFn, 
+  firebaseAuthReady
 };
 
 
