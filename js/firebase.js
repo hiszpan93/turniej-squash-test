@@ -261,7 +261,6 @@ function hideAllMainElements() {
     "setupPanel",
     "generateMatchesBtn",
     "rankingView",
-    "tournamentArchive",
     "userInfoBar",
     "endTournamentWrapper",
   ];
@@ -271,7 +270,7 @@ function hideAllMainElements() {
   });
 
   /* Ukrywamy też tabele */
-  ["matchesTable", "resultsTable", "statsTable", "generalStatsTable", "eloRankingTable"].forEach(
+  ["matchesTable", "resultsTable", "statsTable", "generalStatsTable"].forEach(
     (id) => {
       const wrapper = document.getElementById(id)?.closest(".table-responsive");
       if (wrapper) wrapper.style.display = "none";
