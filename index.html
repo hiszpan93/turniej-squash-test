@@ -239,10 +239,10 @@
 
   <!-- Skrypt inicjalizujący Firebase + ładowanie modułów turniej/ui -->
   <script type="module">
-    import "./firebase.js";
+    import "./js/firebase.js";
 
     window.firebaseAuthReady(() => {
-      import("./tournament.js");
+      import("./js/tournament.js");
       // ui.js zostanie załadowane wewnątrz firebaseAuthReady po inicjalizacji
     });
   </script>
