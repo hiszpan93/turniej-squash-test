@@ -260,7 +260,6 @@ function hideAllMainElements() {
     "playersList",
     "setupPanel",
     "generateMatchesBtn",
-    "resetTournamentBtn",
     "rankingView",
     "tournamentArchive",
     "userInfoBar",

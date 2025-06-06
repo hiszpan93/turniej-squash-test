@@ -17,7 +17,7 @@ import {
   generateMatches,
   confirmMatch,
   endTournament,
-  resetTournamentData,
+  
 } from "./tournament.js";
 
 import {
@@ -738,13 +738,7 @@ function initUI() {
   const endBtn = document.getElementById("endTournamentBtn");
   if (endBtn) endBtn.addEventListener("click", endTournament);
 
-  document
-    .getElementById("resetTournamentBtn")
-    .addEventListener("click", () => {
-      if (typeof resetTournamentData === "function") {
-        resetTournamentData();
-      }
-    });
+  
 
   /* ====== OBSŁUGA ZAKŁADEK ====== */
   document.getElementById("showTournamentBtn").addEventListener("click", () => {

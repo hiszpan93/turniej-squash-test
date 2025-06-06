@@ -810,27 +810,7 @@ function hideSetupControls() {
   if (nc) nc.style.display = "none";
 }
 
-/* ======================= RESET DANYCH TURNIEJU ======================= */
 
-export async function resetTournamentData() {
-  if (!confirm("Na pewno usunąć wszystkie dane trwającego turnieju?")) return;
-
-  matches = [];
-  stats = {};
-  tournamentEnded = false;
-
-  document.getElementById("matchesTable").innerHTML = "";
-  document
-    .getElementById("resultsTable")
-    .getElementsByTagName("tbody")[0].innerHTML = "";
-  document
-    .getElementById("statsTable")
-    .getElementsByTagName("tbody")[0].innerHTML = "";
-
-  alert("Dane turnieju zostały zresetowane.");
-  window.location.href = window.location.href.split("?")[0];
-  prepareForNewTournament();
-}
 
 /**
  * Przywraca interfejs do stanu “nowy turniej” bez usuwania allPlayers:
