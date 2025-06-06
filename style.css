@@ -1,33 +1,58 @@
+/* ======================= OGÓLNE ======================= */
 body {
   background-color: #f8f9fa;
   padding-top: 70px;
 }
+
 .container {
   margin-bottom: 30px;
 }
-input, button {
+
+/* Wyłączamy domyślnie widoczność elementów: */
+#mainContainer,
+#viewTabs,
+#userInfoBar,
+#archiveView,
+#rankingView,
+#payoutView,
+#restoreSpinner,
+#endTournamentWrapper {
+  display: none;
+}
+
+input,
+button {
   border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: box-shadow 0.2s ease-in-out;
 }
-input:focus, button:hover {
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+
+input:focus,
+button:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
+
 table {
   background: #fff;
   border-radius: 4px;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
 th {
   background-color: #e9ecef;
 }
+
+/* Po zatwierdzeniu meczu: */
 .confirmed {
   background-color: #d4edda !important;
 }
+
 #endTournamentBtn {
   margin-top: 15px;
 }
+
+/* Usuwamy strzałki w polach typu number */
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -38,8 +63,10 @@ input[type=number]::-webkit-inner-spin-button {
   overflow-x: auto;
 }
 
+/* ===== Responsywność ===== */
 @media (max-width: 768px) {
-  th, td {
+  th,
+  td {
     font-size: 14px;
     padding: 6px;
   }
@@ -50,7 +77,8 @@ input[type=number]::-webkit-inner-spin-button {
   .btn {
     width: 100%;
   }
-  #setupPanel input, #setupPanel button {
+  #setupPanel input,
+  #setupPanel button {
     font-size: 16px;
   }
 }
@@ -96,86 +124,17 @@ input[type=number]::-webkit-inner-spin-button {
   }
 }
 
+/* Animacje fade-in / slide-in */
 .fade-in {
   animation: fadeIn 0.5s ease-in-out;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.section-header {
-  border-bottom: 1px solid #ccc;
-  margin-top: 30px;
-  padding-bottom: 5px;
-}
-
-.match-input-tile {
-  background-color: #ffffff;
-  border: 1px solid #ccc;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.score-input-tile {
-  width: 100%;
-  font-size: 24px;
-  text-align: center;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  background-color: #f9f9f9;
-  box-sizing: border-box;
-}
-
-.player-label {
-  font-size: 12px;
-  color: #555;
-}
-
-@media (max-width: 576px) {
-  .match-input-tile .d-flex {
-    flex-direction: column !important;
-    gap: 10px;
+  from {
+    opacity: 0;
   }
-
-  .match-input-tile .w-50 {
-    width: 100% !important;
-  }
-
-  .match-input-tile .px-2 {
-    display: none;
-  }
-
-  .score-input-tile {
-    font-size: 22px;
-    padding: 6px 8px;
-    max-height: 48px;
-    max-width: 90vw;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .score-row .card {
-    border: none;
-    box-shadow: none;
-    padding: 8px 10px !important;
-  }
-
-  .score-row button {
-    font-size: 15px;
-    padding: 6px 10px;
-    margin-top: 8px;
-  }
-
-  .player-label {
-    font-size: 11px;
-    margin-bottom: 2px;
-  }
-
-  .score-row td {
-    padding: 0;
-    max-width: 100%;
+  to {
+    opacity: 1;
   }
 }
 
@@ -209,12 +168,7 @@ input[type=number]::-webkit-inner-spin-button {
   animation: slideUp 0.25s ease-in-out;
 }
 
-.winner-glow {
-  animation: glowWinner 1.2s ease-in-out infinite alternate;
-  color: #28a745 !important;
-  font-weight: bold;
-}
-
+/* Efekt “glow” dla zwycięzcy */
 @keyframes glowWinner {
   from {
     text-shadow: 0 0 2px #28a745;
@@ -226,8 +180,83 @@ input[type=number]::-webkit-inner-spin-button {
   }
 }
 
+.winner-glow {
+  animation: glowWinner 1.2s ease-in-out infinite alternate;
+  color: #28a745 !important;
+  font-weight: bold;
+}
+
 .winner-summary {
   font-size: 15px;
   color: #155724;
 }
 
+/* Nagłówki sekcji */
+.section-header {
+  border-bottom: 1px solid #ccc;
+  margin-top: 30px;
+  padding-bottom: 5px;
+}
+
+/* Kafelek meczu */
+.match-input-tile {
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Pole do wpisania wyniku */
+.score-input-tile {
+  width: 100%;
+  font-size: 24px;
+  text-align: center;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
+  box-sizing: border-box;
+}
+
+.player-label {
+  font-size: 12px;
+  color: #555;
+}
+
+@media (max-width: 576px) {
+  .match-input-tile .d-flex {
+    flex-direction: column !important;
+    gap: 10px;
+  }
+  .match-input-tile .w-50 {
+    width: 100% !important;
+  }
+  .match-input-tile .px-2 {
+    display: none;
+  }
+  .score-input-tile {
+    font-size: 22px;
+    padding: 6px 8px;
+    max-height: 48px;
+    max-width: 90vw;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .score-row .card {
+    border: none;
+    box-shadow: none;
+    padding: 8px 10px !important;
+  }
+  .score-row button {
+    font-size: 15px;
+    padding: 6px 10px;
+    margin-top: 8px;
+  }
+  .player-label {
+    font-size: 11px;
+    margin-bottom: 2px;
+  }
+  .score-row td {
+    padding: 0;
+    max-width: 100%;
+  }
+}

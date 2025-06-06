@@ -1,5 +1,11 @@
-
 // @ts-nocheck
+/**
+ * =================== IMPORTY FIREBASE ===================
+ * Ściągamy tylko to, co jest potrzebne:
+ * - initializeApp, getAuth, signIn, signOut, onAuthStateChanged, createUserWithEmailAndPassword, onIdTokenChanged
+ * - getFirestore, doc, setDoc, getDoc, deleteDoc, collection, getDocs
+ */
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import {
   getAuth,
@@ -7,7 +13,7 @@ import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
   signOut,
-  onIdTokenChanged
+  onIdTokenChanged,
 } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 import {
   getFirestore,
@@ -16,12 +22,16 @@ import {
   getDoc,
   deleteDoc,
   collection,
-  getDocs
+  getDocs,
 } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-import { matches as matchesGlobal, allMatches as allMatchesGlobal } from "./tournament.js";
-import * as tournament from './tournament.js';
 
+import {
+  matches as matchesGlobal,
+  allMatches as allMatchesGlobal,
+} from "./tournament.js";
+import * as tournament from "./tournament.js";
 
+/* ======================= KONFIGURACJA Firebase ======================= */
 const firebaseConfig = {
   apiKey: "AIzaSyBsZrIabUINi6KeOAbUmjBWNWjsV8ViHU4",
   authDomain: "turniej-squash.firebaseapp.com",
@@ -29,23 +39,36 @@ const firebaseConfig = {
   storageBucket: "turniej-squash.appspot.com",
   messagingSenderId: "240839704393",
   appId: "1:240839704393:web:0c681a6826a9b6759ca498",
-  measurementId: "G-MF0N1DNET0"
+  measurementId: "G-MF0N1DNET0",
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-window.db = db;
 const auth = getAuth(app);
 
+// Udostępniamy bazę w window, żeby inne moduły mogły korzystać:
+window.db = db;
+
+// Eksportujemy auth jako funkcję, żeby można było dynamicznie pobierać aktualnego usera:
+function getAuthFn() {
+  return auth;
+}
+
+export { auth, db, doc, setDoc, getDoc, deleteDoc, collection, getDocs, getAuthFn };
+
+/* ======================= LOGIKA LOGOWANIA / REJESTRACJI ======================= */
 window.firebaseAuthReady = (callback) => {
+  // ===== OBŁUGA KLIKA: ZALOGUJ SIĘ =====
   document.getElementById("loginBtn").onclick = () => {
     const email = document.getElementById("emailInput").value;
     const pass = document.getElementById("passwordInput").value;
+
     signInWithEmailAndPassword(auth, email, pass)
       .then(() => location.reload())
-      .catch(e => alert("Błąd logowania: " + e.message));
+      .catch((e) => alert("Błąd logowania: " + e.message));
   };
 
+  // ===== OBŁUGA KLIKA: ZAREJESTRUJ SIĘ =====
   document.getElementById("registerBtn").onclick = async () => {
     const email = document.getElementById("emailInput").value;
     const pass = document.getElementById("passwordInput").value;
@@ -59,168 +82,165 @@ window.firebaseAuthReady = (callback) => {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
       const uid = cred.user.uid;
-      await setDoc(doc(window.db, "users", uid), { nick: nick.trim() });
+      await setDoc(doc(db, "users", uid), { nick: nick.trim() });
       alert("Rejestracja zakończona. Możesz się zalogować.");
     } catch (e) {
       alert("Błąd rejestracji: " + e.message);
     }
   };
 
-  async function initTournamentUI() {
-    const tournamentMod = await import("./tournament.js");
-    await tournamentMod.loadDataFromFirebase();
-  
-    const uiMod = await import("./ui.js");
-    uiMod.initUI();
-
-    window.renderPlayersList?.();
-    window.renderGeneralStats?.();
-    window.renderMatches?.();
-    window.renderStats?.();
-
-    window.matches?.forEach(match => {
-    if (match.confirmed) {
-    window.addResultToResultsTable(match);
-     }
-    });
-
-  }
-  onAuthStateChanged(auth, async user => {
+  /* =================== PO ZMIANIE STANU AUTORYZACJI =================== */
+  onAuthStateChanged(auth, async (user) => {
     if (user) {
-       let refreshTimeoutId;
+      // ===== Automatyczne odświeżanie tokenu co 5 minut przed wygaśnięciem =====
+      let refreshTimeoutId;
 
-    // funkcja planująca kolejne odświeżenie
-    const scheduleTokenRefresh = async () => {
-      try {
-        const idTokenResult = await user.getIdTokenResult();
-        const expTime = new Date(idTokenResult.expirationTime).getTime();
-        const now = Date.now();
-        // odświeżaj 5 minut przed wygaśnięciem
-        const delay = expTime - now - 5 * 60 * 1000;
-        if (delay > 0) {
-          refreshTimeoutId = setTimeout(async () => {
-            await user.getIdToken(true);
-            console.log("✅ Token Firebase odświeżony");
-            scheduleTokenRefresh();
-          }, delay);
+      const scheduleTokenRefresh = async () => {
+        try {
+          const idTokenResult = await user.getIdTokenResult();
+          const expTime = new Date(idTokenResult.expirationTime).getTime();
+          const now = Date.now();
+          const delay = expTime - now - 5 * 60 * 1000;
+          if (delay > 0) {
+            refreshTimeoutId = setTimeout(async () => {
+              await user.getIdToken(true);
+              console.log("✅ Token Firebase odświeżony");
+              scheduleTokenRefresh();
+            }, delay);
+          }
+        } catch (err) {
+          console.error("⚠️ Błąd planowania odświeżenia tokenu:", err);
         }
-      } catch (err) {
-        console.error("⚠️ Błąd planowania odświeżenia tokenu:", err);
-      }
-    };
+      };
 
-    // kiedy stan tokenu się zmieni (np. po re-loginie), re-plan
-    onIdTokenChanged(auth, u => {
-      if (u) {
-        if (refreshTimeoutId) clearTimeout(refreshTimeoutId);
-        scheduleTokenRefresh();
-      } else {
-        if (refreshTimeoutId) clearTimeout(refreshTimeoutId);
-      }
-    });
-
-    // od razu zaplanuj pierwsze odświeżenie
-    scheduleTokenRefresh();
-
-      document.getElementById("logoutBtn").addEventListener("click", async () => {
-        await signOut(auth);
-        location.reload();
+      onIdTokenChanged(auth, (u) => {
+        if (u) {
+          if (refreshTimeoutId) clearTimeout(refreshTimeoutId);
+          scheduleTokenRefresh();
+        } else {
+          if (refreshTimeoutId) clearTimeout(refreshTimeoutId);
+        }
       });
-  
-      const draftRef = doc(window.db, "robocze_turnieje", user.uid);
+
+      scheduleTokenRefresh();
+
+      // ===== OBSŁUGA WYLOGOWANIA =====
+      document.getElementById("logoutBtn").addEventListener(
+        "click",
+        async () => {
+          await signOut(auth);
+          location.reload();
+        }
+      );
+
+      // ===== SPRAWDZENIE, CZY SĄ DANE ROBOCZE (draft) W FIRESTORE =====
+      const draftRef = doc(db, "robocze_turnieje", user.uid);
       const draftSnap = await getDoc(draftRef);
-  
+
       let restoreData = null;
       if (draftSnap.exists()) {
         restoreData = draftSnap.data();
         await deleteDoc(draftRef);
       }
-  
+
+      // ===== INICJALIZACJA UI TURNIEJU =====
+      async function initTournamentUI() {
+        const tournamentMod = await import("./tournament.js");
+        await tournamentMod.loadDataFromFirebase();
+
+        const uiMod = await import("./ui.js");
+        uiMod.initUI();
+
+        // Po załadowaniu danych wyrenderuj widoki:
+        window.renderPlayersList?.();
+        window.renderGeneralStats?.();
+        window.renderMatches?.();
+        window.renderStats?.();
+
+        // Jeśli jakieś mecze były potwierdzone, dodaj je do tabeli:
+        window.matches?.forEach((match) => {
+          if (match.confirmed) {
+            window.addResultToResultsTable(match);
+          }
+        });
+      }
+
       await initTournamentUI();
       console.log("✅ UI zainicjowane i dane załadowane");
-  
-      // ✅ Pokaż UI dopiero po init
+
+      // ===== PO ZALOGOWANIU: wyświetlamy UI, chowamy logowanie =====
       document.getElementById("authContainer").style.display = "none";
       document.getElementById("viewTabs").style.display = "flex";
       document.getElementById("mainContainer").style.display = "block";
       document.getElementById("userInfoBar").style.display = "flex";
-      document.getElementById("loggedInUserEmail").textContent = user.email || "(brak e-maila)";
+      document.getElementById("loggedInUserEmail").textContent =
+        user.email || "(brak e-maila)";
       document.body.classList.add("logged-in");
-  
-      // ✅ Dopiero teraz pytanie o przywrócenie
+
+      // ===== JEŚLI BYŁ DRAFT, PYTAMY O PRZYWRÓCENIE =====
       if (restoreData) {
-        const confirmRestore = confirm(`Znaleziono zapisany turniej w chmurze.\nCzy chcesz go przywrócić?`);
+        const confirmRestore = confirm(
+          `Znaleziono zapisany turniej w chmurze.\nCzy chcesz go przywrócić?`
+        );
         if (confirmRestore) {
+          // przywracamy matches/allMatches/statystyki:
           window.matches.length = 0;
-window.matches.push(...(restoreData.matches || []));
-window.allMatches = [...restoreData.allMatches || []];
-matches = [...window.matches];
-allMatches = [...window.allMatches];
-console.log("🧩 Zsynchronizowano matches:", matches);
-console.log("🧩 Zsynchronizowano allMatches:", allMatches);
+          window.matches.push(...(restoreData.matches || []));
+          window.allMatches = [...restoreData.allMatches || []];
 
-// DODAJ TO:
+          matchesGlobal.length = 0;
+          matchesGlobal.push(...(restoreData.matches || []));
+          allMatchesGlobal.length = 0;
+          allMatchesGlobal.push(...(restoreData.allMatches || []));
+          window.allMatches = [...allMatchesGlobal];
 
-matchesGlobal.length = 0;
-matchesGlobal.push(...(restoreData.matches || []));
-allMatchesGlobal.length = 0;
-allMatchesGlobal.push(...(restoreData.allMatches || []));
-window.allMatches = [...allMatchesGlobal]; // ⬅️ ważne!
-
-console.log("📦 allMatches po przywróceniu:", allMatchesGlobal);
-
-
-          Object.keys(window.stats).forEach(k => delete window.stats[k]);
+          Object.keys(window.stats).forEach((k) => delete window.stats[k]);
           Object.assign(window.stats, restoreData.stats || {});
           const selected = restoreData.gracze || [];
-          window.allPlayers.forEach(p => {
+          window.allPlayers.forEach((p) => {
             p.selected = selected.includes(p.name);
           });
-  
-          // 🟡 OD TWÓJ NOWY KAWAŁEK
+
+          // Przywróć stan, gdy turniej był w trakcie:
           if (restoreData.turniejTrwa && !restoreData.tournamentEnded) {
-            ["setupPanel", "playersList", "generateMatchesBtn"].forEach(id => {
+            ["setupPanel", "playersList", "generateMatchesBtn"].forEach((id) => {
               const el = document.getElementById(id);
               if (el) el.style.display = "none";
             });
-          
             const endWrapper = document.getElementById("endTournamentWrapper");
             if (endWrapper) endWrapper.style.display = "block";
           }
-          
-  
-          // 🟡 Zapamiętaj stan zakończenia turnieju
-          window.tournamentEnded = restoreData.tournamentEnded || false;
-          
 
+          window.tournamentEnded = restoreData.tournamentEnded || false;
           window.renderPlayersList?.();
           window.renderGeneralStats?.();
           window.renderMatches?.();
           window.renderStats?.();
-  
-          window.matches?.forEach(match => {
+
+          window.matches?.forEach((match) => {
             if (match.confirmed) {
               window.addResultToResultsTable(match);
             }
           });
-  
+
+          // Pokaż toast z liczbą przywróconych meczów:
           const toastText = restoreData.matches?.length
             ? `✅ Przywrócono turniej z ${restoreData.matches.length} meczami.`
             : `✅ Przywrócono turniej.`;
+
           document.getElementById("restoreToastContent").textContent = toastText;
           const toastEl = document.getElementById("restoreToast");
           new bootstrap.Toast(toastEl).show();
-  
+
           setTimeout(() => {
-            document.getElementById("matchesTable")?.scrollIntoView({ behavior: "smooth" });
+            document
+              .getElementById("matchesTable")
+              ?.scrollIntoView({ behavior: "smooth" });
           }, 600);
         }
       }
-  
-      if (callback) callback();
-  
     } else {
-      // ❌ Użytkownik niezalogowany – pokaż tylko logowanie
+      // Użytkownik niezalogowany – pokaż tylko logowanie
       document.getElementById("authContainer").style.display = "block";
       document.getElementById("userInfoBar").style.display = "none";
       document.getElementById("viewTabs").style.display = "none";
@@ -229,44 +249,38 @@ console.log("📦 allMatches po przywróceniu:", allMatchesGlobal);
       hideAllMainElements();
     }
   });
-  
-  
 };
+
+/* ======================= POMOCNICZA: chowamy wszystkie widoki ======================= */
 function hideAllMainElements() {
-  [
-    "mainContainer", "viewTabs", "archiveView", "playersList",
-    "setupPanel", "generateMatchesBtn", "resetTournamentBtn",
-    "rankingView", "tournamentArchive", "userInfoBar", "endTournamentWrapper"
-  ].forEach(id => {
+  const idsToHide = [
+    "mainContainer",
+    "viewTabs",
+    "archiveView",
+    "playersList",
+    "setupPanel",
+    "generateMatchesBtn",
+    "resetTournamentBtn",
+    "rankingView",
+    "tournamentArchive",
+    "userInfoBar",
+    "endTournamentWrapper",
+  ];
+  idsToHide.forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.style.display = "none";
   });
 
-  ["matchesTable", "resultsTable", "statsTable", "generalStatsTable", "eloRankingTable"].forEach(id => {
-    const wrapper = document.getElementById(id)?.closest(".table-responsive");
-    if (wrapper) wrapper.style.display = "none";
-  });
+  /* Ukrywamy też tabele */
+  ["matchesTable", "resultsTable", "statsTable", "generalStatsTable", "eloRankingTable"].forEach(
+    (id) => {
+      const wrapper = document.getElementById(id)?.closest(".table-responsive");
+      if (wrapper) wrapper.style.display = "none";
+    }
+  );
 
   const nc = document.getElementById("numCourts")?.parentElement;
   if (nc) nc.style.display = "none";
-  console.log("[HIDE] Ukryto wszystkie elementy turniejowe")
+
+  console.log("[HIDE] Ukryto wszystkie elementy turniejowe");
 }
-
-function getAuthFn() {
-  return auth;
-}
-
-export {
-  auth,
-  db,
-  doc,
-  setDoc,
-  getDoc,
-  deleteDoc,
-  signOut,
-  collection,
-  getDocs,
-  getAuthFn // ✅ brakujący eksport
-};
-
-
