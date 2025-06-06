@@ -783,71 +783,6 @@ function hideSetupControls() {
   if (nc) nc.style.display = "none";
 }
 
- export async function resetTournamentData() {
-  if (!confirm("Na pewno usunąć wszystkie dane trwającego turnieju?")) return;
-
- 
-  
-  matches = [];
-  stats = {};
-  tournamentEnded = false;
-
-  document.getElementById("matchesTable").innerHTML = "";
-  document.getElementById("resultsTable").getElementsByTagName("tbody")[0].innerHTML = "";
-  document.getElementById("statsTable").getElementsByTagName("tbody")[0].innerHTML = "";
-
-  alert("Dane turnieju zostały zresetowane.");
-  window.location.href = window.location.href.split("?")[0];
-  prepareForNewTournament();
-  const playersRef = doc(window.db, "turniej", "stats");
-
-
-
-}
-export async function prepareForNewTournament() {
-  console.log("🔁 Przygotowanie nowego turnieju");
-
-  tournamentEnded = false;
-  window.tournamentEnded = false;
-
-  matches = [];
-  allMatches = [];
-  stats = {};
-
-  window.matches = [];
-  window.allMatches = [];
-  window.stats = {};
-// Teraz czyścimy zaznaczenie graczy,
-  // bo faktycznie zaczynamy od nowa
-  allPlayers.forEach(player => player.selected = false);
-  window.renderPlayersList();
-  // Oczyść interfejs
-  document.getElementById("matchesTable").innerHTML = "";
-  document.getElementById("resultsTable").getElementsByTagName("tbody")[0].innerHTML = "";
-  document.getElementById("statsTable").getElementsByTagName("tbody")[0].innerHTML = "";
-
-  // Pokaż ponownie panel wyboru graczy
-  ["setupPanel", "playersList", "generateMatchesBtn"].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = "block";
-  });
-
-  const nc = document.getElementById("numCourts")?.parentElement;
-  if (nc) nc.style.display = "block";
-
-  const endWrapper = document.getElementById("endTournamentWrapper");
-  if (endWrapper) endWrapper.style.display = "none";
-
-  window.renderPlayersList?.();
-  window.renderGeneralStats?.();
-  const user = auth.currentUser;
-if (user) {
-  const playersRef = doc(window.db, "turniej", "stats");
-  
-}
-
-}
-
 // ======= AUTO-ZAPIS CO 10 SEKUND (jeśli turniej trwa) =======
 setInterval(() => {
   const user = auth.currentUser;
@@ -859,4 +794,4 @@ setInterval(() => {
 
   saveDraftToFirebase();
   console.log("🕒 Auto-zapis wykonany");
-}, 10000); // co 10 sekund
+}, 100000); 
