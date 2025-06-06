@@ -4,483 +4,352 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Turniej w squasha</title>
-
-  <!-- Motyw Bootstrap + własne style -->
-  <link
-    id="themeStylesheet"
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootswatch@5/dist/flatly/bootstrap.min.css"
-  />
+  <link id="themeStylesheet" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5/dist/flatly/bootstrap.min.css" />
   <link rel="stylesheet" href="style.css" />
+
 </head>
 <body>
-  <!-- --------------- RESET POCZĄTKOWY WIDOKÓW --------------- -->
-  <!--
-    W CSS mamy reguły, które domyślnie chowają te elementy.
-    Dzięki temu nie musimy w HTML-u ustawiać style="display:none".
-  -->
 
-  <!-- 🔄 Pasek zakładek (responsywny) -->
-  <nav id="viewTabs" class="navbar navbar-expand-sm navbar-light bg-light mb-3">
-    <div class="container-fluid">
-      <!-- Toggler widoczny poniżej sm (576px) -->
-      <button
-        class="navbar-toggler"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#navbarTabs"
-        aria-controls="navbarTabs"
-        aria-expanded="false"
-        aria-label="Przełącz nawigację"
-      >
-        <span class="navbar-toggler-icon"></span>
-      </button>
+  <style>
+    #mainContainer,
+    #viewTabs,
+    #userInfoBar,
+    #archiveView,
+    #rankingView {
+      display: none;
+    }
+  </style>
+  
+  
+  
 
-      <!-- Lista zakładek -->
-      <div class="collapse navbar-collapse" id="navbarTabs">
-        <ul class="navbar-nav me-auto mb-2 mb-sm-0">
-          <li class="nav-item">
-            <a id="showTournamentBtn" class="nav-link active" role="button"
-              >🎾 Turniej</a
-            >
-          </li>
-          <li class="nav-item">
-            <a id="showArchiveBtn" class="nav-link" role="button"
-              >📦 Archiwum</a
-            >
-          </li>
-          <li class="nav-item">
-            <a id="showRankingBtn" class="nav-link" role="button"
-              >📊 Rankingi</a
-            >
-          </li>
-          <li class="nav-item">
-            <a id="showPayoutBtn" class="nav-link" role="button"
-              >💰 Rozliczenia</a
-            >
-          </li>
-        </ul>
-      </div>
-    </div>
-  </nav>
 
-  <!-- 🔐 Sekcja logowania/rejestracji -->
-  <div id="authContainer" class="container">
-    <h3>Logowanie do turnieju</h3>
-    <input
-      type="email"
-      id="emailInput"
-      class="form-control mb-2"
-      placeholder="E-mail"
-    />
-    <input
-      type="password"
-      id="passwordInput"
-      class="form-control mb-2"
-      placeholder="Hasło"
-    />
-    <button id="loginBtn" class="btn btn-primary me-2">Zaloguj się</button>
-    <button id="registerBtn" class="btn btn-secondary">Zarejestruj się</button>
-  </div>
-
-  <!-- 🔐 Informacje o zalogowanym użytkowniku -->
-  <div
-    id="userInfoBar"
-    class="container d-flex justify-content-between align-items-center mb-3"
-  >
-    <div>
-      👤 Zalogowano jako:
-      <span id="loggedInUserEmail" class="fw-bold"></span>
-    </div>
-    <button id="logoutBtn" class="btn btn-sm btn-outline-danger">
-      Wyloguj
+<!-- 🔄 Pasek zakładek (responsywny) -->
+<nav id="viewTabs" class="navbar navbar-expand-sm navbar-light bg-light mb-3" style="display: none;">
+  <div class="container-fluid">
+    <!-- Toggler widoczny poniżej sm (576px) -->
+    <button class="navbar-toggler" type="button"
+            data-bs-toggle="collapse" data-bs-target="#navbarTabs"
+            aria-controls="navbarTabs" aria-expanded="false"
+            aria-label="Przełącz nawigację">
+      <span class="navbar-toggler-icon"></span>
     </button>
+    <!-- Lista zakładek -->
+    <div class="collapse navbar-collapse" id="navbarTabs">
+      <ul class="navbar-nav me-auto mb-2 mb-sm-0">
+        <li class="nav-item">
+          <a id="showTournamentBtn" class="nav-link active" role="button">🎾 Turniej</a>
+        </li>
+        <li class="nav-item">
+          <a id="showArchiveBtn" class="nav-link" role="button">📦 Archiwum</a>
+        </li>
+        <li class="nav-item">
+          <a id="showRankingBtn" class="nav-link" role="button">📊 Rankingi</a>
+        </li>
+        <li class="nav-item">
+          <a id="showPayoutBtn" class="nav-link" role="button">💰 Rozliczenia</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+<div id="authContainer" class="container">
+  <h3>Logowanie do turnieju</h3>
+  <input type="email" id="emailInput" class="form-control mb-2" placeholder="E-mail" />
+  <input type="password" id="passwordInput" class="form-control mb-2" placeholder="Hasło" />
+  <button id="loginBtn" class="btn btn-primary me-2">Zaloguj się</button>
+  <button id="registerBtn" class="btn btn-secondary">Zarejestruj się</button>
+</div>
+
+<!-- 🔐 Informacje o logowaniu -->
+<div id="userInfoBar" class="container d-flex justify-content-between align-items-center mb-3" style="display: none;">
+  <div>
+    👤 Zalogowano jako: <span id="loggedInUserEmail" class="fw-bold"></span>
+  </div>
+  <button id="logoutBtn" class="btn btn-sm btn-outline-danger">Wyloguj</button>
+</div>
+
+<div id="mainContainer" class="container" style="display: none;">
+
+  <!-- 🔹 PANEL STARTOWY: dodawanie gracza -->
+  <div id="setupPanel">
+    <div class="mb-3">
+      <input type="text" id="newPlayerName" class="form-control" placeholder="Nazwa gracza" />
+      <button id="addPlayerBtn" class="btn btn-primary mt-2 w-100">Dodaj gracza</button>
+    </div>
+
+    <!-- 🔹 Lista graczy z checkboxami -->
+    <div id="playersList" class="mb-3">
+      <h5 class="section-header">Dostępni gracze:</h5>
+      <div id="playersForm"></div>
+      <button id="confirmPlayersBtn" class="btn btn-secondary mt-2 w-100">Wybierz graczy</button>
+    </div>
+
+    <!-- 🔹 Liczba kortów -->
+    <div class="mb-3">
+      <select id="numCourts" class="form-select" style="max-width: 200px;">
+        <option value="1">🎾 1 kort</option>
+        <option value="2">🎾🎾 2 korty</option>
+        <option value="3">🎾🎾🎾 3 korty</option>
+        <option value="4">🎾🎾🎾🎾 4 korty</option>
+      </select>
+      
+
+    </div>
+
+    <!-- 🔹 Przycisk: wygeneruj mecze -->
+    <div class="mb-3">
+      <button id="generateMatchesBtn" class="btn btn-success w-100">Wygeneruj mecze</button>
+    </div>
+
+   
+  </div>
+<!-- 🔹 Przycisk: koniec turnieju -->
+<div class="mb-3" style="display: none;" id="endTournamentWrapper">
+  <button id="endTournamentBtn" class="btn btn-danger w-100">Koniec turnieju</button>
+</div>
+
+  <!-- 🔹 Tabela meczów -->
+  <div class="table-responsive mb-4">
+    <table id="matchesTable" class="table table-bordered"></table>
   </div>
 
-  <!-- --------------- GŁÓWNY KONTEJNER APLIKACJI --------------- -->
-  <div id="mainContainer" class="container">
-    <!-- ===== PANEL STARTOWY: Dodawanie gracza ===== -->
-    <div id="setupPanel">
-      <div class="mb-3">
-        <input
-          type="text"
-          id="newPlayerName"
-          class="form-control"
-          placeholder="Nazwa gracza"
-        />
-        <button
-          id="addPlayerBtn"
-          class="btn btn-primary mt-2 w-100"
-        >
-          Dodaj gracza
-        </button>
-      </div>
+  <!-- 🔹 Wyniki meczów -->
+  <h5 class="section-header">Wyniki meczów</h5>
+  <div class="table-responsive mb-4">
+    <table id="resultsTable" class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Mecz</th>
+          <th>Gracz 1</th>
+          <th>Gracz 2</th>
+          <th>Wynik</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-      <!-- ===== Lista graczy z checkboxami ===== -->
-      <div id="playersList" class="mb-3">
-        <h5 class="section-header">Dostępni gracze:</h5>
-        <div id="playersForm"></div>
-        <button
-          id="confirmPlayersBtn"
-          class="btn btn-secondary mt-2 w-100"
-        >
-          Wybierz graczy
-        </button>
-      </div>
+  <!-- 🔹 Statystyki graczy -->
+  <h5 class="section-header">Statystyki graczy</h5>
+  <div class="table-responsive mb-4">
+    <table id="statsTable" class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Gracz</th>
+          <th>Wygrane mecze</th>
+          <th>Przegrane mecze</th>
+          <th>Rozegrane mecze</th>
+          <th>Zdobyte punkty</th>
+          <th>Średnia pkt zdobytych</th>
+          <th>Stracone punkty</th>
+          <th>Średnia pkt straconych</th>
+          <th>ELO</th>
+          <th>Seria</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-      <!-- ===== Wybór liczby kortów ===== -->
-      <div class="mb-3">
-        <select id="numCourts" class="form-select" style="max-width: 200px;">
-          <option value="1">🎾 1 kort</option>
-          <option value="2">🎾🎾 2 korty</option>
-          <option value="3">🎾🎾🎾 3 korty</option>
-          <option value="4">🎾🎾🎾🎾 4 korty</option>
-        </select>
-      </div>
+  <!-- 🔹 Statystyki ogólne -->
+  <h5 class="section-header">Statystyki ogólne</h5>
+  <div class="table-responsive mb-4">
+    <table id="generalStatsTable" class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Gracz</th>
+          <th>ELO</th>
+          <th>Wygrane</th>
+          <th>Porażki</th>
+          <th>Rozegrane mecze</th>
+          <th>Zdobyte punkty</th>
+          <th>Średnia pkt zdobytych</th>
+          <th>Stracone punkty</th>
+          <th>Średnia pkt straconych</th>
+          <th>Obecność</th>
+          <th>Seria</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-      <!-- ===== Przycisk: generuj mecze ===== -->
-      <div class="mb-3">
-        <button
-          id="generateMatchesBtn"
-          class="btn btn-success w-100"
-        >
-          Wygeneruj mecze
-        </button>
-      </div>
-    </div>
+  <!-- 🔹 Reset -->
+  <div class="mb-4">
+    <button id="resetTournamentBtn" class="btn btn-outline-warning w-100">🧹 Resetuj dane turnieju</button>
+  </div>
+</div>
 
-    <!-- ===== Przycisk: koniec turnieju ===== -->
-    <div id="endTournamentWrapper" class="mb-3">
-      <button
-        id="endTournamentBtn"
-        class="btn btn-danger w-100"
-      >
-        Koniec turnieju
-      </button>
-    </div>
 
-    <!-- ===== Tabela meczów ===== -->
-    <div class="table-responsive mb-4">
-      <table id="matchesTable" class="table table-bordered"></table>
-    </div>
+<script type="module">
+  import "./js/firebase.js";
 
-    <!-- ===== Wyniki meczów ===== -->
-    <h5 class="section-header">Wyniki meczów</h5>
-    <div class="table-responsive mb-4">
-      <table id="resultsTable" class="table table-bordered">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Seria-Runda</th>
-            <th>Gracz 1</th>
-            <th>Gracz 2</th>
-            <th>Wynik</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-
-    <!-- ===== Statystyki graczy ===== -->
-    <h5 class="section-header">Statystyki graczy</h5>
-    <div class="table-responsive mb-4">
-      <table id="statsTable" class="table table-bordered">
-        <thead>
-          <tr>
-            <th>Gracz</th>
-            <th>Wygrane</th>
-            <th>Przegrane</th>
-            <th>Rozegrane</th>
-            <th>Zdobyte pkt</th>
-            <th>Średnia pkt</th>
-            <th>Stracone pkt</th>
-            <th>Średnia straconych</th>
-            <th>ELO</th>
-            <th>Seria</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-
-    <!-- ===== Statystyki ogólne ===== -->
-    <h5 class="section-header">Statystyki ogólne</h5>
-    <div class="table-responsive mb-4">
-      <table id="generalStatsTable" class="table table-bordered">
-        <thead>
-          <tr>
-            <th>Gracz</th>
-            <th>ELO</th>
-            <th>Wygrane</th>
-            <th>Porażki</th>
-            <th>Rozegrane</th>
-            <th>Zdobyte pkt</th>
-            <th>Średnia pkt</th>
-            <th>Stracone pkt</th>
-            <th>Średnia straconych</th>
-            <th>Obecność</th>
-            <th>Seria</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-
+  window.firebaseAuthReady(() => {
+    import("./js/tournament.js");
     
-  <!-- Skrypt inicjalizujący Firebase + ładowanie modułów turniej/ui -->
-  <script type="module">
-    import "./js/firebase.js";
+    // ui.js załadujemy później – z firebase.js
+  });
+</script>
 
-    window.firebaseAuthReady(() => {
-      import("./js/tournament.js");
-      // ui.js zostanie załadowane wewnątrz firebaseAuthReady po inicjalizacji
-    });
-  </script>
 
-  <!-- ✅ MODAL POTWIERDZENIA WYNIKU -->
-  <div
-    class="modal fade"
-    id="matchConfirmModal"
-    tabindex="-1"
-    aria-labelledby="matchConfirmModalLabel"
-    aria-hidden="true"
-  >
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="matchConfirmModalLabel">
-            Potwierdzenie wyniku
-          </h5>
-          <button
-            type="button"
-            class="btn-close"
-            data-bs-dismiss="modal"
-            aria-label="Zamknij"
-          ></button>
-        </div>
-        <div class="modal-body" id="matchConfirmContent">
-          <!-- Treść dynamiczna zostanie wstawiona JS -->
-        </div>
-        <div class="modal-footer">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            data-bs-dismiss="modal"
-          >
-            Anuluj
-          </button>
-          <button
-            type="button"
-            class="btn btn-success"
-            id="confirmMatchBtnFinal"
-          >
-            Potwierdź
-          </button>
-        </div>
+<!-- ✅ MODAL POTWIERDZENIA WYNIKU -->
+<div class="modal fade" id="matchConfirmModal" tabindex="-1" aria-labelledby="matchConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="matchConfirmModalLabel">Potwierdzenie wyniku</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+      </div>
+      <div class="modal-body" id="matchConfirmContent">
+        <!-- Treść dynamiczna -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+        <button type="button" class="btn btn-success" id="confirmMatchBtnFinal">Potwierdź</button>
       </div>
     </div>
   </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Bootstrap JS -->
-  <script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-  ></script>
-
-  <!-- ============ ARCHIWUM ============ -->
-  <div id="archiveView" class="container">
-    <h5 class="section-header">📦 Archiwum turniejów</h5>
-    <div id="archiveLoading" class="text-center my-3">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Ładowanie...</span>
-      </div>
-      <p class="mt-2">Ładowanie archiwum...</p>
-    </div>
-    <div id="tournamentArchive"></div>
-  </div>
-
-  <!-- ============ RANKING ELO ============ -->
-  <div id="rankingView" class="container">
-    <h5 class="section-header">📊 Ranking ELO</h5>
-    <div class="table-responsive mb-4">
-      <table class="table table-bordered" id="eloRankingTable">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Gracz</th>
-            <th>ELO</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- ============ ROZLICZENIA ============ -->
-  <div id="payoutView" class="container">
-    <h5 class="section-header">💰 Rozliczenia turnieju</h5>
-    <h6 id="creditor-label" class="mt-3 mb-2">Wierzyciel: —</h6>
-
-    <form id="payout-form" class="mb-4">
-      <div class="row g-2 mb-2">
-        <!-- Liczba kortów -->
-        <div class="col-auto">
-          <label for="num-courts" class="form-label">Liczba kortów:</label>
-          <select id="num-courts" class="form-select">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-          </select>
-        </div>
-        <!-- Godziny gry -->
-        <div class="col-auto">
-          <label for="court-hours" class="form-label">Godziny:</label>
-          <select id="court-hours" class="form-select">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-          </select>
-        </div>
-        <!-- Karty MS Normal -->
-        <div class="col-auto">
-          <label for="ms-normal" class="form-label">Karty Normal:</label>
-          <select id="ms-normal" class="form-select">
-            <option value="0">0</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-          </select>
-        </div>
-        <!-- Karty MS Light -->
-        <div class="col-auto">
-          <label for="ms-light" class="form-label">Karty Light:</label>
-          <select id="ms-light" class="form-select">
-            <option value="0">0</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-          </select>
-        </div>
-        <!-- Płatnik -->
-        <div class="col-auto">
-          <label for="payer-select" class="form-label">Płatnik:</label>
-          <select id="payer-select" class="form-select"></select>
-        </div>
-      </div>
-
-      <button id="calc-btn" type="button" class="btn btn-success">
-        Oblicz
-      </button>
-    </form>
-
-    <div class="table-responsive">
-      <table id="payout-table" class="table table-bordered">
-        <caption id="payout-caption">—</caption>
-        <thead>
-          <tr>
-            <th>Gracz</th>
-            <th>Kwota</th>
-            <th>Akcja</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- ℹ️ MODAL: Informacje o ELO -->
-  <div
-    class="modal fade"
-    id="eloInfoModal"
-    tabindex="-1"
-    aria-labelledby="eloInfoModalLabel"
-    aria-hidden="true"
-  >
-    <div class="modal-dialog modal-dialog-scrollable">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="eloInfoModalLabel">
-            Jak działa ranking ELO?
-          </h5>
-          <button
-            type="button"
-            class="btn-close"
-            data-bs-dismiss="modal"
-            aria-label="Zamknij"
-          ></button>
-        </div>
-        <div class="modal-body">
-          <p>
-            Ranking ELO dynamicznie dostosowuje się do wyników graczy. Przy
-            każdej grze brane są pod uwagę:
-          </p>
-          <ul>
-            <li>
-              <strong>Różnica poziomu ELO:</strong> Pokonanie silniejszego
-              gracza daje większy wzrost ELO. Pokonanie dużo słabszego –
-              mniejszy.
-            </li>
-            <li>
-              <strong>Przewaga punktowa:</strong> Im większa różnica punktów
-              (np. 11:2), tym większa nagroda ELO dla zwycięzcy.
-            </li>
-            <li>
-              <strong>Ochrona słabszych:</strong> Przegrana z silniejszym nie
-              powoduje dużej straty ELO.
-            </li>
-          </ul>
-          <p>Przykładowo:</p>
-          <ul>
-            <li>
-              ✅ <strong>Jan (ELO 980)</strong> pokonuje <strong>Adama (ELO 1020)</strong>
-              wynikiem <strong>11:9</strong> → zyskuje więcej niż zwykle!
-            </li>
-            <li>
-              ✅ <strong>Michał (ELO 1100)</strong> wygrywa z <strong>Krzysztofem (ELO 900)</strong>
-              11:1 → niewielki zysk ELO, bo wynik był spodziewany.
-            </li>
-          </ul>
-          <p class="text-muted">
-            System został zbalansowany, aby promować wyrównane i wartościowe
-            mecze.
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 🔔 Toast potwierdzenia przywrócenia turnieju -->
-  <div class="position-fixed bottom-0 end-0 p-3">
-    <div
-      id="restoreToast"
-      class="toast align-items-center text-bg-success border-0"
-      role="alert"
-      aria-live="assertive"
-      aria-atomic="true"
-      data-bs-delay="4000"
-    >
-      <div class="d-flex">
-        <div class="toast-body" id="restoreToastContent">
-          ✅ Przywrócono turniej.
-        </div>
-        <button
-          type="button"
-          class="btn-close btn-close-white me-2 m-auto"
-          data-bs-dismiss="toast"
-          aria-label="Zamknij"
-        ></button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 🔄 Loader przywracania -->
-  <div id="restoreSpinner" class="text-center my-4">
+<div id="archiveView" style="display: none;" class="container">
+  <h5 class="section-header">📦 Archiwum turniejów</h5>
+  <div id="archiveLoading" style="display: none;" class="text-center my-3">
     <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Trwa przywracanie danych...</span>
+      <span class="visually-hidden">Ładowanie...</span>
     </div>
-    <p class="mt-2">Trwa przywracanie turnieju...</p>
+    <p class="mt-2">Ładowanie archiwum...</p>
   </div>
+  <div id="tournamentArchive"></div>
+</div>
+
+<div id="rankingView" class="container" style="display: none;">
+  <h5 class="section-header">📊 Ranking ELO</h5>
+  <div class="table-responsive mb-4">
+    <table class="table table-bordered" id="eloRankingTable">
+      <thead>
+        <tr>
+          <th>Miejsce</th>
+          <th>Gracz</th>
+          <th>ELO</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+<!-- 🔹 Zakładka: Rozliczenia -->
+<div id="payoutView" class="container" style="display: none;">
+  <h5 class="section-header">💰 Rozliczenia turnieju</h5>
+  <h6 id="creditor-label" class="mt-3 mb-2">Wierzyciel: —</h6>
+
+  <form id="payout-form" class="mb-4">
+    <div class="row g-2 mb-2">
+  <!-- Liczba kortów -->
+  <div class="col-auto">
+    <label for="num-courts" class="form-label">Liczba kortów:</label>
+    <select id="num-courts" class="form-select">
+      <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+    </select>
+  </div>
+  <!-- Godziny gry -->
+  <div class="col-auto">
+    <label for="court-hours" class="form-label">Godziny:</label>
+    <select id="court-hours" class="form-select">
+      <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+    </select>
+  </div>
+  <!-- Karty MS Normal -->
+  <div class="col-auto">
+    <label for="ms-normal" class="form-label">Karty Normal:</label>
+    <select id="ms-normal" class="form-select">
+      <option value="0">0</option><option value="1">1</option><option value="2">2</option>
+      <option value="3">3</option><option value="4">4</option>
+    </select>
+  </div>
+  <!-- Karty MS Light -->
+  <div class="col-auto">
+    <label for="ms-light" class="form-label">Karty Light:</label>
+    <select id="ms-light" class="form-select">
+      <option value="0">0</option><option value="1">1</option><option value="2">2</option>
+      <option value="3">3</option><option value="4">4</option>
+    </select>
+  </div>
+  <!-- Płatnik -->
+  <div class="col-auto">
+    <label for="payer-select" class="form-label">Płatnik:</label>
+    <select id="payer-select" class="form-select"></select>
+  </div>
+</div>
+
+
+
+    <button id="calc-btn" type="button" class="btn btn-success">Oblicz</button>
+  </form>
+  <div class="table-responsive">
+    <table id="payout-table" class="table table-bordered">
+       <caption id="payout-caption">—</caption>
+    <thead>
+      <tr>
+        <th>Gracz</th>
+        <th>Kwota</th>
+        <th>Akcja</th>
+     </tr>
+    </thead>
+  <tbody></tbody>
+</table>
+
+  </div>
+</div>
+
+<!-- ℹ️ MODAL: Informacje o ELO -->
+<div class="modal fade" id="eloInfoModal" tabindex="-1" aria-labelledby="eloInfoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="eloInfoModalLabel">Jak działa ranking ELO?</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+      </div>
+      <div class="modal-body">
+        <p>Ranking ELO dynamicznie dostosowuje się do wyników graczy. Przy każdej grze brane są pod uwagę:</p>
+        <ul>
+          <li><strong>Różnica poziomu ELO:</strong> Pokonanie silniejszego gracza daje większy wzrost ELO. Pokonanie dużo słabszego – mniejszy.</li>
+          <li><strong>Przewaga punktowa:</strong> Im większa różnica punktów (np. 11:2), tym większa nagroda ELO dla zwycięzcy.</li>
+          <li><strong>Ochrona słabszych:</strong> Przegrana z silniejszym nie powoduje dużej straty ELO.</li>
+        </ul>
+        <p>Przykładowo:</p>
+        <ul>
+          <li>✅ <strong>Jan (ELO 980)</strong> pokonuje <strong>Adama (ELO 1020)</strong> wynikiem <strong>11:9</strong> → zyskuje więcej niż zwykle!</li>
+          <li>✅ <strong>Michał (ELO 1100)</strong> wygrywa z <strong>Krzysztofem (ELO 900)</strong> 11:1 → niewielki zysk ELO, bo wynik był spodziewany.</li>
+        </ul>
+        <p class="text-muted">System został zbalansowany, aby promować wyrównane i wartościowe mecze.</p>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- 🔔 Toast z liczbą meczów -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055">
+  <div id="restoreToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
+    <div class="d-flex">
+      <div class="toast-body" id="restoreToastContent">
+        ✅ Przywrócono turniej.
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Zamknij"></button>
+    </div>
+  </div>
+</div>
+
+
+<!-- 🔄 Loader przywracania -->
+<div id="restoreSpinner" class="text-center my-4" style="display: none;">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Trwa przywracanie danych...</span>
+  </div>
+  <p class="mt-2">Trwa przywracanie turnieju...</p>
+</div>
+
 </body>
 </html>
