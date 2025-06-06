@@ -674,7 +674,11 @@ document.getElementById("calc-btn").addEventListener("click", () => calculatePay
 
   
   
-  
+  document.getElementById("resetTournamentBtn").addEventListener("click", () => {
+    if (typeof resetTournamentData === "function") {
+      resetTournamentData();
+    }
+  });
   
   // ======= FADE-IN ELEMENTÓW INTERFEJSU =======
   function fadeInElement(el) {
