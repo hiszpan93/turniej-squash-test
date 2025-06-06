@@ -578,7 +578,7 @@ function initUI() {
 
     fadeInElement(document.getElementById("rankingView"));
   }
-
+window.renderEloRanking = renderEloRanking;
   /**
    * Rysuje widok archiwum: pobiera dane z localStorage i Firestore,
    * grupuje turnieje po miesiącach i pozwala wybrać miesiąc.
@@ -610,9 +610,12 @@ function initUI() {
 
     function renderAllArchives() {
       if (archiveData.length === 0) {
-        container.innerHTML = "<p>Brak zapisanych turniejów.</p>";
-        return;
-      }
+     // Wyświetl komunikat o braku danych i schowaj spinner
+     document.getElementById("archiveLoading").style.display = "none";
+     container.innerHTML = "<p>Brak zapisanych turniejów.</p>";
+     fadeInElement(container);
+     return;
+   }
 
       // Grupowanie po kluczu “YYYY-MM”
       const grouped = {};
