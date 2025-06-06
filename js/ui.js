@@ -1,7 +1,7 @@
 
 import {
   allPlayers, matches, stats, generalStats, addPlayer, confirmPlayers, generateMatches, confirmMatch,
-  endTournament, loadDataFromFirebase
+  endTournament, loadDataFromFirebase, resetTournamentData
 } from './tournament.js';
 
 import { collection, getDocs, getDoc, auth, getAuthFn, db, doc, setDoc, deleteDoc } from "./firebase.js";
@@ -670,6 +670,14 @@ document.getElementById("calc-btn").addEventListener("click", () => calculatePay
       await deleteDoc(doc(payoutsCol, p.id.toString()));
       btn.closest("tr").remove();
     });
+  });
+
+  
+  
+  document.getElementById("resetTournamentBtn").addEventListener("click", () => {
+    if (typeof resetTournamentData === "function") {
+      resetTournamentData();
+    }
   });
   
   // ======= FADE-IN ELEMENTÓW INTERFEJSU =======
