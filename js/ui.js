@@ -674,11 +674,15 @@ document.getElementById("calc-btn").addEventListener("click", () => calculatePay
 
   
   
-  document.getElementById("resetTournamentBtn").addEventListener("click", () => {
+  const resetBtn = document.getElementById("resetTournamentBtn");
+if (resetBtn) {
+  resetBtn.addEventListener("click", () => {
     if (typeof resetTournamentData === "function") {
       resetTournamentData();
     }
   });
+}
+
   
   // ======= FADE-IN ELEMENTÓW INTERFEJSU =======
   function fadeInElement(el) {
