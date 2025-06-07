@@ -387,91 +387,68 @@ export function getEloDelta(p1, p2, s1, s2, K = 24, D = 0.75) {
 
 // ======= ZAKOŃCZ TURNIEJ (wrapper) =======
 export async function endTournament() {
-  // 1) delegujemy do modułu core
+  // 1) Delegujemy do modułu core – dostajemy finalMatches i finalStats
   const { finalMatches, finalStats } = tournament.endTournament();
 
-  // 2) synchronizujemy stany
+  // 2) Synchronizujemy stany lokalne i window.*
   matches = finalMatches;
-  generalStats = finalStats;
+  const stats = finalStats;            // lokalna zmienna stats
+  generalStats = stats;                // przechowujemy też w generalStats
   tournamentEnded = true;
   window.matches = matches;
-  window.generalStats = generalStats;
+  window.stats = stats;
   window.tournamentEnded = true;
 
   // 3) Dodajemy obecność graczy
   allPlayers
     .filter(p => p.selected)
     .forEach(p => {
-      if (!generalStats[p.name]) {
-        generalStats[p.name] = {
-          wins: 0, losses: 0,
-          pointsScored: 0, pointsConceded: 0,
-          obecnosc: 0
-        };
-      }
-      generalStats[p.name].obecnosc = (generalStats[p.name].obecnosc || 0) + 1;
+      stats[p.name] ||= { wins:0, losses:0, pointsScored:0, pointsConceded:0, obecnosc:0 };
+      stats[p.name].obecnosc++;
     });
 
-  // 4) Odświeżamy UI: wyniki, statystyki, podsumowanie
- window.renderFinalScreen(generalStats);
+  // 4) Zapisujemy stan turnieju (finalStats oraz flagę)
+  await saveDataToFirebase();
 
-
-  // 5) Zapisujemy stan turnieju
-  saveDataToFirebase();
-
-  // 6) Budujemy archiwum
+  // 5) Budujemy obiekt archiwum
   const archive = {
     data: new Date().toISOString(),
     gracze: allPlayers.filter(p => p.selected).map(p => p.name),
     serie: []
   };
-
   const serieMap = new Map();
   allMatches.forEach(m => {
     const key = `seria_${m.series || 1}`;
     if (!serieMap.has(key)) serieMap.set(key, []);
-    serieMap.get(key).push({
-      ...m,
-      timestamp: m.timestamp || new Date().toISOString()
-    });
+    serieMap.get(key).push({ ...m, timestamp: m.timestamp || new Date().toISOString() });
   });
-
-  for (const [seriaKey, serieMatches] of serieMap) {
+  for (const [seriaKey, serieMatches] of serieMap.entries()) {
     archive.serie.push({
       numer: seriaKey,
       mecze: serieMatches.map(m => ({
         gracz1: m.player1,
         gracz2: m.player2,
         runda: m.round,
-        wynik: (m.result || "").trim() || "-",
+        wynik: (m.result||"").trim() || "-",
         timestamp: m.timestamp
       }))
     });
   }
 
-  // 7) Zapis archiwum i usunięcie wersji roboczej
+  // 6) Zapis archiwum i usunięcie roboczego turnieju
   const user = auth.currentUser;
   if (user) {
-    const archiveId = `turniej_${archive.data.replace(/[:.]/g, "-")}`;
-    await setDoc(doc(db, "archiwa", archiveId), archive);
+    await setDoc(doc(db, "archiwa", `turniej_${archive.data.replace(/[:.]/g, "-")}`), archive);
     await deleteDoc(doc(db, "robocze_turnieje", user.uid));
+    console.log("✅ Archiwum zapisane i usunięto draft");
   }
 
-  // 8) Reset UI do stanu początkowego
-  ["setupPanel","playersList","generateMatchesBtn"].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = "block";
-  });
-  const numCourtsEl = document.getElementById("numCourts");
-  if (numCourtsEl && numCourtsEl.parentElement) {
-    numCourtsEl.parentElement.style.display = "block";
-  }
-  const endWrap = document.getElementById("endTournamentWrapper");
-if (endWrap) endWrap.style.display = "none";
+  // 7) Wyświetlamy ekran końcowy TYLKO ze statystykami tego turnieju
+  window.renderFinalScreen(stats);
 
-  tournamentEnded = false;
-  window.tournamentEnded = false;
-}  // ← TUTAJ musi być ta klamra zamykająca
+  // 8) (opcjonalnie) czyścimy widoki turniejowe, ale nie resetujemy całej aplikacji –
+  //    restart nastąpi po manualnym odświeżeniu strony.
+}
 
 
 

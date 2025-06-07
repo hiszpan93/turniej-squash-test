@@ -388,7 +388,7 @@ document.getElementById("calc-btn").addEventListener("click", () => calculatePay
     const resultsTable = document.getElementById("resultsTable").getElementsByTagName("tbody")[0];
     const row = resultsTable.insertRow();
     row.innerHTML = `
-      <td>${resultsTable.rows.length + 1}</td>
+      <td>${resultsTable.rows.length}</td>
       <td>Mecz ${match.series || 1}-${match.round || 1}</td>
       <td>${match.player1}</td>
       <td>${match.player2}</td>
@@ -504,58 +504,59 @@ document.getElementById("calc-btn").addEventListener("click", () => calculatePay
     fadeInElement(generalStatsTable.parentElement);
   
   }
-  /**
- * Renderuje ekran końcowy: zwycięzcę i statystyki.
- * @param {Object} generalStats – obiekt z nazwami graczy jako kluczami
+ /**
+ * Renderuje ekran końcowy: zwycięzcę i statystyki bieżącego turnieju.
+ * @param {Object} statsObj – obiekt `stats` z tournament.js
  */
-function renderFinalScreen(generalStats) {
-  // 1) Usuń widoki turniejowe
+function renderFinalScreen(statsObj) {
+  // 1) Ukryj cały dotychczasowy UI turniejowy
   document.getElementById("mainContainer").style.display = "none";
-  document.getElementById("viewTabs").style.display = "none";
-  document.getElementById("userInfoBar").style.display = "none";
+  document.getElementById("viewTabs").style.display      = "none";
+  document.getElementById("userInfoBar").style.display   = "none";
+  document.getElementById("finalScreen").style.display   = "block";
 
-  // 2) Pokaż finalScreen
-  const finalEl = document.getElementById("finalScreen");
-  finalEl.style.display = "block";
+  // 2) Wstaw tytuł sekcji
+  document.querySelector("#finalScreen .section-header").textContent = "Statystyki turnieju";
 
-  // 3) Znajdź zwycięzcę: gracz z największą liczbą zwycięstw
-  const entries = Object.entries(generalStats);
+  // 3) Znajdź zwycięzcę: najwięcej wygranych w statsObj
+  const entries = Object.entries(statsObj);
   const winner = entries.sort((a,b) => b[1].wins - a[1].wins)[0]?.[0] || "-";
   document.getElementById("tournamentWinner").textContent = winner;
 
-  // 4) Wypełnij tabelę finalStatsTable
-  const table = document.getElementById("finalStatsTable");
-  // nagłówki
+  // 4) Zbuduj tabelę
+  const table   = document.getElementById("finalStatsTable");
   table.querySelector("thead")?.remove();
-  const thead = document.createElement("thead");
+  const thead   = document.createElement("thead");
   thead.innerHTML = `
     <tr>
-      <th>Gracz</th>
-      <th>Zwycięstwa</th>
-      <th>Porażki</th>
-      <th>Obecność</th>
+      <th>Gracz</th><th>Wygrane</th><th>Porażki</th><th>Rozegrane</th>
+      <th>Zdobyte pkt</th><th>Stracone pkt</th><th>Obecność</th>
     </tr>
   `;
   table.prepend(thead);
 
   const tbody = table.querySelector("tbody");
   tbody.innerHTML = "";
-  entries.forEach(([name, stats]) => {
+  entries.forEach(([name, s]) => {
+    const played = s.wins + s.losses;
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${name}</td>
-      <td>${stats.wins}</td>
-      <td>${stats.losses}</td>
-      <td>${stats.obecnosc || 0}</td>
+      <td>${s.wins}</td>
+      <td>${s.losses}</td>
+      <td>${played}</td>
+      <td>${s.pointsScored}</td>
+      <td>${s.pointsConceded}</td>
+      <td>${s.obecnosc || 0}</td>
     `;
     tbody.appendChild(row);
   });
 
-  // 5) Obsługa restartu:
+  // 5) Restart
   document.getElementById("restartBtn").onclick = () => location.reload();
 }
-
 window.renderFinalScreen = renderFinalScreen;
+
 
   /**
  * Przełącza widok na podsumowanie zakończonego turnieju:
