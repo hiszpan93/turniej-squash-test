@@ -185,6 +185,19 @@
   </div>
 </div>
 
+<!-- 🔹 Ekran końcowy turnieju -->
+<div id="finalScreen" class="container" style="display: none; text-align: center; margin-top: 50px;">
+  <h2>Koniec turnieju 🎾</h2>
+  <h4>Zwycięzca: <span id="tournamentWinner"></span></h4>
+  <h5 class="section-header">Statystyki ogólne</h5>
+  <div class="table-responsive mb-4">
+    <table id="finalStatsTable" class="table table-bordered">
+      <!-- nagłówki w JS -->
+      <tbody></tbody>
+    </table>
+  </div>
+  <button id="restartBtn" class="btn btn-primary">Nowy turniej</button>
+</div>
 
 <script type="module">
   import "./js/firebase.js";

@@ -505,6 +505,59 @@ document.getElementById("calc-btn").addEventListener("click", () => calculatePay
   
   }
   /**
+ * Renderuje ekran końcowy: zwycięzcę i statystyki.
+ * @param {Object} generalStats – obiekt z nazwami graczy jako kluczami
+ */
+function renderFinalScreen(generalStats) {
+  // 1) Usuń widoki turniejowe
+  document.getElementById("mainContainer").style.display = "none";
+  document.getElementById("viewTabs").style.display = "none";
+  document.getElementById("userInfoBar").style.display = "none";
+
+  // 2) Pokaż finalScreen
+  const finalEl = document.getElementById("finalScreen");
+  finalEl.style.display = "block";
+
+  // 3) Znajdź zwycięzcę: gracz z największą liczbą zwycięstw
+  const entries = Object.entries(generalStats);
+  const winner = entries.sort((a,b) => b[1].wins - a[1].wins)[0]?.[0] || "-";
+  document.getElementById("tournamentWinner").textContent = winner;
+
+  // 4) Wypełnij tabelę finalStatsTable
+  const table = document.getElementById("finalStatsTable");
+  // nagłówki
+  table.querySelector("thead")?.remove();
+  const thead = document.createElement("thead");
+  thead.innerHTML = `
+    <tr>
+      <th>Gracz</th>
+      <th>Zwycięstwa</th>
+      <th>Porażki</th>
+      <th>Obecność</th>
+    </tr>
+  `;
+  table.prepend(thead);
+
+  const tbody = table.querySelector("tbody");
+  tbody.innerHTML = "";
+  entries.forEach(([name, stats]) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${name}</td>
+      <td>${stats.wins}</td>
+      <td>${stats.losses}</td>
+      <td>${stats.obecnosc || 0}</td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  // 5) Obsługa restartu:
+  document.getElementById("restartBtn").onclick = () => location.reload();
+}
+
+window.renderFinalScreen = renderFinalScreen;
+
+  /**
  * Przełącza widok na podsumowanie zakończonego turnieju:
  * - ukrywa widok gier,
  * - pokazuje podsumowanie (tabele wyniki/statystyki),

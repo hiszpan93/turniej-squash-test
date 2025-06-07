@@ -413,9 +413,8 @@ export async function endTournament() {
     });
 
   // 4) Odświeżamy UI: wyniki, statystyki, podsumowanie
-  window.renderMatches();
-  window.renderGeneralStats();
-  window.showFinalResults();
+ window.renderFinalScreen(generalStats);
+
 
   // 5) Zapisujemy stan turnieju
   saveDataToFirebase();
