@@ -224,7 +224,11 @@ export function generateMatches() {
   window.renderMatches();
   saveDraftToFirebase();  // jak dotąd zapisz stan serii
   // 5) odblokuj przycisk zakończenia turnieju, jeśli był ukryty
-  document.getElementById("endTournamentWrapper")?.style.display = "block";
+  const endWrapper = document.getElementById("endTournamentWrapper");
+if (endWrapper) {
+  endWrapper.style.display = "block";
+}
+
 }
 
 
