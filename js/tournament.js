@@ -752,9 +752,15 @@ export async function loadDataFromFirebase() {
       tournamentEnded = data.tournamentEnded || false;
       window.tournamentEnded = tournamentEnded;
       
-      if (allPlayers.length > 0) {
-        nextPlayerId = Math.max(...allPlayers.map(p => p.id)) + 1;
-      }
+        // ===== synchronizacja nextPlayerId =====
+  if (allPlayers.length > 0) {
+    nextPlayerId = Math.max(...allPlayers.map(p => p.id)) + 1;
+  } else {
+    nextPlayerId = 1;
+  }
+  console.log("🔢 nextPlayerId ustawione na", nextPlayerId);
+// ===== koniec synchronizacji =====
+
 
       // ✅ ZAPISZ DO window.* – żeby initUI() miał do nich dostęp
       // Najważniejsze linie
