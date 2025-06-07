@@ -387,30 +387,30 @@ export function getEloDelta(p1, p2, s1, s2, K = 24, D = 0.75) {
 
 // ======= ZAKOŃCZ TURNIEJ (wrapper) =======
 export async function endTournament() {
-  // 1) Delegujemy do modułu core – dostajemy finalMatches i finalStats
-  const { finalMatches, finalStats } = tournament.endTournament();
+  // 0) potwierdzenie od użytkownika
+  if (!confirm("Czy na pewno chcesz zakończyć ten turniej?")) return;
 
-  // 2) Synchronizujemy stany lokalne i window.*
+  // 1) pobierz listę meczów z core, ale NIE generalStats
+  const { finalMatches } = tournament.endTournament();
+
+  // 2) synchronizujemy tylko matches
   matches = finalMatches;
-  const stats = finalStats;            // lokalna zmienna stats
-  generalStats = stats;                // przechowujemy też w generalStats
-  tournamentEnded = true;
   window.matches = matches;
-  window.stats = stats;
-  window.tournamentEnded = true;
 
-  // 3) Dodajemy obecność graczy
-  allPlayers
-    .filter(p => p.selected)
-    .forEach(p => {
-      stats[p.name] ||= { wins:0, losses:0, pointsScored:0, pointsConceded:0, obecnosc:0 };
-      stats[p.name].obecnosc++;
-    });
+  // 3) przygotowujemy finalStats z globalnego `stats` (to Twoje statystyki bieżącego turnieju)
+  const finalStats = { ...stats };
+  window.stats = finalStats;
 
-  // 4) Zapisujemy stan turnieju (finalStats oraz flagę)
+  // 4) dolicz obecność
+  allPlayers.filter(p => p.selected).forEach(p => {
+    finalStats[p.name] ||= { wins:0, losses:0, pointsScored:0, pointsConceded:0, obecnosc:0 };
+    finalStats[p.name].obecnosc++;
+  });
+
+  // 5) zapisujemy stan turnieju (generalStats ignorujemy tutaj, bo DB trzyma sumy)
   await saveDataToFirebase();
 
-  // 5) Budujemy obiekt archiwum
+  // 6) budowa + zapis archiwum (bez zmian)
   const archive = {
     data: new Date().toISOString(),
     gracze: allPlayers.filter(p => p.selected).map(p => p.name),
@@ -434,21 +434,18 @@ export async function endTournament() {
       }))
     });
   }
-
-  // 6) Zapis archiwum i usunięcie roboczego turnieju
   const user = auth.currentUser;
   if (user) {
-    await setDoc(doc(db, "archiwa", `turniej_${archive.data.replace(/[:.]/g, "-")}`), archive);
+    await setDoc(doc(db, "archiwa", `turniej_${archive.data.replace(/[:.]/g,"-")}`), archive);
     await deleteDoc(doc(db, "robocze_turnieje", user.uid));
-    console.log("✅ Archiwum zapisane i usunięto draft");
   }
 
-  // 7) Wyświetlamy ekran końcowy TYLKO ze statystykami tego turnieju
-  window.renderFinalScreen(stats);
+  // 7) wyświetlamy ekran końcowy używając TWOICH `stats` (a nie generalStats)
+  window.renderFinalScreen(finalStats);
 
-  // 8) (opcjonalnie) czyścimy widoki turniejowe, ale nie resetujemy całej aplikacji –
-  //    restart nastąpi po manualnym odświeżeniu strony.
+  // 8) aplikacja ruszy od nowa dopiero po ręcznym odświeżeniu przeglądarki
 }
+
 
 
 
