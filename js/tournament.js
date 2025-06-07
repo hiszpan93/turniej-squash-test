@@ -207,122 +207,26 @@ function generateRoundRobinRounds(playersList) {
   return rounds;
 }
 
-// ======= GENEROWANIE MECZÓW (AKTUALNA RUNDA) =======
+// ======= GENEROWANIE MECZÓW (wrapper) =======
 export function generateMatches() {
-  const players = allPlayers.filter(p => p.selected);
-  if (players.length < 2) {
-    alert("Wybierz co najmniej dwóch graczy, aby wygenerować mecze.");
+  // 1) ile kortów wybrał użytkownik?
+  const courtCount = parseInt(document.getElementById("numCourts").value, 10) || 1;
+  // 2) delegujemy logikę do modułu core
+  const newMatches = tournament.generateMatches(courtCount);
+  if (newMatches.length === 0) {
+    alert("Nie można wygenerować meczy – sprawdź liczbę graczy.");
     return;
   }
-
-  const courtCount = parseInt(document.getElementById("numCourts").value, 10) || 1;
-  let seriesNumber = (allMatches.at(-1)?.series || 0) + 1;
-
-
-
-  const pairings = [];
-  for (let i = 0; i < players.length; i++) {
-    for (let j = i + 1; j < players.length; j++) {
-      pairings.push([players[i], players[j]]);
-    }
-  }
-
-  const generateMatchSet = (seriesNum) => {
-    const newMatches = [];
-    let round = 1;
-    const pairingsCopy = [...pairings];
-     // 1) Inicjalizujemy licznik pod rząd
-    const consecCounts = {};
-    players.forEach(p => consecCounts[p.name] = 0);
-
-    while (pairingsCopy.length > 0) {
-      const roundMatches = [];
-      const roundPlayers = new Set();
-      const usedPlayersThisRound = new Set();
-
-      for (let k = 0; k < pairingsCopy.length; k++) {
-
-        const [p1, p2] = pairingsCopy[k];
-        if (consecCounts[p1.name] >= 2 || consecCounts[p2.name] >= 2) {
-         continue; // skip — już dwa mecze z rzędu
-                 }
-        if (
-          !roundPlayers.has(p1.name) &&
-          !roundPlayers.has(p2.name) &&
-          !usedPlayersThisRound.has(p1.name) &&
-          !usedPlayersThisRound.has(p2.name)
-        ) {
-          roundMatches.push({ p1, p2 });
-          roundPlayers.add(p1.name);
-          roundPlayers.add(p2.name);
-          usedPlayersThisRound.add(p1.name);
-          usedPlayersThisRound.add(p2.name);
-          pairingsCopy.splice(k, 1);
-          k--;
-          if (roundMatches.length >= courtCount) break;
-        }
-      }
-
-      if (roundMatches.length === 0) {
-        for (let k = 0; k < courtCount && k < pairingsCopy.length; k++) {
-          const [p1, p2] = pairingsCopy.shift();
-          roundMatches.push({ p1, p2 });
-          roundPlayers.add(p1.name);
-roundPlayers.add(p2.name);
-usedPlayersThisRound.add(p1.name);
-usedPlayersThisRound.add(p2.name);
-
-        }
-      }
- // 4) Aktualizujemy liczniki consecCounts:
-       players.forEach(p => {
-          if (roundPlayers.has(p.name)) {
-           consecCounts[p.name] += 1;
-          } else {
-           consecCounts[p.name] = 0;
-          }
-       });
-  
-      if (roundMatches.length > 0) {
-        roundMatches.forEach((match, index) => {
-          newMatches.push({
-            player1: match.p1.name,
-            player2: match.p2.name,
-            court: index + 1,
-            result: "",
-            confirmed: false,
-            series: seriesNum,
-            round: round
-          });
-        });
-        round++;
-      }
-    }
-    return newMatches;
-  };
-
-  let allNewMatches = generateMatchSet(seriesNumber);
-
-  // 🟡 Jeśli tylko 2 graczy – generuj od razu 2 serie (ta sama para)
-  if (players.length === 2) {
-    const secondSeriesMatches = generateMatchSet(seriesNumber + 1);
-    allNewMatches = allNewMatches.concat(secondSeriesMatches);
-    seriesNumber += 1; // zaktualizuj numer serii
-  }
-
-  matches = allNewMatches;
-
+  // 3) synchronizujemy globalne zmienne używane przez UI
+  matches = newMatches;
+  window.matches = matches;
+  // 4) pokazujemy mecze i zapisujemy roboczo
   window.renderMatches();
-
-  hideSetupControls();
-  const endWrapper = document.getElementById("endTournamentWrapper");
-  if (endWrapper && !tournamentEnded) {
-    endWrapper.style.display = "block";
-    fadeInElement(endWrapper);
-  }
-  saveDraftToFirebase(); // 📝 zapis roboczy nowej serii
-
+  saveDraftToFirebase();  // jak dotąd zapisz stan serii
+  // 5) odblokuj przycisk zakończenia turnieju, jeśli był ukryty
+  document.getElementById("endTournamentWrapper")?.style.display = "block";
 }
+
 
 
 
