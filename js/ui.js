@@ -512,14 +512,23 @@ document.getElementById("calc-btn").addEventListener("click", () => calculatePay
  */
 function showFinalResults() {
   // 1) Ukryj główny widok turnieju
-  document.getElementById("tournamentView")?.style.display = "none";
+  const tournamentViewEl = document.getElementById("tournamentView");
+  if (tournamentViewEl) {
+    tournamentViewEl.style.display = "none";
+  }
+
   // 2) Pokaż sekcję z podsumowaniem (zakładam, że masz div #resultsView)
-  document.getElementById("resultsView")?.style.display = "block";
+  const resultsViewEl = document.getElementById("resultsView");
+  if (resultsViewEl) {
+    resultsViewEl.style.display = "block";
+  }
+
   // 3) Jeśli używasz zakładek, ustaw aktywną:
   document.querySelectorAll(".nav-link").forEach(link => link.classList.remove("active"));
   const finalTab = document.querySelector('[data-target="#resultsView"]');
   if (finalTab) finalTab.classList.add("active");
 }
+
 // i udostępnij w globalnym scope:
 window.showFinalResults = showFinalResults;
 
