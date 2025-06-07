@@ -190,73 +190,94 @@ function generateRoundRobinRounds(playersList) {
 
 // ======= GENEROWANIE MECZÓW (wrapper) =======
 export function generateMatches() {
-  // 1) ile kortów wybrał użytkownik?
   const courtCount = parseInt(document.getElementById("numCourts").value, 10) || 1;
-  // 2) delegujemy logikę do modułu core
   const newMatches = tournament.generateMatches(courtCount);
-  if (newMatches.length === 0) {
-    alert("Nie można wygenerować meczy – sprawdź liczbę graczy.");
-    return;
-  }
-  // 3) synchronizujemy globalne zmienne używane przez UI
+  if (!newMatches.length) { alert("Nie można wygenerować meczy – sprawdź liczbę graczy."); return; }
+
   matches = newMatches;
   window.matches = matches;
-  // 4) pokazujemy mecze i zapisujemy roboczo
+
   window.renderMatches();
-  saveDraftToFirebase();  // jak dotąd zapisz stan serii
-  // 5) odblokuj przycisk zakończenia turnieju, jeśli był ukryty
+
+  // ── ukryj panel startowy i przycisk generowania ──
+  document.getElementById("setupPanel").style.display = "none";
+  document.getElementById("playersList").style.display = "none";
+  document.getElementById("generateMatchesBtn").style.display = "none";
+  // ─────────────────────────────────────────────────
+
+  saveDraftToFirebase();
   const endWrapper = document.getElementById("endTournamentWrapper");
-if (endWrapper) {
-  endWrapper.style.display = "block";
+  if (endWrapper) endWrapper.style.display = "block";
 }
 
-}
 
 
 
 // ======= POTWIERDZANIE MECZU (wrapper) =======
-export async function confirmMatch(index) {
+export function confirmMatch(index) {
   // 1) pobierz punkty z inputów
   const input1 = document.getElementById(`score1-${index}`);
   const input2 = document.getElementById(`score2-${index}`);
   const score1 = parseInt(input1.value, 10);
   const score2 = parseInt(input2.value, 10);
 
-  // 2) walidacja
+  // 2) podstawowa walidacja
   if (isNaN(score1) || isNaN(score2) || score1 < 0 || score2 < 0) {
     alert("Wprowadź nieujemne liczby dla obu graczy.");
     return;
   }
   if (!validateResult(score1, score2)) {
-    alert("Wynik meczu jest niepoprawny."); 
+    alert("Wynik meczu jest niepoprawny.");
     return;
   }
 
-  // 3) delegujemy logikę do modułu core
-  try {
+  // 3) przygotuj modal
+  const modalEl = document.getElementById("matchConfirmModal");
+  const bsModal = new bootstrap.Modal(modalEl);
+  // wstaw treść do .modal-body
+  const content = document.getElementById("matchConfirmContent");
+  const match = matches[index];
+  const winner = score1 > score2 ? match.player1 : match.player2;
+  content.innerHTML = `
+    <p>Czy na pewno chcesz zatwierdzić wynik <strong>${score1}:${score2}</strong>?</p>
+    <p>🏆 Zwycięzca: <strong>${winner}</strong></p>
+  `;
+
+  // odpinamy stary listener (na wszelki wypadek)
+  const confirmBtn = document.getElementById("confirmMatchBtnFinal");
+  confirmBtn.replaceWith(confirmBtn.cloneNode(true));
+  const newBtn = document.getElementById("confirmMatchBtnFinal");
+
+  // 4) obsługa kliknięcia w modalowym „Potwierdź”
+  newBtn.addEventListener("click", () => {
+    bsModal.hide();
+
+    // 5) delegujemy logikę do modułu core
     tournament.confirmMatch(index, score1, score2);
-  } catch (err) {
-    alert(err.message);
-    return;
-  }
 
-  // 4) synchronizacja globalnych zmiennych z modułu core
-  matches = tournament.matches;
-  allMatches = tournament.allMatches;
-  generalStats = tournament.generalStats;
+    // 6) synchronizacja i odświeżenie UI + zapis
+    matches = tournament.matches;
+    allMatches = tournament.allMatches;
+    generalStats = tournament.generalStats;
+    window.matches = matches;
+    window.generalStats = generalStats;
 
-  // 5) odśwież widok i zapisz zmiany
-  window.renderMatches();
-  window.renderGeneralStats();
-  saveDataToFirebase();
-  saveDraftToFirebase();  // zapis roboczy serii :contentReference[oaicite:1]{index=1}
+    window.renderMatches();
+    window.renderGeneralStats();
+    saveDataToFirebase();
+    saveDraftToFirebase();
 
-  // 6) jeśli wszystkie mecze potwierdzone → generuj następną serię
-  if (matches.every(m => m.confirmed)) {
-    matches = [];
-    generateMatches();
-  }
+    // 7) jeżeli to była ostatnia runda – generujemy następną
+    if (matches.every(m => m.confirmed)) {
+      matches = [];
+      generateMatches();
+    }
+  });
+
+  // 8) pokaż modal
+  bsModal.show();
 }
+
 
 
 
