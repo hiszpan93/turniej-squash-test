@@ -752,14 +752,18 @@ export async function loadDataFromFirebase() {
       tournamentEnded = data.tournamentEnded || false;
       window.tournamentEnded = tournamentEnded;
       
-        // ===== synchronizacja nextPlayerId =====
-  if (allPlayers.length > 0) {
-    nextPlayerId = Math.max(...allPlayers.map(p => p.id)) + 1;
-  } else {
-    nextPlayerId = 1;
-  }
-  console.log("🔢 nextPlayerId ustawione na", nextPlayerId);
-// ===== koniec synchronizacji =====
+            // ===== synchronizacja modułu core =====
+    // 1) przekazujemy do core listę wczytanych graczy
+    tournament.players = allPlayers.slice();
+    // 2) obliczamy, jakie ID powinno mieć następne
+    if (allPlayers.length > 0) {
+      tournament.nextPlayerId = Math.max(...allPlayers.map(p => p.id)) + 1;
+    } else {
+      tournament.nextPlayerId = 1;
+    }
+    console.log("🔢 tournament.nextPlayerId ustawione na", tournament.nextPlayerId);
+    // ===== koniec synchronizacji =====
+
 
 
       // ✅ ZAPISZ DO window.* – żeby initUI() miał do nich dostęp
