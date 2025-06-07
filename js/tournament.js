@@ -467,7 +467,9 @@ export async function endTournament() {
   if (numCourtsEl && numCourtsEl.parentElement) {
     numCourtsEl.parentElement.style.display = "block";
   }
-  document.getElementById("endTournamentWrapper")?.style.display = "none";
+  const endWrap = document.getElementById("endTournamentWrapper");
+if (endWrap) endWrap.style.display = "none";
+
   tournamentEnded = false;
   window.tournamentEnded = false;
 }  // ← TUTAJ musi być ta klamra zamykająca
