@@ -386,87 +386,92 @@ export function getEloDelta(p1, p2, s1, s2, K = 24, D = 0.75) {
 
 
 // ======= ZAKOŃCZ TURNIEJ (wrapper) =======
-export function endTournament() {
+export async function endTournament() {
   // 1) delegujemy do modułu core
   const { finalMatches, finalStats } = tournament.endTournament();
 
-  // 2) synchronizujemy globalne zmienne i window.*
+  // 2) synchronizujemy stany
   matches = finalMatches;
   generalStats = finalStats;
   tournamentEnded = true;
   window.matches = matches;
   window.generalStats = generalStats;
   window.tournamentEnded = true;
-// ——— Dodaj licznik „obecności” każdemu wybranemu graczowi ———
-allPlayers
-  .filter(p => p.selected)
-  .forEach(p => {
-    if (!generalStats[p.name]) {
-      generalStats[p.name] = { wins: 0, losses: 0, pointsScored: 0, pointsConceded: 0, obecnosc: 0 };
-    }
-    generalStats[p.name].obecnosc = (generalStats[p.name].obecnosc || 0) + 1;
-  });
-// —————————————————————————————————————————————————————————
 
-  // 3) odświeżamy UI: pokaż tabelę wyników i statystyk końcowych
+  // 3) Dodajemy obecność graczy
+  allPlayers
+    .filter(p => p.selected)
+    .forEach(p => {
+      if (!generalStats[p.name]) {
+        generalStats[p.name] = {
+          wins: 0, losses: 0,
+          pointsScored: 0, pointsConceded: 0,
+          obecnosc: 0
+        };
+      }
+      generalStats[p.name].obecnosc = (generalStats[p.name].obecnosc || 0) + 1;
+    });
+
+  // 4) Odświeżamy UI: wyniki, statystyki, podsumowanie
   window.renderMatches();
   window.renderGeneralStats();
-  window.showFinalResults();  // Twój UI.js ma tę funkcję, żeby przełączyć widok
+  window.showFinalResults();
 
-  // 4) zapisujemy stan „turniej zakończony” do bazy
+  // 5) Zapisujemy stan turnieju
   saveDataToFirebase();
-  // ——— Budujemy obiekt archiwum ———
-const archive = {
-  data: new Date().toISOString(),
-  gracze: allPlayers.filter(p => p.selected).map(p => p.name),
-  serie: []
-};
 
-const serieMap = new Map();
-allMatches.forEach(m => {
-  const key = `seria_${m.series || 1}`;
-  if (!serieMap.has(key)) serieMap.set(key, []);
-  serieMap.get(key).push({ ...m, timestamp: m.timestamp || new Date().toISOString() });
-});
+  // 6) Budujemy archiwum
+  const archive = {
+    data: new Date().toISOString(),
+    gracze: allPlayers.filter(p => p.selected).map(p => p.name),
+    serie: []
+  };
 
-for (const [seriaKey, serieMatches] of serieMap) {
-  archive.serie.push({
-    numer: seriaKey,
-    mecze: serieMatches.map(m => ({
-      gracz1: m.player1,
-      gracz2: m.player2,
-      runda: m.round,
-      wynik: m.result?.trim() || "-",
-      timestamp: m.timestamp
-    }))
+  const serieMap = new Map();
+  allMatches.forEach(m => {
+    const key = `seria_${m.series || 1}`;
+    if (!serieMap.has(key)) serieMap.set(key, []);
+    serieMap.get(key).push({
+      ...m,
+      timestamp: m.timestamp || new Date().toISOString()
+    });
   });
-}
 
-// ——— Zapis archiwum do Firestore i usunięcie wersji roboczej ———
-const user = auth.currentUser;
-if (user) {
-  const archiveId = `turniej_${archive.data.replace(/[:.]/g, "-")}`;
-  const archiveRef = doc(db, "archiwa", archiveId);
-  setDoc(archiveRef, archive)
-    .then(() => console.log("✅ Archiwum zapisane do Firebase"))
-    .catch(err => console.error("❌ Błąd zapisu archiwum:", err));
+  for (const [seriaKey, serieMatches] of serieMap) {
+    archive.serie.push({
+      numer: seriaKey,
+      mecze: serieMatches.map(m => ({
+        gracz1: m.player1,
+        gracz2: m.player2,
+        runda: m.round,
+        wynik: (m.result || "").trim() || "-",
+        timestamp: m.timestamp
+      }))
+    });
+  }
 
-  deleteDoc(doc(db, "robocze_turnieje", user.uid))
-    .then(() => console.log("🧹 Usunięto wersję roboczą turnieju"))
-    .catch(err => console.error("❌ Błąd usuwania wersji roboczej:", err));
-}
-// ————————————————————————————————————————————————
-// Przywróć panel wyboru graczy i przyciski
-["setupPanel","playersList","generateMatchesBtn"].forEach(id => {
-  const el = document.getElementById(id);
-  if (el) el.style.display = "block";
-});
-document.getElementById("numCourts")?.parentElement?.style.display = "block";
-document.getElementById("endTournamentWrapper")?.style.display = "none";
-tournamentEnded = false;
-window.tournamentEnded = false;
+  // 7) Zapis archiwum i usunięcie wersji roboczej
+  const user = auth.currentUser;
+  if (user) {
+    const archiveId = `turniej_${archive.data.replace(/[:.]/g, "-")}`;
+    await setDoc(doc(db, "archiwa", archiveId), archive);
+    await deleteDoc(doc(db, "robocze_turnieje", user.uid));
+  }
 
-}
+  // 8) Reset UI do stanu początkowego
+  ["setupPanel","playersList","generateMatchesBtn"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "block";
+  });
+  const numCourtsEl = document.getElementById("numCourts");
+  if (numCourtsEl && numCourtsEl.parentElement) {
+    numCourtsEl.parentElement.style.display = "block";
+  }
+  document.getElementById("endTournamentWrapper")?.style.display = "none";
+  tournamentEnded = false;
+  window.tournamentEnded = false;
+}  // ← TUTAJ musi być ta klamra zamykająca
+
 
 
 
