@@ -156,38 +156,6 @@ export function confirmPlayers() {
   saveDataToFirebase();
 }
 
-
-
-
-// ======= GENEROWANIE RUND METODĄ ROUND-ROBIN =======
-function generateRoundRobinRounds(playersList) {
-  let playerList = playersList.slice();
-  const isOdd = (playerList.length % 2 !== 0);
-  if (isOdd) {
-    playerList.push({ id: null, name: "BYE" });
-  }
-  const n = playerList.length;
-  const rounds = [];
-  for (let round = 0; round < n - 1; round++) {
-    const roundMatches = [];
-    for (let i = 0; i < n / 2; i++) {
-      const player1 = playerList[i];
-      const player2 = playerList[n - 1 - i];
-      if (player1.id === null || player2.id === null) continue;
-      roundMatches.push({
-        player1: player1.name,
-        player2: player2.name,
-        confirmed: false,
-        result: null
-      });
-    }
-    rounds.push(roundMatches);
-    const last = playerList.pop();
-    playerList.splice(1, 0, last);
-  }
-  return rounds;
-}
-
 // ======= GENEROWANIE MECZÓW (wrapper) =======
 export function generateMatches() {
   const courtCount = parseInt(document.getElementById("numCourts").value, 10) || 1;
