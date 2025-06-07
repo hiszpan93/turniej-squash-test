@@ -118,6 +118,94 @@ generateMatches(courtCount) {
   this.matches = newMatches;
   return newMatches;
 }
+  /**
+   * Potwierdza wynik meczu i aktualizuje stan turnieju.
+   * @param {number} index – indeks meczu w this.matches
+   * @param {number} score1 – liczba punktów gracza 1
+   * @param {number} score2 – liczba punktów gracza 2
+   */
+  confirmMatch(index, score1, score2) {
+    if (this.tournamentEnded) {
+      throw new Error("Turniej został zakończony");
+    }
+    const match = this.matches[index];
+    if (!match) {
+      throw new Error(`Brak meczu o indeksie ${index}`);
+    }
+
+    // 1) ustaw wynik i potwierdzenie
+    match.result = `${score1}:${score2}`;
+    match.confirmed = true;
+
+    // 2) aktualizacja serii zwycięstw/porażek
+    this.updateStreak(match.player1, score1 > score2);
+    this.updateStreak(match.player2, score2 > score1);
+
+    // 3) aktualizacja ELO
+    const p1 = this.players.find(p => p.name === match.player1);
+    const p2 = this.players.find(p => p.name === match.player2);
+    if (p1 && p2) {
+      this.updateElo(p1, p2, score1, score2);
+    }
+
+    // 4) opcjonalnie: dodaj do historii wszystkich meczów
+    if (!this.allMatches) this.allMatches = [];
+    this.allMatches.push({ ...match, timestamp: new Date().toISOString() });
+  }
+  /**
+   * Aktualizuje serię zwycięstw/porażek w generalStats.
+   * @param {string} playerName 
+   * @param {boolean} won 
+   */
+  updateStreak(playerName, won) {
+    // pobierz lub utwórz statystyki gracza
+    const gs = this.generalStats[playerName] ||= { wins: 0, losses: 0, pointsScored: 0, pointsConceded: 0, obecnosc: 0 };
+    // nowa seria?
+    if (!gs.streakType) {
+      gs.streakType = won ? "W" : "L";
+      gs.streakCount = 1;
+    }
+    // kontynuacja tej samej serii?
+    else if ((won && gs.streakType === "W") || (!won && gs.streakType === "L")) {
+      gs.streakCount++;
+    }
+    // zmiana serii
+    else {
+      gs.streakType = won ? "W" : "L";
+      gs.streakCount = 1;
+    }
+  }
+  /**
+   * Oblicza i aplikuje zmianę ELO obu graczy.
+   * @param {{elo:number}} player1 
+   * @param {{elo:number}} player2 
+   * @param {number} score1 
+   * @param {number} score2 
+   * @param {number} [K=24] 
+   * @param {number} [D=0.75] 
+   */
+  updateElo(player1, player2, score1, score2, K = 24, D = 0.75) {
+    // 1. Oczekiwane wyniki:
+    const R1 = player1.elo, R2 = player2.elo;
+    const E1 = 1 / (1 + 10 ** ((R2 - R1) / 400));
+    // 2. Rzeczywisty wynik:
+    const a1 = score1 > score2 ? 1 : 0;
+    const a2 = 1 - a1;
+    // 3. Mnożnik za przewagę:
+    const margin = Math.abs(score1 - score2);
+    const mf = margin <= 2
+      ? 1
+      : 1 + Math.min((margin - 2) * 0.1, 0.5);
+    // 4. Surowe delty:
+    const raw1 = K * (a1 - E1) * (a1 === 1 ? mf : 1);
+    const raw2 = K * (a2 - (1 - E1)) * (a2 === 1 ? mf : 1);
+    // 5. Zaokrąglenie i tłumienie:
+    const delta1 = Math.round(raw1 * D);
+    const delta2 = Math.round(raw2 * D);
+    // 6. Zapis:
+    player1.elo += delta1;
+    player2.elo += delta2;
+  }
 
   // … w kolejnych krokach dodasz tu generateMatches(), updateElo() itd.
 }

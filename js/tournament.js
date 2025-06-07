@@ -6,25 +6,6 @@ const tournament = new Tournament();
 // Import bazy danych Firestore z modułu firebase.js
 import { db, doc, setDoc, deleteDoc, getDoc, auth } from "./firebase.js";
 
-// ─── Funkcja do aktualizacji serii zwycięstw/porażek ───
-function updateStreak(playerName, won) {
-  // Pobierz istniejące statystyki lub utwórz nowe
-  const gs = generalStats[playerName] ||= { wins:0, losses:0, pointsScored:0, pointsConceded:0, obecnosc:0 };
-  // Jeśli jeszcze nie było serii, ustaw ją na 1W lub 1L
-  if (!gs.streakType) {
-    gs.streakType = won ? "W" : "L";
-    gs.streakCount = 1;
-  }
-  // Jeśli ten sam typ serii co poprzednio, zwiększ licznik
-  else if ((won && gs.streakType === "W") || (!won && gs.streakType === "L")) {
-    gs.streakCount++;
-  }
-  // Inaczej zacznij serię od nowa
-  else {
-    gs.streakType = won ? "W" : "L";
-    gs.streakCount = 1;
-  }
-}
 
 
 
@@ -233,157 +214,51 @@ if (endWrapper) {
 
 
 
-
-// ======= POTWIERDZANIE MECZU =======
+// ======= POTWIERDZANIE MECZU (wrapper) =======
 export async function confirmMatch(index) {
-  if (tournamentEnded) {
-    alert("Turniej został zakończony. Nie można wpisywać wyników.");
-    return;
-  }
-
-  const match = matches[index];
+  // 1) pobierz punkty z inputów
   const input1 = document.getElementById(`score1-${index}`);
   const input2 = document.getElementById(`score2-${index}`);
+  const score1 = parseInt(input1.value, 10);
+  const score2 = parseInt(input2.value, 10);
 
-  const score1 = parseInt(input1.value);
-  const score2 = parseInt(input2.value);
-
+  // 2) walidacja
   if (isNaN(score1) || isNaN(score2) || score1 < 0 || score2 < 0) {
     alert("Wprowadź nieujemne liczby dla obu graczy.");
     return;
   }
-
   if (!validateResult(score1, score2)) {
-    alert("Wynik meczu jest niepoprawny. Zasady:\n• Zwycięzca: 11 pkt, jeśli przeciwnik ma <10\n• Lub różnica 2 pkt przy 10+");
+    alert("Wynik meczu jest niepoprawny."); 
     return;
   }
 
-  const result = `${score1}:${score2}`;
-const winner = score1 > score2 ? match.player1 : match.player2;
-
-const p1 = allPlayers.find(p => p.name === match.player1);
-const p2 = allPlayers.find(p => p.name === match.player2);
-
-// 📊 Oblicz zmianę ELO przed aktualizacją
-const elo1Before = p1?.elo ?? 1000;
-const elo2Before = p2?.elo ?? 1000;
-
-// 📊 Oblicz delty „na sucho”
-const [delta1, delta2, marginFactor] = getEloDelta(p1, p2, score1, score2);
-
-
-
-// ✅ Wstaw dane do modala
-const modalContent = document.getElementById("matchConfirmContent");
-const player1Data = allPlayers.find(p => p.name === match.player1);
-const player2Data = allPlayers.find(p => p.name === match.player2);
-
-
-const getStreakLabel = (player) => {
-  const gs = generalStats[player.name];
-  if (!gs || !gs.streakCount) return "";
-
-  const count = gs.streakCount;
-  const type = gs.streakType;
-  const icon = type === "W" ? "🔥" : "❌";
-
-  let badgeClass = "bg-secondary";
-  if (type === "W") {
-    if (count >= 9) badgeClass = "bg-warning text-dark";
-    else if (count >= 6) badgeClass = "bg-warning";
-    else if (count >= 3) badgeClass = "bg-success";
-  } else if (type === "L") {
-    if (count >= 9) badgeClass = "bg-danger text-white fw-bold";
-    else if (count >= 6) badgeClass = "bg-danger";
-    else if (count >= 3) badgeClass = "bg-secondary";
+  // 3) delegujemy logikę do modułu core
+  try {
+    tournament.confirmMatch(index, score1, score2);
+  } catch (err) {
+    alert(err.message);
+    return;
   }
 
-  return ` <span class="badge ${badgeClass} ms-2">${icon} ${count}${type}</span>`;
-};
+  // 4) synchronizacja globalnych zmiennych z modułu core
+  matches = tournament.matches;
+  allMatches = tournament.allMatches;
+  generalStats = tournament.generalStats;
 
+  // 5) odśwież widok i zapisz zmiany
+  window.renderMatches();
+  window.renderGeneralStats();
+  saveDataToFirebase();
+  saveDraftToFirebase();  // zapis roboczy serii :contentReference[oaicite:1]{index=1}
 
-
-const streak1 = getStreakLabel(player1Data);
-const streak2 = getStreakLabel(player2Data);
-
-
-modalContent.innerHTML = `
-  <p><strong>${match.player1}:</strong> ${score1} pkt${streak1}<br/>
-
-     ELO: ${elo1Before} → ${elo1Before + delta1} <span class="text-muted">(zmiana: ${delta1 >= 0 ? '+' : ''}${delta1})</span>
-  </p>
-  <p><strong>${match.player2}:</strong> ${score2} pkt${streak2}<br/>
-
-     ELO: ${elo2Before} → ${elo2Before + delta2} <span class="text-muted">(zmiana: ${delta2 >= 0 ? '+' : ''}${delta2})</span>
-  </p>
-  <hr/>
-  <p>✅ <strong>Zwycięzca:</strong> ${winner}</p>
-    <p class="text-muted" style="font-size: 13px;">
-  ⚡️ Bonus za przewagę punktową: ×${marginFactor.toFixed(2)}
-</p>
-
-
-`;
-
-
-
-
-  // ✅ Pokaż modal
-  const modal = new bootstrap.Modal(document.getElementById("matchConfirmModal"));
-  modal.show();
-
-  // ✅ Obsługa kliknięcia „Potwierdź” w modalu
-  document.getElementById("confirmMatchBtnFinal").onclick = async () => {
-
-    modal.hide();
-
-    match.result = result;
-    match.confirmed = true;
-// ─── Najpierw zaktualizuj serię ───
-updateStreak(match.player1, score1 > score2);
-updateStreak(match.player2, score2 > score1);
-
-    // 🧮 Aktualizacja ELO
-const p1 = allPlayers.find(p => p.name === match.player1);
-const p2 = allPlayers.find(p => p.name === match.player2);
-if (p1 && p2) updateElo(p1, p2, score1, score2);
-
-    // Dodaj potwierdzony mecz do pełnej historii
-allMatches.push({ ...match, timestamp: new Date().toISOString() });
-await saveDraftToFirebase();
-
-    const btn = document.getElementById(`confirmButton-${index}`);
-    btn.classList.remove("btn-outline-success");
-    btn.classList.add("btn-success");
-
-    const matchesTable = document.getElementById("matchesTable");
-    const rows = matchesTable.getElementsByTagName("tr");
-    rows[index + 1].classList.add("confirmed");
-
-    window.addResultToResultsTable(match);
-    updateStats(match);
-    saveDataToFirebase();
-    
-    saveDraftToFirebase(); // 📝 zapis roboczy nowej serii
-
-    
-
-    window.renderMatches();
-
-    if (matches.every(match => match.confirmed)) {
-      
-      matches = [];
-      generateMatches(); // generuj kolejną serię
-    }
-    
-    
-
-    window.renderStats();
-
-    input1.style.backgroundColor = "";
-    input2.style.backgroundColor = "";
-  };
+  // 6) jeśli wszystkie mecze potwierdzone → generuj następną serię
+  if (matches.every(m => m.confirmed)) {
+    matches = [];
+    generateMatches();
+  }
 }
+
+
 
 
 
@@ -450,49 +325,6 @@ function updateStats(match) {
 }
 
 
-
-
-/**
- * Aktualizuje punkty Elo obu graczy po meczu, z łagodniejszymi zmianami
- * i max. mnożnikiem przewagi 1.5.
- * @param {Object} player1 – obiekt gracza 1, .elo
- * @param {Object} player2 – obiekt gracza 2, .elo
- * @param {number} score1  – wynik gracza 1
- * @param {number} score2  – wynik gracza 2
- * @param {number} [K=24]  – bazowy współczynnik K (domyślnie 24)
- * @param {number} [D=0.75]– globalne tłumienie zmian (0.0–1.0)
- */
-function updateElo(player1, player2, score1, score2, K = 24, D = 0.75) {
-  // 1. Oczekiwane wyniki
-  const R1 = player1.elo, R2 = player2.elo;
-  const E1 = 1 / (1 + 10 ** ((R2 - R1) / 400));
-  const E2 = 1 - E1;
-
-  // 2. Rzeczywisty wynik
-  const a1 = score1 > score2 ? 1 : 0;
-  const a2 = 1 - a1;
-
-  // 3. Mnożnik za przewagę, rośnie powoli i max 1.5
-  const margin = Math.abs(score1 - score2);
-  // przykład: (margin - 2) * 0.1 ⇒ by margin=7 dać 0.5 ⇒ mf=1.5
-  const mf = margin <= 2
-    ? 1
-    : 1 + Math.min((margin - 2) * 0.1, 0.5);
-
-  // 4. Liczymy zmiany ELO i tłumimy je D
-  const raw1 = K * (a1 - E1) * (a1 === 1 ? mf : 1);
-  const raw2 = K * (a2 - E2) * (a2 === 1 ? mf : 1);
-
-  // 5. Zaokrąglamy i nakładamy tłumienie
-  const delta1 = Math.round(raw1 * D);
-  const delta2 = Math.round(raw2 * D);
-
-  // 6. Aktualizacja
-  player1.elo += delta1;
-  player2.elo += delta2;
-
-  return { delta1, delta2, marginFactor: mf };
-}
 
 /**
  * Zwraca, ile ELO zmieni się dla obu graczy (do popupu),
