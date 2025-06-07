@@ -385,126 +385,89 @@ export function getEloDelta(p1, p2, s1, s2, K = 24, D = 0.75) {
 
 
 
-// ======= ZAKOŃCZENIE TURNIEJU =======
-export async function endTournament() {
-  const allConfirmedMatches = allMatches.filter(m => m.confirmed);
+// ======= ZAKOŃCZ TURNIEJ (wrapper) =======
+export function endTournament() {
+  // 1) delegujemy do modułu core
+  const { finalMatches, finalStats } = tournament.endTournament();
 
-  if (allConfirmedMatches.length === 0) {
-    alert("Nie można zakończyć turnieju – żaden mecz nie został rozegrany.");
-    return;
-  }
-
-  if (tournamentEnded) return;
+  // 2) synchronizujemy globalne zmienne i window.*
+  matches = finalMatches;
+  generalStats = finalStats;
   tournamentEnded = true;
+  window.matches = matches;
+  window.generalStats = generalStats;
   window.tournamentEnded = true;
-
-  // ✅ Dodaj obecność
-  allPlayers.filter(p => p.selected).forEach(player => {
-    const name = player.name;
-    if (!generalStats[name]) {
-      generalStats[name] = {
-        wins: 0,
-        losses: 0,
-        pointsScored: 0,
-        pointsConceded: 0,
-        obecnosc: 0
-      };
+// ——— Dodaj licznik „obecności” każdemu wybranemu graczowi ———
+allPlayers
+  .filter(p => p.selected)
+  .forEach(p => {
+    if (!generalStats[p.name]) {
+      generalStats[p.name] = { wins: 0, losses: 0, pointsScored: 0, pointsConceded: 0, obecnosc: 0 };
     }
-    generalStats[name].obecnosc = (generalStats[name].obecnosc || 0) + 1;
+    generalStats[p.name].obecnosc = (generalStats[p.name].obecnosc || 0) + 1;
   });
+// —————————————————————————————————————————————————————————
 
-  saveDataToFirebase();
-
+  // 3) odświeżamy UI: pokaż tabelę wyników i statystyk końcowych
+  window.renderMatches();
   window.renderGeneralStats();
-  document.getElementById("addPlayerBtn").disabled = true;
-  document.getElementById("confirmPlayersBtn").disabled = true;
-  document.getElementById("generateMatchesBtn").disabled = true;
-  document.getElementById("numCourts").disabled = true;
-  const endTournamentBtn = document.getElementById("endTournamentBtn");
-  endTournamentBtn.disabled = true;
-  endTournamentBtn.classList.remove("btn-danger");
-  endTournamentBtn.classList.add("btn-secondary");
-  alert("Turniej został zakończony. Nie można już generować meczy ani wpisywać wyników.");
-// po zapisaniu archiwum i ustawieniu tournamentEnded = true
-document.getElementById("showPayoutBtn").style.display = "";  // odblokuj zakładkę
+  window.showFinalResults();  // Twój UI.js ma tę funkcję, żeby przełączyć widok
 
-  // ✅ ARCHIWUM
-  const archive = {
-    data: new Date().toISOString(),
-    gracze: allPlayers.filter(p => p.selected).map(p => p.name),
-    serie: []
-  };
+  // 4) zapisujemy stan „turniej zakończony” do bazy
+  saveDataToFirebase();
+  // ——— Budujemy obiekt archiwum ———
+const archive = {
+  data: new Date().toISOString(),
+  gracze: allPlayers.filter(p => p.selected).map(p => p.name),
+  serie: []
+};
 
-  const serieMap = new Map();
+const serieMap = new Map();
+allMatches.forEach(m => {
+  const key = `seria_${m.series || 1}`;
+  if (!serieMap.has(key)) serieMap.set(key, []);
+  serieMap.get(key).push({ ...m, timestamp: m.timestamp || new Date().toISOString() });
+});
 
-  allMatches.forEach(match => {
-    const key = `seria_${match.series ?? 1}`;
-    if (!serieMap.has(key)) serieMap.set(key, []);
-    serieMap.get(key).push({
-      ...match,
-      timestamp: match.timestamp || new Date().toISOString()
-    });
+for (const [seriaKey, serieMatches] of serieMap) {
+  archive.serie.push({
+    numer: seriaKey,
+    mecze: serieMatches.map(m => ({
+      gracz1: m.player1,
+      gracz2: m.player2,
+      runda: m.round,
+      wynik: m.result?.trim() || "-",
+      timestamp: m.timestamp
+    }))
   });
+}
 
-  for (const [seriaKey, serieMatches] of serieMap.entries()) {
-    archive.serie.push({
-      numer: seriaKey,
-      mecze: serieMatches.map(m => ({
-        gracz1: m.player1,
-        gracz2: m.player2,
-        runda: m.round,
-        wynik: typeof m.result === "string" && m.result.trim() !== "" ? m.result : "-",
-        timestamp: m.timestamp || new Date().toISOString()
-      }))
-    });
-    matches = [];
-stats = {};
-window.matches = [];
-window.stats = {};
-await saveDraftToFirebase();
+// ——— Zapis archiwum do Firestore i usunięcie wersji roboczej ———
+const user = auth.currentUser;
+if (user) {
+  const archiveId = `turniej_${archive.data.replace(/[:.]/g, "-")}`;
+  const archiveRef = doc(db, "archiwa", archiveId);
+  setDoc(archiveRef, archive)
+    .then(() => console.log("✅ Archiwum zapisane do Firebase"))
+    .catch(err => console.error("❌ Błąd zapisu archiwum:", err));
 
-  }
-
-
-  // ✅ Zapisz do Firebase (archiwum + usunięcie roboczego)
-  const user = auth.currentUser;
-  if (user) {
-    const archiveId = `turniej_${archive.data.replace(/[:.]/g, "-")}`;
-    const archiveRef = doc(db, "archiwa", archiveId);
-
-    setDoc(archiveRef, archive)
-      .then(() => console.log("✅ Archiwum zapisane do Firebase"))
-      .catch(err => console.error("❌ Błąd zapisu archiwum do Firebase", err));
-
-    deleteDoc(doc(window.db, "robocze_turnieje", user.uid))
-      .then(() => console.log("🧹 Usunięto wersję roboczą turnieju"))
-      .catch(err => console.error("❌ Błąd usuwania wersji roboczej:", err));
-  }
-
-  
-
-  // ✅ Zapisz reset graczy
-  const playersRef = doc(window.db, "turniej", "stats");
-await setDoc(playersRef, {
-  allPlayers,
-  generalStats
-}, { merge: true });
-
-
-  if (window.renderArchiveView) window.renderArchiveView();
-  // Przygotuj aplikację do nowego turnieju
-tournamentEnded = false;
-window.tournamentEnded = false;
-
-// 🔄 Pokaż setup panel
-["setupPanel", "playersList", "generateMatchesBtn"].forEach(id => {
+  deleteDoc(doc(db, "robocze_turnieje", user.uid))
+    .then(() => console.log("🧹 Usunięto wersję roboczą turnieju"))
+    .catch(err => console.error("❌ Błąd usuwania wersji roboczej:", err));
+}
+// ————————————————————————————————————————————————
+// Przywróć panel wyboru graczy i przyciski
+["setupPanel","playersList","generateMatchesBtn"].forEach(id => {
   const el = document.getElementById(id);
   if (el) el.style.display = "block";
 });
-const nc = document.getElementById("numCourts")?.parentElement;
-if (nc) nc.style.display = "block";
+document.getElementById("numCourts")?.parentElement?.style.display = "block";
+document.getElementById("endTournamentWrapper")?.style.display = "none";
+tournamentEnded = false;
+window.tournamentEnded = false;
 
 }
+
 
 
 

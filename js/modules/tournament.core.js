@@ -206,6 +206,22 @@ generateMatches(courtCount) {
     player1.elo += delta1;
     player2.elo += delta2;
   }
+/**
+ * Kończy turniej: blokuje dalsze operacje i zwraca podsumowanie wyników.
+ * @returns {{ finalMatches: Array, finalStats: Object }}
+ */
+endTournament() {
+  // 1) oznaczamy, że turniej zakończony
+  this.tournamentEnded = true;
+
+  // 2) przygotowujemy to, co zwrócimy: 
+  //    finalMatches – wszystkie mecze (z wynikiem i potwierdzeniem)
+  //    finalStats – obecny stan generalStats
+  const finalMatches = this.matches.slice();
+  const finalStats = { ...this.generalStats };
+
+  return { finalMatches, finalStats };
+}
 
   // … w kolejnych krokach dodasz tu generateMatches(), updateElo() itd.
 }
