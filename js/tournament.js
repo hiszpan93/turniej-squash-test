@@ -250,29 +250,40 @@ export function confirmMatch(index) {
 
   // 4) obsługa kliknięcia w modalowym „Potwierdź”
   newBtn.addEventListener("click", () => {
-    bsModal.hide();
+  bsModal.hide();
 
-    // 5) delegujemy logikę do modułu core
-    tournament.confirmMatch(index, score1, score2);
+  // 5) delegujemy logikę do modułu core
+  tournament.confirmMatch(index, score1, score2);
 
-    // 6) synchronizacja i odświeżenie UI + zapis
-    matches = tournament.matches;
-    allMatches = tournament.allMatches;
-    generalStats = tournament.generalStats;
-    window.matches = matches;
-    window.generalStats = generalStats;
+  // 6) synchronizujemy listę meczów
+  matches = tournament.matches;
+  allMatches = tournament.allMatches;
+  window.matches = matches;
 
-    window.renderMatches();
-    window.renderGeneralStats();
-    saveDataToFirebase();
-    saveDraftToFirebase();
+  // 7) wrzuć wynik do tabeli „Wyniki meczów”
+  window.addResultToResultsTable(matches[index]);
 
-    // 7) jeżeli to była ostatnia runda – generujemy następną
-    if (matches.every(m => m.confirmed)) {
-      matches = [];
-      generateMatches();
-    }
-  });
+  // 8) aktualizuj szczegółowe statystyki (statsTable)
+  updateStats(matches[index]);
+  window.renderStats();
+
+  // 9) zaktualizuj statystyki ogólne
+  window.renderGeneralStats();
+
+  // 10) wyrenderuj na nowo listę meczów (statusy, przyciski)
+  window.renderMatches();
+
+  // 11) zapisz stan
+  saveDataToFirebase();
+  saveDraftToFirebase();
+
+  // 12) jeżeli to była ostatnia runda – generujemy następną
+  if (matches.every(m => m.confirmed)) {
+    matches = [];
+    generateMatches();
+  }
+});
+
 
   // 8) pokaż modal
   bsModal.show();
