@@ -23,13 +23,13 @@ import * as tournament from './tournament.js';
 
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBsZrIabUINi6KeOAbUmjBWNWjsV8ViHU4",
-  authDomain: "turniej-squash.firebaseapp.com",
-  projectId: "turniej-squash",
-  storageBucket: "turniej-squash.appspot.com",
-  messagingSenderId: "240839704393",
-  appId: "1:240839704393:web:0c681a6826a9b6759ca498",
-  measurementId: "G-MF0N1DNET0"
+  apiKey: "AIzaSyDNJ4KCKJQIte3O3VcK6ZpaF3ovPUXdds0",
+  authDomain: "turniej-apk-test.firebaseapp.com",
+  projectId: "turniej-apk-test",
+  storageBucket: "turniej-apk-test.firebasestorage.app",
+  messagingSenderId: "879669431375",
+  appId: "1:879669431375:web:a3624fac61fa34582cee3a",
+  measurementId: "G-YTRH7S73SB"
 };
 
 const app = initializeApp(firebaseConfig);
