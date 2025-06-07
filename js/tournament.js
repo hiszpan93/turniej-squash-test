@@ -102,7 +102,7 @@ function loadCustomFont(doc) {
 
 // ======= DODAWANIE NOWEGO GRACZA (wrapper) =======
 export function addPlayer() {
-  // pobieramy nazwę z inputa
+  // 1) pobieramy nazwę z inputa
   const nameInput = document.getElementById("newPlayerName");
   const name = nameInput.value.trim();
 
@@ -111,14 +111,23 @@ export function addPlayer() {
     return;
   }
 
-  // delegujemy całą logikę do modułu core
+  // 2) delegujemy całą logikę dodania gracza do modułu core
   const player = tournament.addPlayer(name);
   if (player) {
-    // jeśli się udało, czyścimy input i odświeżamy listę w UI
+    // 3) synchronizujemy globalne allPlayers z modułu core
+    allPlayers.push(player);
+    window.allPlayers = allPlayers;
+
+    // 4) zapisujemy zaktualizowane dane do Firestore
+    // funkcja saveDataToFirebase jest już w tym pliku, więc możesz ją wywołać bez importu
+    saveDataToFirebase();  // zapisuje { allPlayers, generalStats } :contentReference[oaicite:0]{index=0}
+
+    // 5) czyścimy pole i odświeżamy interfejs
     nameInput.value = "";
-    window.renderPlayersList();
+    window.renderPlayersList();  // rysuje listę wg allPlayers :contentReference[oaicite:1]{index=1}
   }
 }
+
 
 
 // ======= POTWIERDZENIE WYBORU GRACZY =======
