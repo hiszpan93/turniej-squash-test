@@ -1,4 +1,7 @@
 console.log("✅ tournament.js załadowany");
+import { Tournament } from './modules/tournament.core.js';
+// Tworzymy obiekt, w którym będzie cała logika turnieju
+const tournament = new Tournament();
 
 // Import bazy danych Firestore z modułu firebase.js
 import { db, doc, setDoc, deleteDoc, getDoc, auth } from "./firebase.js";
@@ -97,24 +100,26 @@ function loadCustomFont(doc) {
   doc.setFont("DejaVuSans");
 }
 
-// ======= DODAWANIE NOWEGO GRACZA =======
+// ======= DODAWANIE NOWEGO GRACZA (wrapper) =======
 export function addPlayer() {
-  if (tournamentEnded) return;
+  // pobieramy nazwę z inputa
   const nameInput = document.getElementById("newPlayerName");
   const name = nameInput.value.trim();
+
   if (!name) {
     alert("Podaj nazwę gracza!");
     return;
   }
-  if (allPlayers.some(p => p.name.toLowerCase() === name.toLowerCase())) {
-    alert("Gracz o takiej nazwie już istnieje!");
-    return;
+
+  // delegujemy całą logikę do modułu core
+  const player = tournament.addPlayer(name);
+  if (player) {
+    // jeśli się udało, czyścimy input i odświeżamy listę w UI
+    nameInput.value = "";
+    window.renderPlayersList();
   }
-  const newPlayer = { id: nextPlayerId++, name: name, elo: 1000 };
-  allPlayers.push(newPlayer);
-  nameInput.value = "";
-  window.renderPlayersList();
 }
+
 
 // ======= POTWIERDZENIE WYBORU GRACZY =======
 export function confirmPlayers() {
