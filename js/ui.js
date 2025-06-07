@@ -504,7 +504,25 @@ document.getElementById("calc-btn").addEventListener("click", () => calculatePay
     fadeInElement(generalStatsTable.parentElement);
   
   }
-  
+  /**
+ * Przełącza widok na podsumowanie zakończonego turnieju:
+ * - ukrywa widok gier,
+ * - pokazuje podsumowanie (tabele wyniki/statystyki),
+ * - ew. wybiera odpowiednią zakładkę.
+ */
+function showFinalResults() {
+  // 1) Ukryj główny widok turnieju
+  document.getElementById("tournamentView")?.style.display = "none";
+  // 2) Pokaż sekcję z podsumowaniem (zakładam, że masz div #resultsView)
+  document.getElementById("resultsView")?.style.display = "block";
+  // 3) Jeśli używasz zakładek, ustaw aktywną:
+  document.querySelectorAll(".nav-link").forEach(link => link.classList.remove("active"));
+  const finalTab = document.querySelector('[data-target="#resultsView"]');
+  if (finalTab) finalTab.classList.add("active");
+}
+// i udostępnij w globalnym scope:
+window.showFinalResults = showFinalResults;
+
   function renderEloRanking() {
     const tableBody = document.querySelector("#eloRankingTable tbody");
     tableBody.innerHTML = "";
