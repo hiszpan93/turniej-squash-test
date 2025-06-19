@@ -222,6 +222,23 @@ endTournament() {
 
   return { finalMatches, finalStats };
 }
+/**
+ * Sprawdza poprawność wyniku meczu według zasad 11 pkt / przewaga 2.
+ * @param {number} score1 
+ * @param {number} score2 
+ * @returns {boolean}
+ */
+validateResult(score1, score2) {
+  if (isNaN(score1) || isNaN(score2)) return false;
+  const winner = Math.max(score1, score2);
+  const loser  = Math.min(score1, score2);
+  if (winner < 11) return false;
+  if (loser < 10) {
+    return winner === 11;
+  } else {
+    return winner === loser + 2;
+  }
+}
 
   // … w kolejnych krokach dodasz tu generateMatches(), updateElo() itd.
 }

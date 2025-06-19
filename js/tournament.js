@@ -257,27 +257,6 @@ export function confirmMatch(index) {
   bsModal.show();
 }
 
-
-
-
-
-
-// ======= WALIDACJA WYNIKU MECZU =======
-// Zasady:
-// • Jeśli przeciwnik zdobywa mniej niż 10 punktów, zwycięzca musi mieć dokładnie 11 punktów.
-// • Jeśli obaj gracze mają 10 lub więcej punktów, mecz trwa, aż różnica wyniesie dokładnie 2 punkty.
-function validateResult(score1, score2) {
-  if (isNaN(score1) || isNaN(score2)) return false;
-  const winner = Math.max(score1, score2);
-  const loser = Math.min(score1, score2);
-  if (winner < 11) return false;
-  if (loser < 10) {
-    return winner === 11;
-  } else {
-    return winner === loser + 2;
-  }
-}
-
 // ======= AKTUALIZACJA STATYSTYK =======
 function updateStats(match) {
   const [score1, score2] = match.result.split(":").map(Number);
