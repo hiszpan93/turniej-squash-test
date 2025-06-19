@@ -190,14 +190,16 @@ export function confirmMatch(index) {
   const score2 = parseInt(input2.value, 10);
 
   // 2) podstawowa walidacja
-  if (isNaN(score1) || isNaN(score2) || score1 < 0 || score2 < 0) {
-    alert("Wprowadź nieujemne liczby dla obu graczy.");
-    return;
-  }
-  if (!validateResult(score1, score2)) {
-    alert("Wynik meczu jest niepoprawny.");
-    return;
-  }
+if (isNaN(score1) || isNaN(score2) || score1 < 0 || score2 < 0) {
+  alert("Wprowadź nieujemne liczby dla obu graczy.");
+  return;
+}
+// → wywołujemy metodę validateResult z modułu core
+if (!tournament.validateResult(score1, score2)) {
+  alert("Wynik meczu jest niepoprawny.");
+  return;
+}
+
 
   // 3) przygotuj modal
   const modalEl = document.getElementById("matchConfirmModal");
