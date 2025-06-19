@@ -124,34 +124,54 @@ generateMatches(courtCount) {
    * @param {number} score1 – liczba punktów gracza 1
    * @param {number} score2 – liczba punktów gracza 2
    */
-  confirmMatch(index, score1, score2) {
-    if (this.tournamentEnded) {
-      throw new Error("Turniej został zakończony");
-    }
-    const match = this.matches[index];
-    if (!match) {
-      throw new Error(`Brak meczu o indeksie ${index}`);
-    }
+  // W pliku js/modules/tournament.core.js, wewnątrz klasy Tournament:
 
-    // 1) ustaw wynik i potwierdzenie
-    match.result = `${score1}:${score2}`;
-    match.confirmed = true;
+confirmMatch(index, score1, score2) {
+  if (this.tournamentEnded) throw new Error("Turniej zakończony");
+  
+  const match = this.matches[index];
+  if (!match) throw new Error(`Brak meczu o indeksie ${index}`);
 
-    // 2) aktualizacja serii zwycięstw/porażek
-    this.updateStreak(match.player1, score1 > score2);
-    this.updateStreak(match.player2, score2 > score1);
+  // 1) ustaw wynik i potwierdzenie
+  match.result    = `${score1}:${score2}`;
+  match.confirmed = true;
 
-    // 3) aktualizacja ELO
-    const p1 = this.players.find(p => p.name === match.player1);
-    const p2 = this.players.find(p => p.name === match.player2);
-    if (p1 && p2) {
-      this.updateElo(p1, p2, score1, score2);
-    }
+  // 2) seria zwycięstw/porażek
+  this.updateStreak(match.player1, score1 > score2);
+  this.updateStreak(match.player2, score2 > score1);
 
-    // 4) opcjonalnie: dodaj do historii wszystkich meczów
-    if (!this.allMatches) this.allMatches = [];
-    this.allMatches.push({ ...match, timestamp: new Date().toISOString() });
+  // 3) ELO
+  const p1 = this.players.find(p => p.name === match.player1);
+  const p2 = this.players.find(p => p.name === match.player2);
+  if (p1 && p2) this.updateElo(p1, p2, score1, score2);
+
+  // —— aktualizacja bieżących statystyk turnieju ——
+  if (!this.stats) this.stats = {};
+  const m        = this.matches[index];               // <-- nazwa zmiennej zmieniona
+  const [s1, s2] = m.result.split(':').map(Number);
+
+  this.stats[m.player1] ||= { wins:0, losses:0, pointsScored:0, pointsConceded:0 };
+  this.stats[m.player2] ||= { wins:0, losses:0, pointsScored:0, pointsConceded:0 };
+
+  if (s1 > s2) {
+    this.stats[m.player1].wins++;
+    this.stats[m.player2].losses++;
+  } else {
+    this.stats[m.player2].wins++;
+    this.stats[m.player1].losses++;
   }
+
+  this.stats[m.player1].pointsScored   += s1;
+  this.stats[m.player1].pointsConceded += s2;
+  this.stats[m.player2].pointsScored   += s2;
+  this.stats[m.player2].pointsConceded += s1;
+  // ——————————————————————————————
+
+  // 4) zapis do historii
+  if (!this.allMatches) this.allMatches = [];
+  this.allMatches.push({ ...m, timestamp: new Date().toISOString() });
+}
+
   /**
    * Aktualizuje serię zwycięstw/porażek w generalStats.
    * @param {string} playerName 

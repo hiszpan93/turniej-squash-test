@@ -182,128 +182,65 @@ export function generateMatches() {
 
 
 // ======= POTWIERDZANIE MECZU (wrapper) =======
+
 export function confirmMatch(index) {
-  // 1) pobierz punkty z inputów
-  const input1 = document.getElementById(`score1-${index}`);
-  const input2 = document.getElementById(`score2-${index}`);
-  const score1 = parseInt(input1.value, 10);
-  const score2 = parseInt(input2.value, 10);
+  // 1) pobierz punkty
+  const score1 = parseInt(document.getElementById(`score1-${index}`).value, 10);
+  const score2 = parseInt(document.getElementById(`score2-${index}`).value, 10);
 
   // 2) podstawowa walidacja
-if (isNaN(score1) || isNaN(score2) || score1 < 0 || score2 < 0) {
-  alert("Wprowadź nieujemne liczby dla obu graczy.");
-  return;
-}
-// → wywołujemy metodę validateResult z modułu core
-if (!tournament.validateResult(score1, score2)) {
-  alert("Wynik meczu jest niepoprawny.");
-  return;
-}
+  if (isNaN(score1) || isNaN(score2) || score1 < 0 || score2 < 0) {
+    return alert("Wprowadź nieujemne liczby dla obu graczy.");
+  }
+  if (!tournament.validateResult(score1, score2)) {
+    return alert("Wynik meczu jest niepoprawny.");
+  }
 
-
-  // 3) przygotuj modal
+  // 3) otwórz modal
   const modalEl = document.getElementById("matchConfirmModal");
   const bsModal = new bootstrap.Modal(modalEl);
-  // wstaw treść do .modal-body
-  const content = document.getElementById("matchConfirmContent");
-  const match = matches[index];
-  const winner = score1 > score2 ? match.player1 : match.player2;
-  content.innerHTML = `
-    <p>Czy na pewno chcesz zatwierdzić wynik <strong>${score1}:${score2}</strong>?</p>
-    <p>🏆 Zwycięzca: <strong>${winner}</strong></p>
+  document.getElementById("matchConfirmContent").innerHTML = `
+    <p>Czy na pewno zatwierdzić <strong>${score1}:${score2}</strong>?</p>
   `;
+  // podpinamy “Potwierdź”
+  const btn = document.getElementById("confirmMatchBtnFinal");
+  btn.replaceWith(btn.cloneNode(true));
+  document.getElementById("confirmMatchBtnFinal")
+    .addEventListener("click", () => {
+      bsModal.hide();
 
-  // odpinamy stary listener (na wszelki wypadek)
-  const confirmBtn = document.getElementById("confirmMatchBtnFinal");
-  confirmBtn.replaceWith(confirmBtn.cloneNode(true));
-  const newBtn = document.getElementById("confirmMatchBtnFinal");
+      // 4) wykonaj core i zsynchronizuj
+      tournament.confirmMatch(index, score1, score2);
 
-  // 4) obsługa kliknięcia w modalowym „Potwierdź”
-  newBtn.addEventListener("click", () => {
-  bsModal.hide();
+      matches      = tournament.matches;
+      stats        = tournament.stats;
+      generalStats = tournament.generalStats;
+      window.matches      = matches;
+      window.stats        = stats;
+      window.generalStats = generalStats;
 
-  // 5) delegujemy logikę do modułu core
-  tournament.confirmMatch(index, score1, score2);
+      // 5) odśwież UI
+      addResultToResultsTable(matches[index]);
+      renderStats();
+      renderGeneralStats();
+      renderMatches();
 
-  // 6) synchronizujemy listę meczów
-  matches = tournament.matches;
-  allMatches = tournament.allMatches;
-  window.matches = matches;
+      // 6) zapis i autosave
+      saveDataToFirebase();
+      saveDraftToFirebase();
 
-  // 7) wrzuć wynik do tabeli „Wyniki meczów”
-  window.addResultToResultsTable(matches[index]);
+      // 7) jeżeli to ostatni – generuj kolejny
+      if (matches.every(m => m.confirmed)) {
+        generateMatches();
+      }
+    });
 
-  // 8) aktualizuj szczegółowe statystyki (statsTable)
-  updateStats(matches[index]);
-  window.renderStats();
-
-  // 9) zaktualizuj statystyki ogólne
-  window.renderGeneralStats();
-
-  // 10) wyrenderuj na nowo listę meczów (statusy, przyciski)
-  window.renderMatches();
-
-  // 11) zapisz stan
-  saveDataToFirebase();
-  saveDraftToFirebase();
-
-  // 12) jeżeli to była ostatnia runda – generujemy następną
-  if (matches.every(m => m.confirmed)) {
-    matches = [];
-    generateMatches();
-  }
-});
-
-
-  // 8) pokaż modal
   bsModal.show();
 }
 
+
 // ======= AKTUALIZACJA STATYSTYK =======
-function updateStats(match) {
-  const [score1, score2] = match.result.split(":").map(Number);
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  if (score1 > score2) {
-    stats[match.player1].wins++;
-    stats[match.player2].losses++;
-  } else {
-    stats[match.player2].wins++;
-    stats[match.player1].losses++;
-  }
-  stats[match.player1].pointsScored += score1;
-  stats[match.player2].pointsScored += score2;
-  stats[match.player1].pointsConceded += score2;
-  stats[match.player2].pointsConceded += score1;
-  if (!generalStats[match.player1]) {
-    generalStats[match.player1] = { wins: 0, losses: 0, pointsScored: 0, pointsConceded: 0, obecnosc: 0 };
-  }
-  if (!generalStats[match.player2]) {
-    generalStats[match.player2] = { wins: 0, losses: 0, pointsScored: 0, pointsConceded: 0, obecnosc: 0 };
-  }
-  if (score1 > score2) {
-    generalStats[match.player1].wins++;
-    generalStats[match.player2].losses++;
-  } else {
-    generalStats[match.player2].wins++;
-    generalStats[match.player1].losses++;
-  }
-  generalStats[match.player1].pointsScored += score1;
-  generalStats[match.player2].pointsScored += score2;
-  generalStats[match.player1].pointsConceded += score2;
-  generalStats[match.player2].pointsConceded += score1;
-  
-  
 
-
-  window.renderStats();
-  
-  window.renderGeneralStats();
-  saveDraftToFirebase(); // 📝 zapis roboczy nowej serii
-  console.log("✅ updateStats działa, match:", match);
-
-}
 
 
 
